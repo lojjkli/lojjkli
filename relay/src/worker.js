@@ -24,7 +24,12 @@ export default {
   async fetch(request, env) {
     const url = new URL(request.url);
 
-    if (request.headers.get("Upgrade") !== "websocket") {
+    // RFC 6455 makes this value case-insensitive and clients disagree on casing
+    // ("websocket" vs "WebSocket"). A strict === here answers the handshake with a
+    // plain 200, which the client rejects — and the site looks fine in a browser,
+    // so the failure appears to be on the client side.
+    const upgrade = (request.headers.get("Upgrade") || "").toLowerCase();
+    if (upgrade !== "websocket") {
       // plain GET — useful for checking the deploy actually works
       return new Response("KlisTeam relay online\n", {
         status: 200,
