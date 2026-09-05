@@ -80,11 +80,17 @@ const SOURCES = [
   { id: 'mctiers_direct', url: (u) => `https://mctiers.com/api/profile/${u}`,
     pick: (d) => ({ overall: d.overall ?? null, points: d.points ?? null, modes: d.rankings ?? null }) },
 
-  // UNVERIFIED: I could not confirm these endpoints exist. Check with ?debug=1
-  // and correct the URL here; nothing else needs changing.
-  { id: 'pvptiers', url: (u, n) => `https://pvptiers.com/api/profile/${u}`, pick: passthrough },
-  { id: 'subtiers', url: (u, n) => `https://subtiers.net/api/profile/${u}`, pick: passthrough },
-  { id: 'pvphq',    url: (u, n) => `https://pvphq.net/api/profile/${u}`,    pick: passthrough },
+  // Same aggregator, other list names. It uses one URL shape for every list it
+  // supports, so if it covers these they work immediately; if not they 404 and
+  // the row is simply marked unavailable. Costs nothing to try.
+  { id: 'subtiers',  url: (u, n) => `https://api.yeahjenni.xyz/subtiers/player/${n}`,  pick: aggregator },
+  { id: 'pvphq',     url: (u, n) => `https://api.yeahjenni.xyz/pvphq/player/${n}`,     pick: aggregator },
+  { id: 'pvptiers',  url: (u, n) => `https://api.yeahjenni.xyz/pvptiers/player/${n}`,  pick: aggregator },
+
+  // Direct guesses, kept as a fallback. Still UNVERIFIED - check ?debug=1 and
+  // correct the URL here if you find the real one.
+  { id: 'subtiers_direct', url: (u) => `https://subtiers.net/api/profile/${u}`, pick: passthrough },
+  { id: 'pvphq_direct',    url: (u) => `https://pvphq.net/api/profile/${u}`,    pick: passthrough },
 ];
 
 /** api.yeahjenni.xyz shape: gameModes.<mode>.{tier,isLT}, plus tier/score/ranked. */
