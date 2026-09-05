@@ -53,6 +53,9 @@
   td{padding:13px 12px 13px 0;border-bottom:1px solid var(--line);font:14px var(--mono)}
   tr:last-child td{border-bottom:0}
   .name{color:var(--text);font-weight:500}
+  .who{display:flex;align-items:center;gap:10px}
+  .head{width:26px;height:26px;border-radius:5px;image-rendering:pixelated;
+        background:var(--surface);border:1px solid var(--line);flex:none}
   .coords{color:#d8d8d8}
   .muted{color:var(--sub)}
   .stale{opacity:.35}
@@ -202,8 +205,14 @@ function draw() {
     const stale = now - p.at > STALE_MS;
     const dim = DIMS[p.d] || (p.d || '—').replace(/^.*:/, '');
     const td = (cls, v) => '<td class="' + cls + '">' + String(v).replace(/[<>&]/g, '') + '</td>';
+    const safe = String(p.n).replace(/[^A-Za-z0-9_]/g, '');
+    // mc-heads renders by username; crafatar is the fallback if it misses
+    const head = '<img class="head" alt="" loading="lazy"'
+      + ' src="https://mc-heads.net/avatar/' + safe + '/52"'
+      + ' onerror="this.onerror=null;this.src=\'https://crafatar.com/avatars/' + safe
+      + '?size=52&overlay\'">';
     return '<tr class="' + (stale ? 'stale' : '') + '">'
-      + td('name', p.n)
+      + '<td class="name"><span class="who">' + head + '<span>' + safe + '</span></span></td>'
       + td('coords', p.x + ', ' + p.y + ', ' + p.z)
       + td('muted', dim)
       + td('muted', p.sa || '—')
