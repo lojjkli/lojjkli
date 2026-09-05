@@ -1,0 +1,15 @@
+name = "klisteam-lookup"
+main = "src/worker.js"
+compatibility_date = "2026-01-01"
+
+[[durable_objects.bindings]]
+name = "REGISTRY"
+class_name = "Registry"
+
+[[migrations]]
+tag = "v1"
+new_sqlite_classes = ["Registry"]
+
+[[routes]]
+pattern = "api.lojjkli.site"
+custom_domain = true
