@@ -87,10 +87,14 @@ const SOURCES = [
   { id: 'pvphq',     url: (u, n) => `https://api.yeahjenni.xyz/pvphq/player/${n}`,     pick: aggregator },
   { id: 'pvptiers',  url: (u, n) => `https://api.yeahjenni.xyz/pvptiers/player/${n}`,  pick: aggregator },
 
-  // Direct guesses, kept as a fallback. Still UNVERIFIED - check ?debug=1 and
-  // correct the URL here if you find the real one.
-  { id: 'subtiers_direct', url: (u) => `https://subtiers.net/api/profile/${u}`, pick: passthrough },
-  { id: 'pvphq_direct',    url: (u) => `https://pvphq.net/api/profile/${u}`,    pick: passthrough },
+  // Real endpoints, taken from the TierTagger mod jar: base /api with
+  // /profile/<uuid> and /profile/by-name/<name>. by-name avoids any uuid
+  // formatting mismatch, so it is tried first.
+  { id: 'subtiers_byname', url: (u, n) => `https://subtiers.net/api/profile/by-name/${n}`, pick: passthrough },
+  { id: 'subtiers_direct', url: (u) => `https://subtiers.net/api/profile/${u}`,            pick: passthrough },
+  { id: 'mctiers_byname',  url: (u, n) => `https://mctiers.com/api/profile/by-name/${n}`,  pick: passthrough },
+  // confirmed from the Tiers mod jar
+  { id: 'pvptiers',        url: (u) => `https://pvptiers.com/api/profile/${u}`,            pick: passthrough },
 ];
 
 /** api.yeahjenni.xyz shape: gameModes.<mode>.{tier,isLT}, plus tier/score/ranked. */
@@ -215,6 +219,10 @@ export default {
     } catch (e) {
       status.mojang_textures = String(e.message);
     }
+    // Pre-rendered 3D body shots, so the client doesn't have to build a model.
+    out.render3d = `https://visage.surgeplay.com/full/256/${profile.uuid}`;
+    out.render3dAlt = `https://render.crafty.gg/3d/full/${profile.uuid}`;
+
     if (!out.skin) {
       out.skin = `https://crafatar.com/skins/${profile.uuid}`;
       out.skinSource = 'crafatar';
