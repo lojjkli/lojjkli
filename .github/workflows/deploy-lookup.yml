@@ -1,0 +1,32 @@
+name: Deploy lookup
+
+# Deliberately separate from the site workflow: deploying a Worker restarts it
+# and drops every open WebSocket, so the lookup should only redeploy when the
+# lookup itself changes — not every time you tweak the website.
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'lookup/**'
+      - '.github/workflows/deploy-lookup.yml'
+  workflow_dispatch:
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install wrangler
+        run: npm install -g wrangler
+
+      - name: Deploy
+        working-directory: lookup
+        run: wrangler deploy
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
