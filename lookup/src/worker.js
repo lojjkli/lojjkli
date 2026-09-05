@@ -103,9 +103,36 @@ function passthrough(d) {
 }
 
 
-async function mojang(name) {
-  const p = await getJSON(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`);
-  return { uuid: p.id, name: p.name };
+/**
+ * Resolve a name to a UUID. Mojang rate limits and sometimes blocks datacenter
+ * IPs outright, and Workers run from datacenters, so fall back to mirrors rather
+ * than reporting a live account as nonexistent.
+ */
+async function resolveName(name, status) {
+  const attempts = [
+    ['mojang',   `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`,
+                 (d) => (d && d.id ? { uuid: d.id, name: d.name } : null)],
+    ['playerdb', `https://playerdb.co/api/player/minecraft/${encodeURIComponent(name)}`,
+                 (d) => (d && d.data && d.data.player
+                          ? { uuid: String(d.data.player.raw_id || d.data.player.id).replace(/-/g, ''),
+                              name: d.data.player.username } : null)],
+    ['minetools', `https://api.minetools.eu/uuid/${encodeURIComponent(name)}`,
+                 (d) => (d && d.id ? { uuid: d.id, name: d.name } : null)],
+  ];
+
+  for (const [id, url, parse] of attempts) {
+    try {
+      const r = await fetch(url, { headers: { 'user-agent': 'KlisTeamMod/1.0 (+https://lojjkli.site)' } });
+      if (r.status === 204 || r.status === 404) { status['resolve_' + id] = 'not found (404)'; continue; }
+      if (!r.ok) { status['resolve_' + id] = 'HTTP ' + r.status; continue; }
+      const parsed = parse(await r.json());
+      if (parsed && parsed.uuid) { status['resolve_' + id] = 'ok'; return parsed; }
+      status['resolve_' + id] = 'no uuid in response';
+    } catch (e) {
+      status['resolve_' + id] = String(e.message);
+    }
+  }
+  return null;
 }
 
 async function textures(uuid) {
@@ -165,14 +192,12 @@ export default {
     const cached = await caches.default.match(cacheKey);
     if (cached && !debug) return cached;
 
-    let profile;
-    try {
-      profile = await mojang(name);
-    } catch (e) {
-      return json({ error: 'no such player', name }, 404);
-    }
-
     const status = {};
+    const profile = await resolveName(name, status);
+    if (!profile) {
+      // say which lookups failed and how, instead of blaming the username
+      return json({ error: 'could not resolve username', name, _status: status }, 404);
+    }
     const out = { name: profile.name, uuid: profile.uuid, tiers: {} };
 
     // skin + cape
