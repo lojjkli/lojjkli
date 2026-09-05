@@ -70,32 +70,38 @@ async function getJSON(url, opts = {}) {
 
 /** Tier sites. Each returns whatever it can; shape is normalised by `pick`. */
 const SOURCES = [
-  {
-    id: 'mctiers',
-    url: (uuid) => `https://mctiers.com/api/profile/${uuid}`,
-    pick: (d) => ({ overall: d.overall ?? null, points: d.points ?? null, modes: d.rankings ?? d.gameModes ?? null }),
-  },
-  {
-    id: 'mcpvp',
-    url: (uuid) => `https://mcpvp.com/api/profile/${uuid}`,
-    pick: (d) => ({ overall: d.overall ?? null, points: d.points ?? null, modes: d.rankings ?? d.kitRanks ?? null }),
-  },
-  {
-    id: 'pvptiers',
-    url: (uuid) => `https://pvptiers.com/api/profile/${uuid}`,
-    pick: (d) => ({ modes: d.rankings ?? d.gameModes ?? null }),
-  },
-  {
-    id: 'subtiers',
-    url: (uuid) => `https://subtiers.net/api/profile/${uuid}`,
-    pick: (d) => ({ modes: d.rankings ?? d.gameModes ?? null }),
-  },
-  {
-    id: 'pvphq',
-    url: (uuid) => `https://pvphq.net/api/profile/${uuid}`,
-    pick: (d) => ({ modes: d.rankings ?? d.gameModes ?? null }),
-  },
+  // Documented format: api.yeahjenni.xyz/<list>/player/<ign>
+  // Lists it supports: mctiers (mctiers.com), mctiersio, ocetiers.
+  { id: 'mctiers',  url: (u, n) => `https://api.yeahjenni.xyz/mctiers/player/${n}`,   pick: aggregator },
+  { id: 'mctiersio',url: (u, n) => `https://api.yeahjenni.xyz/mctiersio/player/${n}`, pick: aggregator },
+  { id: 'ocetiers', url: (u, n) => `https://api.yeahjenni.xyz/ocetiers/player/${n}`,  pick: aggregator },
+
+  // Direct, in case the aggregator is down.
+  { id: 'mctiers_direct', url: (u) => `https://mctiers.com/api/profile/${u}`,
+    pick: (d) => ({ overall: d.overall ?? null, points: d.points ?? null, modes: d.rankings ?? null }) },
+
+  // UNVERIFIED: I could not confirm these endpoints exist. Check with ?debug=1
+  // and correct the URL here; nothing else needs changing.
+  { id: 'pvptiers', url: (u, n) => `https://pvptiers.com/api/profile/${u}`, pick: passthrough },
+  { id: 'subtiers', url: (u, n) => `https://subtiers.net/api/profile/${u}`, pick: passthrough },
+  { id: 'pvphq',    url: (u, n) => `https://pvphq.net/api/profile/${u}`,    pick: passthrough },
 ];
+
+/** api.yeahjenni.xyz shape: gameModes.<mode>.{tier,isLT}, plus tier/score/ranked. */
+function aggregator(d) {
+  return {
+    tier: d.tier ?? null,
+    ranked: d.ranked ?? null,
+    score: d.score ?? null,
+    position: d.leaderboardPosition ?? null,
+    modes: d.gameModes ?? null,
+  };
+}
+
+function passthrough(d) {
+  return { modes: d.rankings ?? d.gameModes ?? d.kitRanks ?? null, raw: d };
+}
+
 
 async function mojang(name) {
   const p = await getJSON(`https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`);
@@ -184,7 +190,7 @@ export default {
     // tier sites, all in parallel — a slow one shouldn't hold up the rest
     await Promise.all(SOURCES.map(async (src) => {
       try {
-        const d = await getJSON(src.url(profile.uuid));
+        const d = await getJSON(src.url(profile.uuid, encodeURIComponent(profile.name)));
         out.tiers[src.id] = src.pick(d);
         status[src.id] = 'ok';
       } catch (e) {
