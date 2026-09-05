@@ -200,11 +200,20 @@ export default {
     }
     const out = { name: profile.name, uuid: profile.uuid, tiers: {} };
 
-    // skin + cape
+    // skin + cape. sessionserver blocks datacenter IPs the same way the name API
+    // does, so fall back to a mirror rather than returning no skin at all.
     try {
-      Object.assign(out, await textures(profile.uuid));
-      status.mojang_textures = 'ok';
-    } catch (e) { status.mojang_textures = String(e.message); }
+      const tex = await textures(profile.uuid);
+      Object.assign(out, tex);
+      status.mojang_textures = tex.skin ? 'ok' : 'no skin in profile';
+    } catch (e) {
+      status.mojang_textures = String(e.message);
+    }
+    if (!out.skin) {
+      out.skin = `https://crafatar.com/skins/${profile.uuid}`;
+      out.skinSource = 'crafatar';
+      status.skin_fallback = 'crafatar';
+    }
 
     // name history / skin gallery
     try {
