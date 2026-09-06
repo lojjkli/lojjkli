@@ -84,7 +84,6 @@ const SOURCES = [
   // supports, so if it covers these they work immediately; if not they 404 and
   // the row is simply marked unavailable. Costs nothing to try.
   { id: 'subtiers',  url: (u, n) => `https://api.yeahjenni.xyz/subtiers/player/${n}`,  pick: aggregator },
-  { id: 'pvphq',     url: (u, n) => `https://api.yeahjenni.xyz/pvphq/player/${n}`,     pick: aggregator },
   { id: 'pvptiers',  url: (u, n) => `https://api.yeahjenni.xyz/pvptiers/player/${n}`,  pick: aggregator },
 
   // Real endpoints, taken from the TierTagger mod jar: base /api with
@@ -95,6 +94,14 @@ const SOURCES = [
   { id: 'mctiers_byname',  url: (u, n) => `https://mctiers.com/api/profile/by-name/${n}`,  pick: passthrough },
   // confirmed from the Tiers mod jar
   { id: 'pvptiers',        url: (u) => `https://pvptiers.com/api/profile/${u}`,            pick: passthrough },
+
+  // MCPVP: no endpoint found in either tier mod, so these are candidates derived
+  // from the public profile URL (mcpvp.com/profile/<name>). Check ?debug=1 - the
+  // one that answers is the keeper, delete the rest.
+  { id: 'mcpvp',        url: (u, n) => `https://www.mcpvp.com/api/profile/${n}`,  pick: passthrough },
+  { id: 'mcpvp_alt',    url: (u, n) => `https://mcpvp.com/api/profile/${n}`,      pick: passthrough },
+  { id: 'mcpvp_uuid',   url: (u) => `https://www.mcpvp.com/api/profile/${u}`,     pick: passthrough },
+  { id: 'mcpvp_player', url: (u, n) => `https://www.mcpvp.com/api/player/${n}`,   pick: passthrough },
 ];
 
 /** api.yeahjenni.xyz shape: gameModes.<mode>.{tier,isLT}, plus tier/score/ranked. */
@@ -108,8 +115,20 @@ function aggregator(d) {
   };
 }
 
+/**
+ * Shape used by mctiers and subtiers, confirmed from TierTagger: the response has
+ * `rankings` keyed by gamemode, each { tier, pos, attained, retired, peak }, plus
+ * `overall`, `points` and `region` at the top. `pos` 0 means high tier.
+ */
 function passthrough(d) {
-  return { modes: d.rankings ?? d.gameModes ?? d.kitRanks ?? null, raw: d };
+  const modes = d.rankings ?? d.gamemodes ?? d.gameModes ?? d.kitRanks ?? null;
+  return {
+    overall: d.overall ?? null,
+    points: d.points ?? null,
+    region: d.region ?? null,
+    modes,
+    raw: modes ? undefined : d,   // keep the body only when nothing was recognised
+  };
 }
 
 
