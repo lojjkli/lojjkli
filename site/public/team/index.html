@@ -203,7 +203,16 @@ function draw() {
   $('rows').innerHTML = list.map(p => {
     const age = Math.round((now - p.at) / 1000);
     const stale = now - p.at > STALE_MS;
-    const dim = DIMS[p.d] || (p.d || '—').replace(/^.*:/, '');
+    const dim = DIMS[p.d] || (p.d || '-').replace(/^.*:/, '');
+    // present in the room but not publishing coordinates
+    if (p.off) {
+      return '<tr class="' + (stale ? 'stale' : '') + '">'
+        + '<td class="name"><span class="who">' + head + '<span>' + safe + '</span></span></td>'
+        + '<td class="muted" colspan="2">sharing turned off</td>'
+        + td('muted', p.sa || '-')
+        + td('muted', age < 2 ? 'now' : age + 's ago')
+        + '</tr>';
+    }
     const td = (cls, v) => '<td class="' + cls + '">' + String(v).replace(/[<>&]/g, '') + '</td>';
     const safe = String(p.n).replace(/[^A-Za-z0-9_]/g, '');
     // mc-heads renders by username; crafatar is the fallback if it misses
