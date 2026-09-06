@@ -67,7 +67,18 @@ export class Room extends DurableObject {
     // Hibernation: the object is evicted from memory while idle but the sockets
     // stay open, so an idle team costs nothing.
     this.ctx.acceptWebSocket(server);
-    server.serializeAttachment({ windowStart: 0, count: 0 });
+    server.serializeAttachment({ windowStart: 0, count: 0, last: null });
+
+    // Replay everyone's most recent frame to the new arrival, so they see the team
+    // immediately instead of waiting for each player's next update. Frames are
+    // opaque ciphertext here - the relay still understands none of it.
+    for (const peer of this.ctx.getWebSockets()) {
+      if (peer === server) continue;
+      const meta = peer.deserializeAttachment();
+      if (meta && meta.last) {
+        try { server.send(meta.last); } catch (e) { /* peer gone */ }
+      }
+    }
 
     return new Response(null, { status: 101, webSocket: client });
   }
@@ -87,6 +98,7 @@ export class Room extends DurableObject {
       meta.count = 0;
     }
     meta.count++;
+    if (message !== 'ping') meta.last = message;   // remembered for late joiners
     ws.serializeAttachment(meta);
     if (meta.count > MAX_MSGS_PER_SEC) return;
 
