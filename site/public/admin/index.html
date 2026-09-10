@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <meta name="robots" content="noindex">
 
-<title>lojjkli - Welcome back, Kli</title>
+<title>lojjkli · Welcome back, Kli</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
@@ -15,8 +15,8 @@
     --black: #050505;
     --card: #0d0d0d;
     --card-hover: #111111;
-    --line: #202020;
-    --line-bright: #343434;
+    --line: #1f1f1f;
+    --line-bright: #333333;
 
     --text: #f4f4f4;
     --dim: #9a9a9a;
@@ -25,6 +25,10 @@
     --green: #22c55e;
     --red: #ef4444;
     --amber: #f59e0b;
+
+    --r-sm: 8px;
+    --r-md: 12px;
+    --r-lg: 16px;
 
     --display: "Space Grotesk", sans-serif;
     --body: "Inter", sans-serif;
@@ -101,46 +105,30 @@
     margin-bottom: 14px;
     color: #666;
     font: 500 10px var(--mono);
-    letter-spacing: .38em;
+    letter-spacing: .34em;
     text-transform: uppercase;
     opacity: 0;
     animation: fadeUp .8s ease .35s forwards;
   }
 
   /* Decorative only - the real page heading is .brand-name below, so this
-     is not a second <h1>: screen readers should skip straight past it. */
+     is not a second <h1>: screen readers should skip straight past it.
+     One glowing sweep crosses the static text once, rather than animating
+     each letter separately - a single deliberate moment instead of a
+     16-node stagger that has to be kept in sync by hand. */
   .intro-title {
     margin: 0;
-    color: #f5f5f5;
-    font: 700 clamp(38px, 8vw, 82px)/.95 var(--display);
-    letter-spacing: -.065em;
-    text-shadow: 0 0 15px rgba(255,255,255,.1), 0 0 60px rgba(255,255,255,.07);
+    font: 700 clamp(34px, 7.5vw, 76px)/1.05 var(--display);
+    letter-spacing: -.04em;
     white-space: nowrap;
-  }
-
-  .intro-title span {
-    display: inline-block;
+    background: linear-gradient(100deg, #444 0%, #444 42%, #ffffff 50%, #444 58%, #444 100%);
+    background-size: 260% 100%;
+    -webkit-background-clip: text;
+    background-clip: text;
+    color: transparent;
     opacity: 0;
-    transform: translateY(18px);
-    animation: letterIn .7s cubic-bezier(.2,.8,.2,1) forwards;
+    animation: fadeUp .7s ease .4s forwards, introSweep 1.7s cubic-bezier(.2,.8,.2,1) .45s forwards;
   }
-
-  .intro-title span:nth-child(1) { animation-delay: .45s; }
-  .intro-title span:nth-child(2) { animation-delay: .49s; }
-  .intro-title span:nth-child(3) { animation-delay: .53s; }
-  .intro-title span:nth-child(4) { animation-delay: .57s; }
-  .intro-title span:nth-child(5) { animation-delay: .61s; }
-  .intro-title span:nth-child(6) { animation-delay: .65s; }
-  .intro-title span:nth-child(7) { animation-delay: .69s; }
-  .intro-title span:nth-child(8) { animation-delay: .73s; }
-  .intro-title span:nth-child(9) { animation-delay: .77s; }
-  .intro-title span:nth-child(10) { animation-delay: .81s; }
-  .intro-title span:nth-child(11) { animation-delay: .85s; }
-  .intro-title span:nth-child(12) { animation-delay: .89s; }
-  .intro-title span:nth-child(13) { animation-delay: .93s; }
-  .intro-title span:nth-child(14) { animation-delay: .97s; }
-  .intro-title span:nth-child(15) { animation-delay: 1.01s; }
-  .intro-title span:nth-child(16) { animation-delay: 1.05s; }
 
   .intro-line {
     width: 0;
@@ -161,22 +149,23 @@
 
   .intro-status {
     position: absolute;
-    left: 50%;
+    left: 0;
+    right: 0;
     bottom: 56px;
-    transform: translateX(-50%);
-    display: flex;
-    align-items: center;
-    gap: 9px;
+    text-align: center;
     color: #555;
     font: 500 10px var(--mono);
     letter-spacing: .14em;
     text-transform: uppercase;
-    white-space: nowrap;
     opacity: 0;
     animation: fadeUp .8s ease 1.3s forwards;
   }
 
   .intro-dot {
+    display: inline-block;
+    vertical-align: middle;
+    margin-right: 9px;
+    margin-bottom: 1px;
     width: 6px;
     height: 6px;
     border-radius: 50%;
@@ -187,27 +176,29 @@
 
   .intro-progress {
     position: absolute;
-    left: 50%;
+    left: 0;
+    right: 0;
     bottom: 32px;
     width: min(260px, 60vw);
     height: 1px;
-    transform: translateX(-50%);
+    margin: 0 auto;
     background: #171717;
     overflow: hidden;
   }
 
   .intro-progress-bar {
-    width: 0;
+    width: 40%;
     height: 100%;
     background: #aaa;
-    animation: progress 2.3s cubic-bezier(.25,.8,.25,1) forwards;
+    animation: scan 1.8s ease-in-out infinite;
   }
 
   .intro-skip {
     position: absolute;
-    left: 50%;
+    left: 0;
+    right: 0;
     bottom: 16px;
-    transform: translateX(-50%);
+    text-align: center;
     color: #3a3a3a;
     font: 500 9px var(--mono);
     letter-spacing: .12em;
@@ -244,29 +235,41 @@
     text-transform: uppercase;
   }
 
-  #lockBtn {
-    display: none;
+  .brand-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+
+  .iconbtn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
     background: transparent;
     color: var(--faint);
     border: 1px solid var(--line-bright);
+    border-radius: var(--r-sm);
     font: 500 11px var(--mono);
-    padding: 7px 13px;
+    padding: 8px 10px;
+    line-height: 1;
   }
-  #lockBtn:hover { color: #ddd; background: #171717; }
+  .iconbtn svg { width: 14px; height: 14px; display: block; }
+  .iconbtn:hover { color: #ddd; background: #171717; }
 
-  h2 { margin: 0 0 14px; color: #b5b5b5; font: 600 14px var(--display); }
+  #lockBtn { display: none; }
+
+  h2 { margin: 0 0 14px; color: #c7c7c7; font: 600 14px var(--display); }
+  h2 .h2-icon { width: 15px; height: 15px; margin-right: 8px; vertical-align: -3px; color: var(--faint); }
 
   .card {
     position: relative;
     background: linear-gradient(145deg, rgba(255,255,255,.025), rgba(255,255,255,.008)), var(--card);
     border: 1px solid var(--line);
-    border-radius: 14px;
+    border-radius: var(--r-lg);
     padding: 20px;
     margin-bottom: 18px;
     box-shadow: 0 18px 60px rgba(0,0,0,.18);
-    transition: border-color .2s ease, background .2s ease, transform .2s ease;
+    transition: border-color .2s ease, background .2s ease;
   }
   .card:hover { border-color: #2b2b2b; }
+  .card.flash { animation: cardFlash 1s ease; }
 
   label {
     display: block;
@@ -283,7 +286,7 @@
     background: #080808;
     color: var(--text);
     border: 1px solid var(--line);
-    border-radius: 9px;
+    border-radius: var(--r-sm);
     outline: none;
     font: 14px var(--mono);
     transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
@@ -298,7 +301,7 @@
     position: relative;
     background: #f1f1f1;
     border: 1px solid #f1f1f1;
-    border-radius: 9px;
+    border-radius: var(--r-sm);
     color: #050505;
     padding: 10px 17px;
     font: 600 12px var(--body);
@@ -320,39 +323,62 @@
   #msg.success { color: var(--green); }
 
   table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-  tr { border-bottom: 1px solid var(--line); }
-  tr:last-child { border-bottom: 0; }
   td { padding: 10px 8px; border-bottom: 1px solid var(--line); color: #ddd; font: 13px var(--mono); vertical-align: middle; }
   tr:last-child td { border-bottom: 0; }
-  td.who { display: flex; align-items: center; gap: 9px; font-weight: 500; border-bottom: 0; }
   td.reason, td.time { color: var(--dim); }
   td.btns { width: 1%; text-align: right; white-space: nowrap; }
   td.btns button { margin-left: 5px; }
 
+  /* .who is a span *inside* a <td>, not the cell itself - a <td> switched
+     to display:flex stops behaving like a table cell and can size itself
+     out of step with its neighbours, which is what was throwing the text
+     in this row out of line with the others. */
+  .who { display: inline-flex; align-items: center; gap: 9px; font-weight: 500; }
+  .who .name { line-height: 1; }
+
   .head {
-    width: 24px; height: 24px; flex: none; border-radius: 6px;
+    width: 24px; height: 24px; flex: none; border-radius: var(--r-sm);
     background: #080808; border: 1px solid var(--line); image-rendering: pixelated;
   }
 
   .dot {
-    width: 7px; height: 7px; flex: none; margin-right: 1px; border-radius: 50%;
+    width: 7px; height: 7px; flex: none; border-radius: 50%;
     background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,.75);
     animation: onlinePulse 1.8s ease-in-out infinite;
   }
 
   .empty { color: var(--faint); }
 
+  /* Kli, watching from the corner. A plain <img src="...gif"> plays on its
+     own - no JS, no canvas, nothing to keep running - so this costs one
+     cached image request and nothing at runtime. Hidden once the viewport
+     is too narrow to have room beside the panel. */
+  .mascot {
+    position: fixed;
+    right: 26px;
+    bottom: 26px;
+    width: 108px;
+    height: 108px;
+    z-index: 5;
+    image-rendering: pixelated;
+    filter: drop-shadow(0 0 20px rgba(255,255,255,.10));
+    pointer-events: none;
+    opacity: .92;
+  }
+  @media (max-width: 980px) { .mascot { display: none; } }
+
   .refresh-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
   .refresh-row h2 { margin: 0; }
   #onlineRefreshed { color: var(--faint); font: 500 10px var(--mono); }
 
   @keyframes introEnter { from { opacity: 0; transform: scale(.97); filter: blur(8px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
-  @keyframes letterIn { to { opacity: 1; transform: translateY(0); } }
+  @keyframes introSweep { from { background-position: 140% 0; } to { background-position: -40% 0; } }
   @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
   @keyframes lineGrow { to { width: min(260px, 60vw); } }
-  @keyframes progress { 0% { width: 0; } 72% { width: 82%; } 100% { width: 100%; } }
+  @keyframes scan { 0% { transform: translateX(-120%); } 100% { transform: translateX(350%); } }
   @keyframes pulse { 0%,100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
   @keyframes onlinePulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
+  @keyframes cardFlash { 0% { border-color: rgba(255,255,255,.4); box-shadow: 0 0 0 3px rgba(255,255,255,.06), 0 18px 60px rgba(0,0,0,.18); } 100% { border-color: var(--line); box-shadow: 0 18px 60px rgba(0,0,0,.18); } }
 
   @media (max-width: 640px) {
     .wrap { padding: 38px 15px 70px; }
@@ -373,6 +399,7 @@
       animation-iteration-count: 1 !important;
       transition-duration: .01ms !important;
     }
+    .intro-title { background-position: -40% 0; opacity: 1; }
   }
 </style>
 </head>
@@ -382,14 +409,7 @@
 <div id="intro" role="button" tabindex="0" aria-label="Skip intro">
   <div class="intro-content" aria-hidden="true">
     <div class="intro-overline">KlisTeam Studio</div>
-    <div class="intro-title">
-      <span>W</span><span>e</span><span>l</span><span>c</span><span>o</span><span>m</span><span>e</span>
-      <span>&nbsp;</span>
-      <span>b</span><span>a</span><span>c</span><span>k</span>
-      <span>,</span>
-      <span>&nbsp;</span>
-      <span>K</span><span>l</span><span>i</span>
-    </div>
+    <div class="intro-title">Welcome back, Kli</div>
     <div class="intro-line"></div>
     <div class="intro-sub">lojjkli · private administration</div>
   </div>
@@ -401,6 +421,8 @@
   <div class="intro-skip" aria-hidden="true">click or press any key to skip</div>
 </div>
 
+<img class="mascot" src="kli_looking.gif" alt="" aria-hidden="true">
+
 <div class="wrap">
 
   <div class="brand">
@@ -408,7 +430,9 @@
       <h1 class="brand-name">lojjkli</h1>
       <p class="brand-sub">KlisTeam Studio · Administration</p>
     </div>
-    <button id="lockBtn" onclick="lock()">Lock</button>
+    <div class="brand-actions">
+      <button id="lockBtn" class="iconbtn" onclick="lock()">Lock</button>
+    </div>
   </div>
 
   <div class="card" id="loginCard">
@@ -421,13 +445,19 @@
         <button id="unlockBtn" onclick="unlock()">Unlock</button>
       </div>
     </div>
-    <div id="msg"></div>
+    <div id="msg" role="status" aria-live="polite"></div>
   </div>
 
   <div id="panels" style="display:none">
 
     <div class="card">
-      <h2>Blocked servers</h2>
+      <h2>
+        <svg class="h2-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <rect x="4" y="5" width="16" height="5" rx="1.5"/><rect x="4" y="14" width="16" height="5" rx="1.5"/>
+          <line x1="7" y1="7.5" x2="7.01" y2="7.5"/><line x1="7" y1="16.5" x2="7.01" y2="16.5"/>
+          <line x1="3" y1="21" x2="21" y2="3"/>
+        </svg>Blocked servers
+      </h2>
       <div class="row">
         <div><input id="server" placeholder="play.example.com"></div>
         <div><input id="serverReason" placeholder="Reason (optional)"></div>
@@ -437,7 +467,12 @@
     </div>
 
     <div class="card">
-      <h2>Banned players</h2>
+      <h2>
+        <svg class="h2-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/>
+          <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+        </svg>Banned players
+      </h2>
       <div class="row">
         <div><input id="player" placeholder="Username"></div>
         <div><input id="playerReason" placeholder="Reason (optional)"></div>
@@ -448,7 +483,11 @@
 
     <div class="card">
       <div class="refresh-row">
-        <h2>Using the mod right now <span style="color:var(--faint);font-weight:400">(last 5 min)</span></h2>
+        <h2>
+          <svg class="h2-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+            <path d="M3 12h4l2-7 4 14 2-7h6"/>
+          </svg>Using the mod right now <span style="color:var(--faint);font-weight:400">(last 5 min)</span>
+        </h2>
         <span id="onlineRefreshed"></span>
       </div>
       <table id="onlineList"><tbody></tbody></table>
@@ -481,12 +520,19 @@ function setMessage(text, type = "") {
   const msg = $("msg");
   msg.textContent = text;
   msg.className = type;
+  if (type === "error") playErrorSound();
+  else if (type === "success") playSuccessSound();
 }
 
 function head(name) {
   const safe = safeName(name);
   return `<img class="head" alt="" loading="lazy" src="https://mc-heads.net/avatar/${safe}/24" onerror="this.onerror=null;this.src='https://crafatar.com/avatars/${safe}?size=24&overlay'">`;
 }
+
+/* ---------- sound ---------- */
+/* Every sound is a couple of synthesised oscillator tones - no audio
+   files, nothing to download, nothing kept running once it has played.
+   A single AudioContext is created lazily on first use. */
 
 let audioContext = null;
 
@@ -498,57 +544,70 @@ function getAudioContext() {
   return audioContext;
 }
 
-function playStartupSound() {
+function primeAudio() {
   const ctx = getAudioContext();
-  if (!ctx) return;
+  if (!ctx) return null;
   if (ctx.state === "suspended") ctx.resume().catch(() => {});
-  const now = ctx.currentTime;
+  return ctx;
+}
 
-  const bass = ctx.createOscillator();
-  const bassGain = ctx.createGain();
-  bass.type = "sine";
-  bass.frequency.setValueAtTime(105, now);
-  bass.frequency.exponentialRampToValueAtTime(42, now + .8);
-  bassGain.gain.setValueAtTime(.0001, now);
-  bassGain.gain.exponentialRampToValueAtTime(.25, now + .02);
-  bassGain.gain.exponentialRampToValueAtTime(.0001, now + .9);
-  bass.connect(bassGain);
-  bassGain.connect(ctx.destination);
-  bass.start(now);
-  bass.stop(now + 1);
+function envTone(ctx, { type = "sine", freq, freqTo, start = 0, dur = .12, peak = .04, attack = .008 }) {
+  const t0 = ctx.currentTime + start;
+  const osc = ctx.createOscillator();
+  const gain = ctx.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, t0);
+  if (freqTo) osc.frequency.exponentialRampToValueAtTime(freqTo, t0 + dur);
+  gain.gain.setValueAtTime(.0001, t0);
+  gain.gain.exponentialRampToValueAtTime(peak, t0 + attack);
+  gain.gain.exponentialRampToValueAtTime(.0001, t0 + dur);
+  osc.connect(gain);
+  gain.connect(ctx.destination);
+  osc.start(t0);
+  osc.stop(t0 + dur + .03);
+}
 
-  const shimmer = ctx.createOscillator();
-  const shimmerGain = ctx.createGain();
-  shimmer.type = "triangle";
-  shimmer.frequency.setValueAtTime(720, now + .15);
-  shimmer.frequency.exponentialRampToValueAtTime(1500, now + .9);
-  shimmerGain.gain.setValueAtTime(.0001, now);
-  shimmerGain.gain.exponentialRampToValueAtTime(.045, now + .25);
-  shimmerGain.gain.exponentialRampToValueAtTime(.0001, now + 1);
-  shimmer.connect(shimmerGain);
-  shimmerGain.connect(ctx.destination);
-  shimmer.start(now);
-  shimmer.stop(now + 1.05);
+function playStartupSound() {
+  const ctx = primeAudio();
+  if (!ctx) return;
+  envTone(ctx, { type: "sine", freq: 105, freqTo: 42, dur: .85, peak: .25, attack: .02 });
+  envTone(ctx, { type: "triangle", freq: 720, freqTo: 1500, start: .15, dur: .85, peak: .045, attack: .1 });
 }
 
 function playClickSound() {
-  const ctx = getAudioContext();
+  const ctx = primeAudio();
   if (!ctx) return;
-  if (ctx.state === "suspended") ctx.resume().catch(() => {});
-  const now = ctx.currentTime;
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-  osc.type = "sine";
-  osc.frequency.setValueAtTime(620, now);
-  osc.frequency.exponentialRampToValueAtTime(390, now + .07);
-  gain.gain.setValueAtTime(.0001, now);
-  gain.gain.exponentialRampToValueAtTime(.035, now + .008);
-  gain.gain.exponentialRampToValueAtTime(.0001, now + .08);
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-  osc.start(now);
-  osc.stop(now + .09);
+  envTone(ctx, { type: "sine", freq: 620, freqTo: 390, dur: .07, peak: .035, attack: .006 });
 }
+
+function playSuccessSound() {
+  const ctx = primeAudio();
+  if (!ctx) return;
+  envTone(ctx, { type: "sine", freq: 520, dur: .09, peak: .05, attack: .006 });
+  envTone(ctx, { type: "sine", freq: 784, start: .07, dur: .16, peak: .045, attack: .006 });
+}
+
+function playErrorSound() {
+  const ctx = primeAudio();
+  if (!ctx) return;
+  envTone(ctx, { type: "square", freq: 180, freqTo: 140, dur: .09, peak: .03, attack: .004 });
+  envTone(ctx, { type: "square", freq: 150, freqTo: 105, start: .11, dur: .12, peak: .03, attack: .004 });
+}
+
+function playKickSound() {
+  const ctx = primeAudio();
+  if (!ctx) return;
+  envTone(ctx, { type: "sawtooth", freq: 900, freqTo: 120, dur: .16, peak: .035, attack: .004 });
+}
+
+function playBanSound() {
+  const ctx = primeAudio();
+  if (!ctx) return;
+  envTone(ctx, { type: "sine", freq: 220, freqTo: 55, dur: .38, peak: .07, attack: .01 });
+  envTone(ctx, { type: "square", freq: 80, start: .02, dur: .16, peak: .03, attack: .004 });
+}
+
+/* ---------- intro ---------- */
 
 let introFinished = false;
 
@@ -562,19 +621,15 @@ function finishIntro() {
 }
 
 function activateAudio() {
-  const ctx = getAudioContext();
-  if (!ctx) return;
-  if (ctx.state === "suspended") ctx.resume().catch(() => {});
   playStartupSound();
 }
 
-// The intro used to be a mandatory 2.6s wait every single time this page
-// opened, with no way through it - fine once, actively annoying on a page
-// you open repeatedly to ban or kick someone. A click or key now skips
-// straight to the login form; doing nothing still auto-finishes at 2.6s.
+// A click or key press is the only thing that dismisses this screen - it
+// stays up until someone actually acts on it, no auto-timeout.
 $("intro").addEventListener("click", () => { activateAudio(); finishIntro(); });
 $("intro").addEventListener("keydown", () => { activateAudio(); finishIntro(); });
-setTimeout(finishIntro, 2600);
+
+/* ---------- api ---------- */
 
 async function apiRequest(url, options = {}) {
   const controller = new AbortController();
@@ -619,7 +674,7 @@ async function unlock() {
     setMessage("Unlocked.", "success");
     $("loginCard").style.display = "none";
     $("panels").style.display = "block";
-    $("lockBtn").style.display = "inline-block";
+    $("lockBtn").style.display = "inline-flex";
 
     await refreshBlacklist();
     await refreshOnline();
@@ -660,26 +715,13 @@ async function refreshBlacklist() {
 
     $("serverList").querySelector("tbody").innerHTML = details
       .filter(x => x.kind === "server")
-      .map(row => `
-        <tr>
-          <td>${escapeHtml(row.value)}</td>
-          <td class="reason">${escapeHtml(row.reason)}</td>
-          <td class="btns"><button class="ghost" data-action="remove" data-kind="server" data-value="${escapeHtml(row.value)}">Remove</button></td>
-        </tr>
-      `).join("") || `<tr><td class="empty">No servers blocked</td></tr>`;
+      .map(row => `<tr><td>${escapeHtml(row.value)}</td><td class="reason">${escapeHtml(row.reason)}</td><td class="btns"><button class="ghost" data-action="remove" data-kind="server" data-value="${escapeHtml(row.value)}">Remove</button></td></tr>`)
+      .join("") || `<tr><td class="empty" colspan="3">No servers blocked</td></tr>`;
 
     $("playerList").querySelector("tbody").innerHTML = details
       .filter(x => x.kind === "player")
-      .map(row => `
-        <tr>
-          <td class="who">${head(row.display)}${escapeHtml(row.display)}</td>
-          <td class="reason">${escapeHtml(row.reason)}</td>
-          <td class="btns">
-            <button class="warn" data-action="kick" data-name="${escapeHtml(row.display)}">Kick</button>
-            <button class="ghost" data-action="remove" data-kind="player" data-value="${escapeHtml(row.value)}">Unban</button>
-          </td>
-        </tr>
-      `).join("") || `<tr><td class="empty">Nobody banned</td></tr>`;
+      .map(row => `<tr><td><span class="who">${head(row.display)}<span class="name">${escapeHtml(row.display)}</span></span></td><td class="reason">${escapeHtml(row.reason)}</td><td class="btns"><button class="warn" data-action="kick" data-name="${escapeHtml(row.display)}">Kick</button><button class="ghost" data-action="remove" data-kind="player" data-value="${escapeHtml(row.value)}">Unban</button></td></tr>`)
+      .join("") || `<tr><td class="empty" colspan="3">Nobody banned</td></tr>`;
 
   } catch (error) {
     console.error("Blacklist error:", error);
@@ -698,21 +740,8 @@ async function refreshOnline() {
     $("onlineList").querySelector("tbody").innerHTML = players
       .map(player => {
         const secondsAgo = Math.max(0, Math.round((Date.now() - player.last) / 1000));
-        return `
-          <tr>
-            <td class="who">
-              <span class="dot"></span>
-              ${head(player.name)}
-              ${escapeHtml(player.name)}
-            </td>
-            <td class="time">${secondsAgo}s ago</td>
-            <td class="btns">
-              <button class="warn" data-action="kick" data-name="${escapeHtml(player.name)}">Kick</button>
-              <button class="danger" data-action="ban" data-name="${escapeHtml(player.name)}">Ban</button>
-            </td>
-          </tr>
-        `;
-      }).join("") || `<tr><td class="empty">Nobody currently active</td></tr>`;
+        return `<tr><td><span class="who"><span class="dot"></span>${head(player.name)}<span class="name">${escapeHtml(player.name)}</span></span></td><td class="time">${secondsAgo}s ago</td><td class="btns"><button class="warn" data-action="kick" data-name="${escapeHtml(player.name)}">Kick</button><button class="danger" data-action="ban" data-name="${escapeHtml(player.name)}">Ban</button></td></tr>`;
+      }).join("") || `<tr><td class="empty" colspan="3">Nobody currently active</td></tr>`;
 
     $("onlineRefreshed").textContent = "updated just now";
 
@@ -723,7 +752,6 @@ async function refreshOnline() {
 }
 
 async function write(kind, value, reason, method) {
-  playClickSound();
   const key = $("key").value.trim();
 
   if (!key) { setMessage("Enter the admin key first.", "error"); return false; }
@@ -756,6 +784,7 @@ async function write(kind, value, reason, method) {
 }
 
 async function addServer() {
+  playClickSound();
   const button = $("blockBtn");
   button.disabled = true;
   try {
@@ -772,6 +801,7 @@ async function addServer() {
 }
 
 async function addPlayer() {
+  playClickSound();
   const button = $("banBtn");
   button.disabled = true;
   try {
@@ -799,7 +829,6 @@ async function removeItem(kind, value) {
 }
 
 async function kick(name) {
-  playClickSound();
   const key = $("key").value.trim();
   if (!key) { setMessage("Enter the admin key first.", "error"); return; }
 
@@ -847,11 +876,17 @@ document.addEventListener("click", async event => {
       pendingConfirm.set(button, now);
       const original = button.textContent;
       button.textContent = "Confirm?";
+      playClickSound();
       setTimeout(() => { if (button.textContent === "Confirm?") button.textContent = original; }, 4000);
       return;
     }
     pendingConfirm.delete(button);
     button.textContent = "Ban";
+    playBanSound();
+  } else if (action === "kick") {
+    playKickSound();
+  } else {
+    playClickSound();
   }
 
   button.disabled = true;
