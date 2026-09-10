@@ -180,8 +180,16 @@ async function remove(kind, value) {
 async function unlock() {
   const key = $('key').value.trim();
   if (!key) { $('msg').textContent = 'Enter the key.'; return; }
-  const r = await fetch(`${API}/verify`, { headers: { 'x-admin-key': key } });
-  if (!r.ok) { $('msg').textContent = 'Wrong key.'; return; }
+  $('msg').textContent = 'Checking...';
+  try {
+    const r = await fetch(`${API}/verify`, { headers: { 'x-admin-key': key } });
+    if (!r.ok) { $('msg').textContent = 'Wrong key.'; return; }
+  } catch (e) {
+    // network failure, CORS block, or the worker not deployed yet all land
+    // here - say so instead of leaving the button looking like it did nothing
+    $('msg').textContent = 'Could not reach the server. Is the worker deployed?';
+    return;
+  }
   $('msg').textContent = '';
   $('key').closest('.card').style.display = 'none';
   $('panels').style.display = '';

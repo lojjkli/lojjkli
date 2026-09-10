@@ -150,7 +150,13 @@ const kicks = (env) => env.KICKS.get(env.KICKS.idFromName('global'));
 
 const CORS = {
   'access-control-allow-origin': '*',
-  'access-control-allow-methods': 'GET,OPTIONS',
+  // GET/POST/DELETE for the admin actions, plus x-admin-key - without that
+  // header explicitly allowed, the browser's preflight check silently blocks
+  // every write (and /verify) before it is ever sent. This was the actual
+  // cause of "pressing the button does nothing."
+  'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS',
+  'access-control-allow-headers': 'x-admin-key, content-type',
+  'access-control-max-age': '86400',
   'content-type': 'application/json; charset=utf-8',
 };
 
