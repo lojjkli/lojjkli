@@ -24,31 +24,129 @@ export class Registry extends DurableObject {
     super(ctx, env);
     this.ctx.storage.sql.exec(
       `CREATE TABLE IF NOT EXISTS seen (
-         name TEXT PRIMARY KEY, first INTEGER NOT NULL, last INTEGER NOT NULL, hits INTEGER NOT NULL
+         name TEXT PRIMARY KEY, display TEXT NOT NULL,
+         first INTEGER NOT NULL, last INTEGER NOT NULL, hits INTEGER NOT NULL
        )`);
   }
   async fetch(request) {
     const url = new URL(request.url);
-    const name = (url.searchParams.get('name') || '').toLowerCase();
+
+    // list=1 returns everyone seen recently, for the admin "online now" view -
+    // separate from the per-name lookup below, which needs a valid username.
+    if (url.searchParams.get('list') === '1') {
+      const since = parseInt(url.searchParams.get('since') || '0', 10);
+      const rows = [...this.ctx.storage.sql.exec(
+        `SELECT display AS name, last FROM seen WHERE last > ? ORDER BY last DESC LIMIT 200`, since)];
+      return Response.json({ players: rows });
+    }
+
+    // display keeps whatever case the player's own client is actually using;
+    // name (lowercase) stays the lookup key so "Steve" and "steve" are one row.
+    const display = (url.searchParams.get('name') || '').trim();
+    const name = display.toLowerCase();
     if (!/^[a-z0-9_]{1,16}$/.test(name)) return new Response('bad name', { status: 400 });
     const now = Date.now();
 
     if (request.method === 'POST') {
       this.ctx.storage.sql.exec(
-        `INSERT INTO seen (name, first, last, hits) VALUES (?, ?, ?, 1)
-         ON CONFLICT(name) DO UPDATE SET last = ?, hits = hits + 1`, name, now, now, now);
+        `INSERT INTO seen (name, display, first, last, hits) VALUES (?, ?, ?, ?, 1)
+         ON CONFLICT(name) DO UPDATE SET display = ?, last = ?, hits = hits + 1`,
+        name, display, now, now, display, now);
       return new Response('ok');
     }
     const rows = [...this.ctx.storage.sql.exec(
-      `SELECT first, last, hits FROM seen WHERE name = ?`, name)];
+      `SELECT display, first, last, hits FROM seen WHERE name = ?`, name)];
     return Response.json(rows.length
-      ? { seen: true, firstSeen: rows[0].first, lastSeen: rows[0].last, sessions: rows[0].hits }
+      ? { seen: true, name: rows[0].display, firstSeen: rows[0].first,
+          lastSeen: rows[0].last, sessions: rows[0].hits }
       : { seen: false });
   }
 }
 
 const registry = (env, name) =>
   env.REGISTRY.get(env.REGISTRY.idFromName('global'));
+
+/**
+ * Server blacklist. Read is public - every mod install fetches this on join.
+ * Write requires the ADMIN_KEY secret, so only whoever set that secret can
+ * add or remove a server. Set it once with: wrangler secret put ADMIN_KEY
+ */
+export class Blacklist extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    // kind is 'server' or 'player'; id = kind + ':' + value, so both share one table.
+    this.ctx.storage.sql.exec(
+      `CREATE TABLE IF NOT EXISTS blocked (
+         id TEXT PRIMARY KEY, kind TEXT NOT NULL, value TEXT NOT NULL, display TEXT NOT NULL,
+         reason TEXT, added INTEGER NOT NULL
+       )`);
+  }
+  async fetch(request) {
+    const url = new URL(request.url);
+    if (request.method === 'GET') {
+      const rows = [...this.ctx.storage.sql.exec(`SELECT kind, value, display, reason FROM blocked`)];
+      return Response.json({
+        servers: rows.filter(r => r.kind === 'server').map(r => r.value),
+        players: rows.filter(r => r.kind === 'player').map(r => r.display),
+        detail: rows.map(r => ({ kind: r.kind, value: r.value, display: r.display, reason: r.reason })),
+      });
+    }
+    const kind = (url.searchParams.get('kind') || 'server').trim().toLowerCase();
+    // display keeps whatever case was typed; value (lowercase) is the actual key,
+    // since matching a player or server must never depend on capitalization.
+    const displayRaw = (url.searchParams.get('value') || url.searchParams.get('server') || '').trim();
+    const value = displayRaw.toLowerCase();
+    if (!value || (kind !== 'server' && kind !== 'player')) {
+      return new Response('missing or bad value', { status: 400 });
+    }
+    const id = kind + ':' + value;
+    if (request.method === 'POST') {
+      const reason = (url.searchParams.get('reason') || '').slice(0, 200);
+      this.ctx.storage.sql.exec(
+        `INSERT INTO blocked (id, kind, value, display, reason, added) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET display = ?, reason = ?`,
+        id, kind, value, displayRaw, reason, Date.now(), displayRaw, reason);
+      return new Response('ok');
+    }
+    if (request.method === 'DELETE') {
+      this.ctx.storage.sql.exec(`DELETE FROM blocked WHERE id = ?`, id);
+      return new Response('ok');
+    }
+    return new Response('method not allowed', { status: 405 });
+  }
+}
+
+const blacklist = (env) => env.BLACKLIST.get(env.BLACKLIST.idFromName('global'));
+
+/**
+ * One-shot "get off this server now" signal, separate from the ban list because
+ * it is meant to fire once and be done, not accumulate like a blacklist does.
+ * The mod polls its own name every ~20s while connected; a timestamp newer than
+ * the last one it acted on means disconnect immediately.
+ */
+export class Kicks extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.ctx.storage.sql.exec(
+      `CREATE TABLE IF NOT EXISTS kicks (name TEXT PRIMARY KEY, at INTEGER NOT NULL)`);
+  }
+  async fetch(request) {
+    const url = new URL(request.url);
+    const name = (url.searchParams.get('name') || '').trim().toLowerCase();
+    if (!/^[a-z0-9_]{1,16}$/.test(name)) return new Response('bad name', { status: 400 });
+
+    if (request.method === 'POST') {
+      this.ctx.storage.sql.exec(
+        `INSERT INTO kicks (name, at) VALUES (?, ?)
+         ON CONFLICT(name) DO UPDATE SET at = ?`, name, Date.now(), Date.now());
+      return new Response('ok');
+    }
+    const rows = [...this.ctx.storage.sql.exec(`SELECT at FROM kicks WHERE name = ?`, name)];
+    return Response.json({ at: rows.length ? rows[0].at : 0 });
+  }
+}
+
+const kicks = (env) => env.KICKS.get(env.KICKS.idFromName('global'));
 
 const CORS = {
   'access-control-allow-origin': '*',
@@ -207,6 +305,53 @@ export default {
       await registry(env).fetch(new Request(
         `https://r/?name=${encodeURIComponent(name)}`, { method: 'POST' }));
       return json({ ok: true });
+    }
+
+    if (url.pathname === '/blacklist') {
+      if (request.method === 'GET') {
+        const r = await blacklist(env).fetch('https://b/');
+        const body = await r.text();
+        return new Response(body, { headers: CORS });
+      }
+      // write: needs the admin key. Case does not matter on either side.
+      const key = (request.headers.get('x-admin-key') || url.searchParams.get('key') || '').toLowerCase();
+      if (!env.ADMIN_KEY || key !== env.ADMIN_KEY.toLowerCase()) {
+        return json({ error: 'unauthorized' }, 401);
+      }
+      const kind   = url.searchParams.get('kind') || 'server';
+      const value  = url.searchParams.get('value') || url.searchParams.get('server') || '';
+      const reason = url.searchParams.get('reason') || '';
+      const r = await blacklist(env).fetch(
+        `https://b/?kind=${encodeURIComponent(kind)}&value=${encodeURIComponent(value)}`
+        + `&reason=${encodeURIComponent(reason)}`,
+        { method: request.method });
+      return json({ ok: r.ok });
+    }
+
+    if (url.pathname === '/kick') {
+      const name = (url.searchParams.get('name') || '').trim();
+      if (!/^[A-Za-z0-9_]{1,16}$/.test(name)) return json({ error: 'bad name' }, 400);
+
+      if (request.method === 'GET') {
+        const r = await kicks(env).fetch(`https://k/?name=${encodeURIComponent(name)}`);
+        const body = await r.text();
+        return new Response(body, { headers: CORS });
+      }
+      const key = (request.headers.get('x-admin-key') || url.searchParams.get('key') || '').toLowerCase();
+      if (!env.ADMIN_KEY || key !== env.ADMIN_KEY.toLowerCase()) {
+        return json({ error: 'unauthorized' }, 401);
+      }
+      const r = await kicks(env).fetch(`https://k/?name=${encodeURIComponent(name)}`, { method: 'POST' });
+      return json({ ok: r.ok });
+    }
+
+    // Who has used the mod recently - "online now" is approximate: whichever
+    // players' clients have checked in within the window.
+    if (url.pathname === '/online') {
+      const minutes = Math.max(1, Math.min(60, parseInt(url.searchParams.get('minutes') || '5', 10)));
+      const r = await registry(env).fetch(`https://r/?list=1&since=${Date.now() - minutes * 60000}`);
+      const body = await r.text();
+      return new Response(body, { headers: CORS });
     }
 
     if (!url.pathname.startsWith('/player/')) {
