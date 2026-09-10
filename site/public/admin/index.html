@@ -1029,7 +1029,6 @@ function safeName(value) {
 
 function setMessage(text, type = "") {
   const msg = $("msg");
-
   msg.textContent = text;
   msg.className = type;
 }
@@ -1059,32 +1058,21 @@ function head(name) {
 let audioContext = null;
 
 function getAudioContext() {
-
-  if (audioContext) {
-    return audioContext;
-  }
+  if (audioContext) return audioContext;
 
   const AudioCtx =
     window.AudioContext ||
     window.webkitAudioContext;
 
-  if (!AudioCtx) {
-    return null;
-  }
+  if (!AudioCtx) return null;
 
   audioContext = new AudioCtx();
-
   return audioContext;
 }
 
-
 function playStartupSound() {
-
   const ctx = getAudioContext();
-
-  if (!ctx) {
-    return;
-  }
+  if (!ctx) return;
 
   if (ctx.state === "suspended") {
     ctx.resume().catch(() => {});
@@ -1092,38 +1080,17 @@ function playStartupSound() {
 
   const now = ctx.currentTime;
 
-
-  /* Deep cinematic hit */
-
   const bass = ctx.createOscillator();
   const bassGain = ctx.createGain();
 
   bass.type = "sine";
 
-  bass.frequency.setValueAtTime(
-    105,
-    now
-  );
+  bass.frequency.setValueAtTime(105, now);
+  bass.frequency.exponentialRampToValueAtTime(42, now + .8);
 
-  bass.frequency.exponentialRampToValueAtTime(
-    42,
-    now + .8
-  );
-
-  bassGain.gain.setValueAtTime(
-    .0001,
-    now
-  );
-
-  bassGain.gain.exponentialRampToValueAtTime(
-    .25,
-    now + .02
-  );
-
-  bassGain.gain.exponentialRampToValueAtTime(
-    .0001,
-    now + .9
-  );
+  bassGain.gain.setValueAtTime(.0001, now);
+  bassGain.gain.exponentialRampToValueAtTime(.25, now + .02);
+  bassGain.gain.exponentialRampToValueAtTime(.0001, now + .9);
 
   bass.connect(bassGain);
   bassGain.connect(ctx.destination);
@@ -1131,38 +1098,17 @@ function playStartupSound() {
   bass.start(now);
   bass.stop(now + 1);
 
-
-  /* Bright studio shimmer */
-
   const shimmer = ctx.createOscillator();
   const shimmerGain = ctx.createGain();
 
   shimmer.type = "triangle";
 
-  shimmer.frequency.setValueAtTime(
-    720,
-    now + .15
-  );
+  shimmer.frequency.setValueAtTime(720, now + .15);
+  shimmer.frequency.exponentialRampToValueAtTime(1500, now + .9);
 
-  shimmer.frequency.exponentialRampToValueAtTime(
-    1500,
-    now + .9
-  );
-
-  shimmerGain.gain.setValueAtTime(
-    .0001,
-    now
-  );
-
-  shimmerGain.gain.exponentialRampToValueAtTime(
-    .045,
-    now + .25
-  );
-
-  shimmerGain.gain.exponentialRampToValueAtTime(
-    .0001,
-    now + 1
-  );
+  shimmerGain.gain.setValueAtTime(.0001, now);
+  shimmerGain.gain.exponentialRampToValueAtTime(.045, now + .25);
+  shimmerGain.gain.exponentialRampToValueAtTime(.0001, now + 1);
 
   shimmer.connect(shimmerGain);
   shimmerGain.connect(ctx.destination);
@@ -1171,14 +1117,9 @@ function playStartupSound() {
   shimmer.stop(now + 1.05);
 }
 
-
 function playClickSound() {
-
   const ctx = getAudioContext();
-
-  if (!ctx) {
-    return;
-  }
+  if (!ctx) return;
 
   if (ctx.state === "suspended") {
     ctx.resume().catch(() => {});
@@ -1191,30 +1132,12 @@ function playClickSound() {
 
   osc.type = "sine";
 
-  osc.frequency.setValueAtTime(
-    620,
-    now
-  );
+  osc.frequency.setValueAtTime(620, now);
+  osc.frequency.exponentialRampToValueAtTime(390, now + .07);
 
-  osc.frequency.exponentialRampToValueAtTime(
-    390,
-    now + .07
-  );
-
-  gain.gain.setValueAtTime(
-    .0001,
-    now
-  );
-
-  gain.gain.exponentialRampToValueAtTime(
-    .035,
-    now + .008
-  );
-
-  gain.gain.exponentialRampToValueAtTime(
-    .0001,
-    now + .08
-  );
+  gain.gain.setValueAtTime(.0001, now);
+  gain.gain.exponentialRampToValueAtTime(.035, now + .008);
+  gain.gain.exponentialRampToValueAtTime(.0001, now + .08);
 
   osc.connect(gain);
   gain.connect(ctx.destination);
@@ -1231,18 +1154,12 @@ function playClickSound() {
 let introFinished = false;
 
 function finishIntro() {
-
-  if (introFinished) {
-    return;
-  }
+  if (introFinished) return;
 
   introFinished = true;
 
   const intro = $("intro");
-
-  if (!intro) {
-    return;
-  }
+  if (!intro) return;
 
   intro.classList.add("hide");
 
@@ -1251,19 +1168,10 @@ function finishIntro() {
   }, 1100);
 }
 
-
-/*
- * Browsers normally block completely automatic audio.
- * A first interaction unlocks the audio context.
- */
-
 function activateAudio() {
-
   const ctx = getAudioContext();
 
-  if (!ctx) {
-    return;
-  }
+  if (!ctx) return;
 
   if (ctx.state === "suspended") {
     ctx.resume().catch(() => {});
@@ -1271,7 +1179,6 @@ function activateAudio() {
 
   playStartupSound();
 }
-
 
 window.addEventListener(
   "pointerdown",
@@ -1285,11 +1192,6 @@ window.addEventListener(
   { once: true }
 );
 
-
-/*
- * Intro automatically disappears.
- */
-
 setTimeout(() => {
   finishIntro();
 }, 2600);
@@ -1300,27 +1202,16 @@ setTimeout(() => {
    =========================================================== */
 
 async function apiRequest(url, options = {}) {
-
   try {
-
-    const response = await fetch(url, {
+    return await fetch(url, {
       ...options,
-
       headers: {
         "Accept": "application/json",
         ...(options.headers || {})
       }
     });
-
-    return response;
-
   } catch (error) {
-
-    console.error(
-      "API request failed:",
-      error
-    );
-
+    console.error("API request failed:", error);
     throw error;
   }
 }
@@ -1331,63 +1222,35 @@ async function apiRequest(url, options = {}) {
    =========================================================== */
 
 async function unlock() {
-
   playClickSound();
 
-  const key =
-    $("key").value.trim();
-
-  const button =
-    $("unlockBtn");
-
+  const key = $("key").value.trim();
+  const button = $("unlockBtn");
 
   if (!key) {
-
-    setMessage(
-      "Enter the admin key.",
-      "error"
-    );
-
+    setMessage("Enter the admin key.", "error");
     $("key").focus();
-
     return;
   }
 
-
   button.disabled = true;
-
   setMessage("Checking...");
 
-
   try {
-
-    const response =
-      await apiRequest(
-        `${API}/verify`,
-        {
-          method: "GET",
-
-          headers: {
-            "x-admin-key": key
-          }
+    const response = await apiRequest(
+      `${API}/verify`,
+      {
+        method: "GET",
+        headers: {
+          "x-admin-key": key
         }
-      );
-
+      }
+    );
 
     if (!response.ok) {
-
-      if (
-        response.status === 401 ||
-        response.status === 403
-      ) {
-
-        setMessage(
-          "Wrong admin key.",
-          "error"
-        );
-
+      if (response.status === 401 || response.status === 403) {
+        setMessage("Wrong admin key.", "error");
       } else {
-
         setMessage(
           `Server returned HTTP ${response.status}.`,
           "error"
@@ -1395,36 +1258,25 @@ async function unlock() {
       }
 
       button.disabled = false;
-
       return;
     }
 
-
-    setMessage(
-      "Unlocked.",
-      "success"
-    );
-
+    setMessage("Unlocked.", "success");
 
     $("loginCard").style.display = "none";
     $("panels").style.display = "block";
 
-
     await refreshBlacklist();
     await refreshOnline();
 
-
     if (!window.onlineTimer) {
-
-      window.onlineTimer =
-        setInterval(
-          refreshOnline,
-          15000
-        );
+      window.onlineTimer = setInterval(
+        refreshOnline,
+        15000
+      );
     }
 
   } catch (error) {
-
     console.error(error);
 
     setMessage(
@@ -1442,14 +1294,18 @@ async function unlock() {
    =========================================================== */
 
 async function refreshBlacklist() {
-
   try {
+    const key = $("key").value.trim();
 
-    const response =
-      await apiRequest(
-        `${API}/blacklist`
-      );
-
+    const response = await apiRequest(
+      `${API}/blacklist`,
+      {
+        method: "GET",
+        headers: {
+          "x-admin-key": key
+        }
+      }
+    );
 
     if (!response.ok) {
       throw new Error(
@@ -1457,10 +1313,7 @@ async function refreshBlacklist() {
       );
     }
 
-
-    const data =
-      await response.json();
-
+    const data = await response.json();
 
     const details =
       Array.isArray(data.detail)
@@ -1468,133 +1321,110 @@ async function refreshBlacklist() {
         : [];
 
 
-    /* SERVERS */
+    /* -------------------------------------------------------
+       SERVERS
+       ------------------------------------------------------- */
 
     $("serverList")
       .querySelector("tbody")
-      .innerHTML =
+      .innerHTML = details
 
-      details
+      .filter(x => x.kind === "server")
 
-        .filter(
-          x => x.kind === "server"
-        )
+      .map(row => `
+        <tr>
+          <td>
+            ${escapeHtml(row.value)}
+          </td>
 
-        .map(row => `
+          <td class="reason">
+            ${escapeHtml(row.reason)}
+          </td>
 
-          <tr>
+          <td class="btns">
+            <button
+              class="ghost"
+              data-action="remove"
+              data-kind="server"
+              data-value="${escapeHtml(row.value)}"
+            >
+              Remove
+            </button>
+          </td>
+        </tr>
+      `)
 
-            <td>
-              ${escapeHtml(row.value)}
-            </td>
+      .join("")
 
-            <td class="reason">
-              ${escapeHtml(row.reason)}
-            </td>
-
-            <td class="btns">
-
-              <button
-                class="ghost"
-                onclick="removeItem(
-                  'server',
-                  ${JSON.stringify(row.value)}
-                )"
-              >
-                Remove
-              </button>
-
-            </td>
-
-          </tr>
-
-        `)
-
-        .join("")
-
-        ||
-
-        `
-          <tr>
-            <td class="empty">
-              No servers blocked
-            </td>
-          </tr>
-        `;
+      || `
+        <tr>
+          <td class="empty">
+            No servers blocked
+          </td>
+        </tr>
+      `;
 
 
-    /* PLAYERS */
+    /* -------------------------------------------------------
+       PLAYERS
+       ------------------------------------------------------- */
 
     $("playerList")
       .querySelector("tbody")
-      .innerHTML =
+      .innerHTML = details
 
-      details
+      .filter(x => x.kind === "player")
 
-        .filter(
-          x => x.kind === "player"
-        )
+      .map(row => `
+        <tr>
+          <td class="who">
+            ${head(row.display)}
+            ${escapeHtml(row.display)}
+          </td>
 
-        .map(row => `
+          <td class="reason">
+            ${escapeHtml(row.reason)}
+          </td>
 
-          <tr>
+          <td class="btns">
 
-            <td class="who">
+            <button
+              class="warn"
+              data-action="kick"
+              data-name="${escapeHtml(row.display)}"
+            >
+              Kick
+            </button>
 
-              ${head(row.display)}
+            <button
+              class="ghost"
+              data-action="remove"
+              data-kind="player"
+              data-value="${escapeHtml(row.value)}"
+            >
+              Unban
+            </button>
 
-              ${escapeHtml(row.display)}
+          </td>
+        </tr>
+      `)
 
-            </td>
+      .join("")
 
-            <td class="reason">
-              ${escapeHtml(row.reason)}
-            </td>
-
-            <td class="btns">
-
-              <button
-                class="warn"
-                onclick="kick(
-                  ${JSON.stringify(row.display)}
-                )"
-              >
-                Kick
-              </button>
-
-              <button
-                class="ghost"
-                onclick="removeItem(
-                  'player',
-                  ${JSON.stringify(row.value)}
-                )"
-              >
-                Unban
-              </button>
-
-            </td>
-
-          </tr>
-
-        `)
-
-        .join("")
-
-        ||
-
-        `
-          <tr>
-            <td class="empty">
-              Nobody banned
-            </td>
-          </tr>
-        `;
+      || `
+        <tr>
+          <td class="empty">
+            Nobody banned
+          </td>
+        </tr>
+      `;
 
   } catch (error) {
+    console.error("Blacklist error:", error);
 
-    console.error(
-      "Blacklist error:",
-      error
+    setMessage(
+      "Could not load blacklist.",
+      "error"
     );
   }
 }
@@ -1605,14 +1435,10 @@ async function refreshBlacklist() {
    =========================================================== */
 
 async function refreshOnline() {
-
   try {
-
-    const response =
-      await apiRequest(
-        `${API}/online?minutes=5`
-      );
-
+    const response = await apiRequest(
+      `${API}/online?minutes=5`
+    );
 
     if (!response.ok) {
       throw new Error(
@@ -1620,103 +1446,80 @@ async function refreshOnline() {
       );
     }
 
-
-    const data =
-      await response.json();
-
+    const data = await response.json();
 
     const players =
       Array.isArray(data.players)
         ? data.players
         : [];
 
-
     $("onlineList")
       .querySelector("tbody")
-      .innerHTML =
+      .innerHTML = players
 
-      players
+      .map(player => {
 
-        .map(player => {
+        const secondsAgo =
+          Math.max(
+            0,
+            Math.round(
+              (Date.now() - player.last) / 1000
+            )
+          );
 
-          const secondsAgo =
-            Math.max(
-              0,
-              Math.round(
-                (Date.now() - player.last) / 1000
-              )
-            );
-
-
-          return `
-
-            <tr>
-
-              <td class="who">
-
-                <span class="dot"></span>
-
-                ${head(player.name)}
-
-                ${escapeHtml(player.name)}
-
-              </td>
-
-
-              <td class="time">
-
-                ${secondsAgo}s ago
-
-              </td>
-
-
-              <td class="btns">
-
-                <button
-                  class="warn"
-                  onclick="kick(
-                    ${JSON.stringify(player.name)}
-                  )"
-                >
-                  Kick
-                </button>
-
-
-                <button
-                  class="danger"
-                  onclick="banFromOnline(
-                    ${JSON.stringify(player.name)}
-                  )"
-                >
-                  Ban
-                </button>
-
-              </td>
-
-            </tr>
-
-          `;
-
-        })
-
-        .join("")
-
-        ||
-
-        `
+        return `
           <tr>
-            <td class="empty">
-              Nobody currently active
+
+            <td class="who">
+
+              <span class="dot"></span>
+
+              ${head(player.name)}
+
+              ${escapeHtml(player.name)}
+
             </td>
+
+            <td class="time">
+              ${secondsAgo}s ago
+            </td>
+
+            <td class="btns">
+
+              <button
+                class="warn"
+                data-action="kick"
+                data-name="${escapeHtml(player.name)}"
+              >
+                Kick
+              </button>
+
+              <button
+                class="danger"
+                data-action="ban"
+                data-name="${escapeHtml(player.name)}"
+              >
+                Ban
+              </button>
+
+            </td>
+
           </tr>
         `;
+      })
+
+      .join("")
+
+      || `
+        <tr>
+          <td class="empty">
+            Nobody currently active
+          </td>
+        </tr>
+      `;
 
   } catch (error) {
-
-    console.error(
-      "Online error:",
-      error
-    );
+    console.error("Online error:", error);
   }
 }
 
@@ -1731,15 +1534,11 @@ async function write(
   reason,
   method
 ) {
-
   playClickSound();
 
-  const key =
-    $("key").value.trim();
-
+  const key = $("key").value.trim();
 
   if (!key) {
-
     setMessage(
       "Enter the admin key first.",
       "error"
@@ -1748,9 +1547,7 @@ async function write(
     return false;
   }
 
-
   if (!value) {
-
     setMessage(
       "Nothing entered.",
       "error"
@@ -1759,47 +1556,38 @@ async function write(
     return false;
   }
 
+  const params = new URLSearchParams();
 
-  const params =
-    new URLSearchParams();
-
-
-  params.set(
-    "kind",
-    kind
-  );
-
-  params.set(
-    "value",
-    value
-  );
-
+  params.set("kind", kind);
+  params.set("value", value);
 
   if (reason) {
-
-    params.set(
-      "reason",
-      reason
-    );
+    params.set("reason", reason);
   }
 
-
   try {
-
-    const response =
-      await apiRequest(
-        `${API}/blacklist?${params.toString()}`,
-        {
-          method,
-
-          headers: {
-            "x-admin-key": key
-          }
+    const response = await apiRequest(
+      `${API}/blacklist?${params.toString()}`,
+      {
+        method,
+        headers: {
+          "x-admin-key": key
         }
-      );
-
+      }
+    );
 
     if (!response.ok) {
+      let errorText = "";
+
+      try {
+        errorText = await response.text();
+      } catch (_) {}
+
+      console.error(
+        "Write failed:",
+        response.status,
+        errorText
+      );
 
       setMessage(
         `Failed: HTTP ${response.status}`,
@@ -1809,16 +1597,16 @@ async function write(
       return false;
     }
 
-
     setMessage(
-      "Saved.",
+      method === "DELETE"
+        ? "Removed."
+        : "Saved.",
       "success"
     );
 
     return true;
 
   } catch (error) {
-
     console.error(error);
 
     setMessage(
@@ -1836,7 +1624,6 @@ async function write(
    =========================================================== */
 
 async function addServer() {
-
   const value =
     $("server").value
       .trim()
@@ -1847,18 +1634,14 @@ async function addServer() {
       .value
       .trim();
 
-
-  const success =
-    await write(
-      "server",
-      value,
-      reason,
-      "POST"
-    );
-
+  const success = await write(
+    "server",
+    value,
+    reason,
+    "POST"
+  );
 
   if (success) {
-
     $("server").value = "";
     $("serverReason").value = "";
 
@@ -1872,7 +1655,6 @@ async function addServer() {
    =========================================================== */
 
 async function addPlayer() {
-
   const value =
     $("player").value.trim();
 
@@ -1881,18 +1663,14 @@ async function addPlayer() {
       .value
       .trim();
 
-
-  const success =
-    await write(
-      "player",
-      value,
-      reason,
-      "POST"
-    );
-
+  const success = await write(
+    "player",
+    value,
+    reason,
+    "POST"
+  );
 
   if (success) {
-
     $("player").value = "";
     $("playerReason").value = "";
 
@@ -1906,18 +1684,14 @@ async function addPlayer() {
    =========================================================== */
 
 async function banFromOnline(name) {
-
-  const success =
-    await write(
-      "player",
-      name,
-      "banned from online list",
-      "POST"
-    );
-
+  const success = await write(
+    "player",
+    name,
+    "banned from online list",
+    "POST"
+  );
 
   if (success) {
-
     await refreshBlacklist();
     await refreshOnline();
   }
@@ -1925,25 +1699,18 @@ async function banFromOnline(name) {
 
 
 /* ===========================================================
-   REMOVE
+   REMOVE / UNBAN
    =========================================================== */
 
-async function removeItem(
-  kind,
-  value
-) {
-
-  const success =
-    await write(
-      kind,
-      value,
-      "",
-      "DELETE"
-    );
-
+async function removeItem(kind, value) {
+  const success = await write(
+    kind,
+    value,
+    "",
+    "DELETE"
+  );
 
   if (success) {
-
     await refreshBlacklist();
   }
 }
@@ -1954,15 +1721,11 @@ async function removeItem(
    =========================================================== */
 
 async function kick(name) {
-
   playClickSound();
 
-  const key =
-    $("key").value.trim();
-
+  const key = $("key").value.trim();
 
   if (!key) {
-
     setMessage(
       "Enter the admin key first.",
       "error"
@@ -1971,30 +1734,37 @@ async function kick(name) {
     return;
   }
 
-
   try {
-
-    const response =
-      await apiRequest(
-        `${API}/kick?name=${encodeURIComponent(name)}`,
-        {
-          method: "POST",
-
-          headers: {
-            "x-admin-key": key
-          }
+    const response = await apiRequest(
+      `${API}/kick?name=${encodeURIComponent(name)}`,
+      {
+        method: "POST",
+        headers: {
+          "x-admin-key": key
         }
-      );
-
+      }
+    );
 
     if (response.ok) {
-
       setMessage(
         `Kick sent for ${name}.`,
         "success"
       );
 
+      await refreshOnline();
+
     } else {
+      let errorText = "";
+
+      try {
+        errorText = await response.text();
+      } catch (_) {}
+
+      console.error(
+        "Kick failed:",
+        response.status,
+        errorText
+      );
 
       setMessage(
         `Kick failed: HTTP ${response.status}`,
@@ -2003,7 +1773,6 @@ async function kick(name) {
     }
 
   } catch (error) {
-
     console.error(error);
 
     setMessage(
@@ -2021,11 +1790,8 @@ async function kick(name) {
 $("key").addEventListener(
   "keydown",
   event => {
-
     if (event.key === "Enter") {
-
       event.preventDefault();
-
       unlock();
     }
   }
@@ -2033,7 +1799,78 @@ $("key").addEventListener(
 
 
 /* ===========================================================
-   BUTTON SOUNDS
+   BUTTON HANDLER
+   =========================================================== */
+
+/*
+ * IMPORTANT:
+ * No inline onclick handlers are used for dynamically generated
+ * buttons anymore. This avoids broken HTML attributes caused by
+ * JSON.stringify() quotes.
+ */
+
+document.addEventListener(
+  "click",
+  async event => {
+
+    const button =
+      event.target.closest("button");
+
+    if (!button) return;
+
+    const action =
+      button.dataset.action;
+
+    if (!action) return;
+
+    button.disabled = true;
+
+    try {
+
+      if (action === "remove") {
+
+        const kind =
+          button.dataset.kind;
+
+        const value =
+          button.dataset.value;
+
+        await removeItem(
+          kind,
+          value
+        );
+
+      }
+
+      else if (action === "kick") {
+
+        const name =
+          button.dataset.name;
+
+        await kick(name);
+
+      }
+
+      else if (action === "ban") {
+
+        const name =
+          button.dataset.name;
+
+        await banFromOnline(name);
+
+      }
+
+    } finally {
+
+      button.disabled = false;
+
+    }
+  }
+);
+
+
+/* ===========================================================
+   SOUND
    =========================================================== */
 
 document.addEventListener(
@@ -2043,13 +1880,11 @@ document.addEventListener(
     const button =
       event.target.closest("button");
 
-    if (!button) {
-      return;
-    }
+    if (!button) return;
 
     /*
-     * Avoid playing the click twice for actions
-     * that already call playClickSound().
+     * Action functions already play their own sound.
+     * This listener intentionally does nothing.
      */
   }
 );
