@@ -1,2059 +1,443 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex">
-
-<title>lojjkli — Welcome back, Kli</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
-
-<style>
-  :root {
-    --void: #020202;
-    --black: #050505;
-    --card: #0d0d0d;
-    --card-hover: #111111;
-    --line: #202020;
-    --line-bright: #343434;
-
-    --text: #f4f4f4;
-    --dim: #9a9a9a;
-    --faint: #5e5e5e;
-
-    --green: #22c55e;
-    --red: #ef4444;
-    --amber: #f59e0b;
-
-    --display: "Space Grotesk", sans-serif;
-    --body: "Inter", sans-serif;
-    --mono: "JetBrains Mono", monospace;
-  }
-
-  * {
-    box-sizing: border-box;
-  }
-
-  html {
-    background: var(--void);
-    scroll-behavior: smooth;
-  }
-
-  body {
-    margin: 0;
-    min-height: 100vh;
-    background:
-      radial-gradient(
-        circle at 50% -10%,
-        rgba(255,255,255,.055),
-        transparent 34%
-      ),
-      var(--void);
-    color: var(--text);
-    font: 15px/1.6 var(--body);
-  }
-
-  body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: .25;
-
-    background:
-      linear-gradient(
-        rgba(255,255,255,.018) 1px,
-        transparent 1px
-      ),
-      linear-gradient(
-        90deg,
-        rgba(255,255,255,.018) 1px,
-        transparent 1px
-      );
-
-    background-size: 48px 48px;
-
-    mask-image: linear-gradient(
-      to bottom,
-      black,
-      transparent 80%
-    );
-  }
-
-  /* =========================================================
-     INTRO
-     ========================================================= */
-
-  #intro {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    background:
-      radial-gradient(
-        circle at center,
-        #111 0%,
-        #050505 42%,
-        #020202 75%
-      );
-
-    opacity: 1;
-    transition:
-      opacity 1s cubic-bezier(.77,0,.18,1),
-      visibility 1s;
-  }
-
-  #intro::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-
-    background:
-      repeating-linear-gradient(
-        0deg,
-        rgba(255,255,255,.025) 0px,
-        rgba(255,255,255,.025) 1px,
-        transparent 1px,
-        transparent 4px
-      );
-
-    opacity: .3;
-    pointer-events: none;
-  }
-
-  #intro::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-
-    background:
-      radial-gradient(
-        ellipse at center,
-        transparent 35%,
-        rgba(0,0,0,.75) 100%
-      );
-
-    pointer-events: none;
-  }
-
-  .intro-content {
-    position: relative;
-    z-index: 2;
-
-    width: min(90vw, 700px);
-    text-align: center;
-
-    animation:
-      introEnter 1.6s cubic-bezier(.2,.8,.2,1) both;
-  }
-
-  .intro-overline {
-    margin-bottom: 14px;
-
-    color: #666;
-
-    font: 500 10px var(--mono);
-    letter-spacing: .38em;
-    text-transform: uppercase;
-
-    opacity: 0;
-
-    animation:
-      fadeUp .8s ease .35s forwards;
-  }
-
-  .intro-title {
-    margin: 0;
-
-    color: #f5f5f5;
-
-    font: 700 clamp(38px, 8vw, 82px)/.95 var(--display);
-
-    letter-spacing: -.065em;
-
-    text-shadow:
-      0 0 15px rgba(255,255,255,.1),
-      0 0 60px rgba(255,255,255,.07);
-
-    white-space: nowrap;
-  }
-
-  .intro-title span {
-    display: inline-block;
-
-    opacity: 0;
-    transform: translateY(18px);
-
-    animation:
-      letterIn .7s cubic-bezier(.2,.8,.2,1) forwards;
-  }
-
-  .intro-title span:nth-child(1) { animation-delay: .45s; }
-  .intro-title span:nth-child(2) { animation-delay: .49s; }
-  .intro-title span:nth-child(3) { animation-delay: .53s; }
-  .intro-title span:nth-child(4) { animation-delay: .57s; }
-  .intro-title span:nth-child(5) { animation-delay: .61s; }
-  .intro-title span:nth-child(6) { animation-delay: .65s; }
-  .intro-title span:nth-child(7) { animation-delay: .69s; }
-  .intro-title span:nth-child(8) { animation-delay: .73s; }
-  .intro-title span:nth-child(9) { animation-delay: .77s; }
-  .intro-title span:nth-child(10) { animation-delay: .81s; }
-  .intro-title span:nth-child(11) { animation-delay: .85s; }
-  .intro-title span:nth-child(12) { animation-delay: .89s; }
-  .intro-title span:nth-child(13) { animation-delay: .93s; }
-  .intro-title span:nth-child(14) { animation-delay: .97s; }
-  .intro-title span:nth-child(15) { animation-delay: 1.01s; }
-  .intro-title span:nth-child(16) { animation-delay: 1.05s; }
-
-  .intro-line {
-    width: 0;
-    height: 1px;
-
-    margin: 22px auto 16px;
-
-    background: linear-gradient(
-      90deg,
-      transparent,
-      rgba(255,255,255,.8),
-      transparent
-    );
-
-    animation:
-      lineGrow 1s ease .8s forwards;
-  }
-
-  .intro-sub {
-    color: #696969;
-
-    font: 500 10px var(--mono);
-
-    letter-spacing: .3em;
-    text-transform: uppercase;
-
-    opacity: 0;
-
-    animation:
-      fadeUp .8s ease 1.1s forwards;
-  }
-
-  .intro-status {
-    position: absolute;
-    left: 50%;
-    bottom: 56px;
-
-    transform: translateX(-50%);
-
-    display: flex;
-    align-items: center;
-    gap: 9px;
-
-    color: #555;
-
-    font: 500 10px var(--mono);
-    letter-spacing: .14em;
-    text-transform: uppercase;
-
-    white-space: nowrap;
-
-    opacity: 0;
-
-    animation:
-      fadeUp .8s ease 1.3s forwards;
-  }
-
-  .intro-dot {
-    width: 6px;
-    height: 6px;
-
-    border-radius: 50%;
-
-    background: #fff;
-
-    box-shadow:
-      0 0 10px rgba(255,255,255,.55);
-
-    animation: pulse 1.3s ease-in-out infinite;
-  }
-
-  .intro-progress {
-    position: absolute;
-    left: 50%;
-    bottom: 32px;
-
-    width: min(260px, 60vw);
-    height: 1px;
-
-    transform: translateX(-50%);
-
-    background: #171717;
-    overflow: hidden;
-  }
-
-  .intro-progress-bar {
-    width: 0;
-    height: 100%;
-
-    background: #aaa;
-
-    animation:
-      progress 2.3s cubic-bezier(.25,.8,.25,1) forwards;
-  }
-
-  #intro.hide {
-    opacity: 0;
-    visibility: hidden;
-    pointer-events: none;
-  }
-
-  /* =========================================================
-     MAIN
-     ========================================================= */
-
-  .wrap {
-    position: relative;
-    z-index: 1;
-
-    width: min(100%, 760px);
-
-    margin: 0 auto;
-
-    padding:
-      64px 24px 100px;
-  }
-
-  .brand {
-    margin-bottom: 34px;
-  }
-
-  .brand-name {
-    margin: 0;
-
-    font:
-      700 30px/1 var(--display);
-
-    letter-spacing: -.045em;
-  }
-
-  .brand-sub {
-    margin: 8px 0 0;
-
-    color: var(--faint);
-
-    font:
-      500 10px var(--mono);
-
-    letter-spacing: .16em;
-    text-transform: uppercase;
-  }
-
-  h2 {
-    margin: 0 0 14px;
-
-    color: #b5b5b5;
-
-    font:
-      600 14px var(--display);
-  }
-
-  .card {
-    position: relative;
-
-    background:
-      linear-gradient(
-        145deg,
-        rgba(255,255,255,.025),
-        rgba(255,255,255,.008)
-      ),
-      var(--card);
-
-    border: 1px solid var(--line);
-
-    border-radius: 14px;
-
-    padding: 20px;
-
-    margin-bottom: 18px;
-
-    box-shadow:
-      0 18px 60px rgba(0,0,0,.18);
-
-    transition:
-      border-color .2s ease,
-      background .2s ease,
-      transform .2s ease;
-  }
-
-  .card:hover {
-    border-color: #2b2b2b;
-  }
-
-  label {
-    display: block;
-
-    margin-bottom: 9px;
-
-    color: var(--faint);
-
-    font:
-      500 10px var(--mono);
-
-    letter-spacing: .13em;
-    text-transform: uppercase;
-  }
-
-  input {
-    width: 100%;
-
-    padding: 11px 13px;
-
-    background: #080808;
-
-    color: var(--text);
-
-    border: 1px solid var(--line);
-
-    border-radius: 9px;
-
-    outline: none;
-
-    font:
-      14px var(--mono);
-
-    transition:
-      border-color .2s ease,
-      box-shadow .2s ease,
-      background .2s ease;
-  }
-
-  input::placeholder {
-    color: #454545;
-  }
-
-  input:focus {
-    border-color: #404040;
-
-    background: #0a0a0a;
-
-    box-shadow:
-      0 0 0 3px rgba(255,255,255,.025);
-  }
-
-  .row {
-    display: flex;
-    gap: 10px;
-  }
-
-  .row > div {
-    flex: 1;
-    min-width: 0;
-  }
-
-  button {
-    position: relative;
-
-    background: #f1f1f1;
-
-    border: 1px solid #f1f1f1;
-
-    border-radius: 9px;
-
-    color: #050505;
-
-    padding: 10px 17px;
-
-    font:
-      600 12px var(--body);
-
-    cursor: pointer;
-
-    white-space: nowrap;
-
-    transition:
-      transform .15s ease,
-      opacity .15s ease,
-      background .15s ease;
-  }
-
-  button:hover {
-    transform: translateY(-1px);
-  }
-
-  button:active {
-    transform: translateY(0) scale(.98);
-  }
-
-  button:disabled {
-    opacity: .45;
-    cursor: not-allowed;
-    transform: none;
-  }
-
-  button.danger {
-    color: #fff;
-    background: var(--red);
-    border-color: var(--red);
-  }
-
-  button.warn {
-    color: #1a1204;
-    background: var(--amber);
-    border-color: var(--amber);
-  }
-
-  button.ghost {
-    color: #a0a0a0;
-    background: transparent;
-    border-color: var(--line-bright);
-  }
-
-  button.ghost:hover {
-    background: #171717;
-    color: #ddd;
-  }
-
-  #msg {
-    min-height: 18px;
-
-    margin-top: 11px;
-
-    font:
-      500 11px var(--mono);
-
-    color: var(--dim);
-  }
-
-  #msg.error {
-    color: var(--red);
-  }
-
-  #msg.success {
-    color: var(--green);
-  }
-
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    margin-top: 5px;
-  }
-
-  tr {
-    border-bottom: 1px solid var(--line);
-  }
-
-  tr:last-child {
-    border-bottom: 0;
-  }
-
-  td {
-    padding: 10px 8px;
-
-    border-bottom: 1px solid var(--line);
-
-    color: #ddd;
-
-    font:
-      13px var(--mono);
-
-    vertical-align: middle;
-  }
-
-  tr:last-child td {
-    border-bottom: 0;
-  }
-
-  td.who {
-    display: flex;
-    align-items: center;
-    gap: 9px;
-
-    font-weight: 500;
-
-    border-bottom: 0;
-  }
-
-  td.reason,
-  td.time {
-    color: var(--dim);
-  }
-
-  td.btns {
-    width: 1%;
-
-    text-align: right;
-
-    white-space: nowrap;
-  }
-
-  td.btns button {
-    margin-left: 5px;
-  }
-
-  .head {
-    width: 24px;
-    height: 24px;
-
-    flex: none;
-
-    border-radius: 6px;
-
-    background: #080808;
-
-    border: 1px solid var(--line);
-
-    image-rendering: pixelated;
-  }
-
-  .dot {
-    width: 7px;
-    height: 7px;
-
-    flex: none;
-
-    margin-right: 1px;
-
-    border-radius: 50%;
-
-    background: var(--green);
-
-    box-shadow:
-      0 0 8px rgba(34,197,94,.75);
-
-    animation:
-      onlinePulse 1.8s ease-in-out infinite;
-  }
-
-  .empty {
-    color: var(--faint);
-  }
-
-  /* =========================================================
-     ANIMATIONS
-     ========================================================= */
-
-  @keyframes introEnter {
-    from {
-      opacity: 0;
-      transform: scale(.97);
-      filter: blur(8px);
-    }
-
-    to {
-      opacity: 1;
-      transform: scale(1);
-      filter: blur(0);
-    }
-  }
-
-  @keyframes letterIn {
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes fadeUp {
-    from {
-      opacity: 0;
-      transform: translateY(8px);
-    }
-
-    to {
-      opacity: 1;
-      transform: translateY(0);
-    }
-  }
-
-  @keyframes lineGrow {
-    to {
-      width: min(260px, 60vw);
-    }
-  }
-
-  @keyframes progress {
-    0% {
-      width: 0;
-    }
-
-    72% {
-      width: 82%;
-    }
-
-    100% {
-      width: 100%;
-    }
-  }
-
-  @keyframes pulse {
-    0%,100% {
-      opacity: .35;
-      transform: scale(.8);
-    }
-
-    50% {
-      opacity: 1;
-      transform: scale(1.15);
-    }
-  }
-
-  @keyframes onlinePulse {
-    0%,100% {
-      opacity: .5;
-    }
-
-    50% {
-      opacity: 1;
-    }
-  }
-
-  /* =========================================================
-     MOBILE
-     ========================================================= */
-
-  @media (max-width: 640px) {
-    .wrap {
-      padding:
-        38px 15px 70px;
-    }
-
-    .row {
-      flex-direction: column;
-    }
-
-    .row > div {
-      width: 100%;
-    }
-
-    .row button {
-      width: 100%;
-    }
-
-    .intro-title {
-      white-space: normal;
-      padding: 0 15px;
-    }
-
-    table,
-    tbody,
-    tr,
-    td {
-      width: 100%;
-    }
-
-    td.btns {
-      text-align: right;
-    }
-
-    td.reason {
-      display: none;
-    }
-
-    td.time {
-      font-size: 11px;
-    }
-
-    td.btns button {
-      padding: 8px 10px;
-    }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    *,
-    *::before,
-    *::after {
-      animation-duration: .01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: .01ms !important;
-    }
-  }
-</style>
-</head>
-
-<body>
-
-<!-- =========================================================
-     LOJJKLI INTRO
-     ========================================================= -->
-
-<div id="intro">
-
-  <div class="intro-content">
-
-    <div class="intro-overline">
-      KlisTeam Studio
-    </div>
-
-    <h1 class="intro-title" aria-label="Welcome back, Kli">
-      <span>W</span>
-      <span>e</span>
-      <span>l</span>
-      <span>c</span>
-      <span>o</span>
-      <span>m</span>
-      <span>e</span>
-
-      <span>&nbsp;</span>
-
-      <span>b</span>
-      <span>a</span>
-      <span>c</span>
-      <span>k</span>
-
-      <span>,</span>
-
-      <span>&nbsp;</span>
-
-      <span>K</span>
-      <span>l</span>
-      <span>i</span>
-    </h1>
-
-    <div class="intro-line"></div>
-
-    <div class="intro-sub">
-      lojjkli · private administration
-    </div>
-
-  </div>
-
-  <div class="intro-status">
-    <span class="intro-dot"></span>
-    Secure session initializing
-  </div>
-
-  <div class="intro-progress">
-    <div class="intro-progress-bar"></div>
-  </div>
-
-</div>
-
-
-<!-- =========================================================
-     MAIN SITE
-     ========================================================= -->
-
-<div class="wrap">
-
-  <div class="brand">
-    <h1 class="brand-name">
-      lojjkli
-    </h1>
-
-    <p class="brand-sub">
-      KlisTeam Studio · Administration
-    </p>
-  </div>
-
-
-  <!-- =======================================================
-       LOGIN
-       ======================================================= -->
-
-  <div class="card" id="loginCard">
-
-    <label for="key">
-      Admin key
-    </label>
-
-    <div class="row">
-
-      <div>
-        <input
-          id="key"
-          type="password"
-          placeholder="Enter admin key"
-          autocomplete="current-password"
-          spellcheck="false"
-        >
-      </div>
-
-      <div style="flex:0 0 auto">
-        <button
-          id="unlockBtn"
-          onclick="unlock()"
-        >
-          Unlock
-        </button>
-      </div>
-
-    </div>
-
-    <div id="msg"></div>
-
-  </div>
-
-
-  <!-- =======================================================
-       ADMIN PANELS
-       ======================================================= -->
-
-  <div id="panels" style="display:none">
-
-
-    <!-- BLOCKED SERVERS -->
-
-    <div class="card">
-
-      <h2>
-        Blocked servers
-      </h2>
-
-      <div class="row">
-
-        <div>
-          <input
-            id="server"
-            placeholder="play.example.com"
-          >
-        </div>
-
-        <div>
-          <input
-            id="serverReason"
-            placeholder="Reason (optional)"
-          >
-        </div>
-
-        <div style="flex:0 0 auto">
-          <button onclick="addServer()">
-            Block
-          </button>
-        </div>
-
-      </div>
-
-      <table id="serverList">
-        <tbody></tbody>
-      </table>
-
-    </div>
-
-
-    <!-- BANNED PLAYERS -->
-
-    <div class="card">
-
-      <h2>
-        Banned players
-      </h2>
-
-      <div class="row">
-
-        <div>
-          <input
-            id="player"
-            placeholder="Username"
-          >
-        </div>
-
-        <div>
-          <input
-            id="playerReason"
-            placeholder="Reason (optional)"
-          >
-        </div>
-
-        <div style="flex:0 0 auto">
-          <button
-            class="danger"
-            onclick="addPlayer()"
-          >
-            Ban
-          </button>
-        </div>
-
-      </div>
-
-      <table id="playerList">
-        <tbody></tbody>
-      </table>
-
-    </div>
-
-
-    <!-- ONLINE PLAYERS -->
-
-    <div class="card">
-
-      <h2>
-        Using the mod right now
-        <span style="color:var(--faint);font-weight:400">
-          (last 5 min)
-        </span>
-      </h2>
-
-      <table id="onlineList">
-        <tbody></tbody>
-      </table>
-
-    </div>
-
-
-  </div>
-
-</div>
-
-
-<script>
-/* ===========================================================
-   CONFIG
-   =========================================================== */
-
-const API = "https://api.lojjkli.site";
-
-
-/* ===========================================================
-   HELPERS
-   =========================================================== */
-
-const $ = id => document.getElementById(id);
-
-function escapeHtml(value) {
-  return String(value ?? "")
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function safeName(value) {
-  return String(value ?? "")
-    .replace(/[^A-Za-z0-9_]/g, "");
-}
-
-function setMessage(text, type = "") {
-  const msg = $("msg");
-
-  msg.textContent = text;
-  msg.className = type;
-}
-
-function head(name) {
-  const safe = safeName(name);
-
-  return `
-    <img
-      class="head"
-      alt=""
-      loading="lazy"
-      src="https://mc-heads.net/avatar/${safe}/24"
-      onerror="
-        this.onerror=null;
-        this.src='https://crafatar.com/avatars/${safe}?size=24&overlay'
-      "
-    >
-  `;
-}
-
-
-/* ===========================================================
-   SOUND ENGINE
-   =========================================================== */
-
-let audioContext = null;
-
-function getAudioContext() {
-
-  if (audioContext) {
-    return audioContext;
-  }
-
-  const AudioCtx =
-    window.AudioContext ||
-    window.webkitAudioContext;
-
-  if (!AudioCtx) {
-    return null;
-  }
-
-  audioContext = new AudioCtx();
-
-  return audioContext;
-}
-
-
-function playStartupSound() {
-
-  const ctx = getAudioContext();
-
-  if (!ctx) {
-    return;
-  }
-
-  if (ctx.state === "suspended") {
-    ctx.resume().catch(() => {});
-  }
-
-  const now = ctx.currentTime;
-
-
-  /* Deep cinematic hit */
-
-  const bass = ctx.createOscillator();
-  const bassGain = ctx.createGain();
-
-  bass.type = "sine";
-
-  bass.frequency.setValueAtTime(
-    105,
-    now
-  );
-
-  bass.frequency.exponentialRampToValueAtTime(
-    42,
-    now + .8
-  );
-
-  bassGain.gain.setValueAtTime(
-    .0001,
-    now
-  );
-
-  bassGain.gain.exponentialRampToValueAtTime(
-    .25,
-    now + .02
-  );
-
-  bassGain.gain.exponentialRampToValueAtTime(
-    .0001,
-    now + .9
-  );
-
-  bass.connect(bassGain);
-  bassGain.connect(ctx.destination);
-
-  bass.start(now);
-  bass.stop(now + 1);
-
-
-  /* Bright studio shimmer */
-
-  const shimmer = ctx.createOscillator();
-  const shimmerGain = ctx.createGain();
-
-  shimmer.type = "triangle";
-
-  shimmer.frequency.setValueAtTime(
-    720,
-    now + .15
-  );
-
-  shimmer.frequency.exponentialRampToValueAtTime(
-    1500,
-    now + .9
-  );
-
-  shimmerGain.gain.setValueAtTime(
-    .0001,
-    now
-  );
-
-  shimmerGain.gain.exponentialRampToValueAtTime(
-    .045,
-    now + .25
-  );
-
-  shimmerGain.gain.exponentialRampToValueAtTime(
-    .0001,
-    now + 1
-  );
-
-  shimmer.connect(shimmerGain);
-  shimmerGain.connect(ctx.destination);
-
-  shimmer.start(now);
-  shimmer.stop(now + 1.05);
-}
-
-
-function playClickSound() {
-
-  const ctx = getAudioContext();
-
-  if (!ctx) {
-    return;
-  }
-
-  if (ctx.state === "suspended") {
-    ctx.resume().catch(() => {});
-  }
-
-  const now = ctx.currentTime;
-
-  const osc = ctx.createOscillator();
-  const gain = ctx.createGain();
-
-  osc.type = "sine";
-
-  osc.frequency.setValueAtTime(
-    620,
-    now
-  );
-
-  osc.frequency.exponentialRampToValueAtTime(
-    390,
-    now + .07
-  );
-
-  gain.gain.setValueAtTime(
-    .0001,
-    now
-  );
-
-  gain.gain.exponentialRampToValueAtTime(
-    .035,
-    now + .008
-  );
-
-  gain.gain.exponentialRampToValueAtTime(
-    .0001,
-    now + .08
-  );
-
-  osc.connect(gain);
-  gain.connect(ctx.destination);
-
-  osc.start(now);
-  osc.stop(now + .09);
-}
-
-
-/* ===========================================================
-   INTRO
-   =========================================================== */
-
-let introFinished = false;
-
-function finishIntro() {
-
-  if (introFinished) {
-    return;
-  }
-
-  introFinished = true;
-
-  const intro = $("intro");
-
-  if (!intro) {
-    return;
-  }
-
-  intro.classList.add("hide");
-
-  setTimeout(() => {
-    intro.remove();
-  }, 1100);
-}
-
-
-/*
- * Browsers normally block completely automatic audio.
- * A first interaction unlocks the audio context.
+/**
+ * Player lookup API.
+ *
+ *   GET /player/<name>           -> profile + tiers
+ *   GET /player/<name>?debug=1   -> same, plus per-source status
+ *
+ * Every source is optional. If one 404s, rate-limits or changes its schema, that
+ * source is marked unavailable and the rest still return. Endpoints for the tier
+ * sites are guesses in places — use ?debug=1 to see which ones actually answer,
+ * then fix the URL in SOURCES below without touching anything else.
  */
 
-function activateAudio() {
+import { DurableObject } from "cloudflare:workers";
 
-  const ctx = getAudioContext();
+const CACHE_SECONDS = 900;   // 15 min; these values barely move
 
-  if (!ctx) {
-    return;
-  }
-
-  if (ctx.state === "suspended") {
-    ctx.resume().catch(() => {});
-  }
-
-  playStartupSound();
-}
-
-
-window.addEventListener(
-  "pointerdown",
-  activateAudio,
-  { once: true }
-);
-
-window.addEventListener(
-  "keydown",
-  activateAudio,
-  { once: true }
-);
-
-
-/*
- * Intro automatically disappears.
+/**
+ * Registry of players who have run the mod. Clients POST their name once per
+ * session; nothing is broadcast, so this never touches the relay rooms and adds
+ * no traffic between players.
  */
+export class Registry extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.ctx.storage.sql.exec(
+      `CREATE TABLE IF NOT EXISTS seen (
+         name TEXT PRIMARY KEY, display TEXT NOT NULL,
+         first INTEGER NOT NULL, last INTEGER NOT NULL, hits INTEGER NOT NULL
+       )`);
+  }
+  async fetch(request) {
+    const url = new URL(request.url);
 
-setTimeout(() => {
-  finishIntro();
-}, 2600);
+    // list=1 returns everyone seen recently, for the admin "online now" view -
+    // separate from the per-name lookup below, which needs a valid username.
+    if (url.searchParams.get('list') === '1') {
+      const since = parseInt(url.searchParams.get('since') || '0', 10);
+      const rows = [...this.ctx.storage.sql.exec(
+        `SELECT display AS name, last FROM seen WHERE last > ? ORDER BY last DESC LIMIT 200`, since)];
+      return Response.json({ players: rows });
+    }
+
+    // display keeps whatever case the player's own client is actually using;
+    // name (lowercase) stays the lookup key so "Steve" and "steve" are one row.
+    const display = (url.searchParams.get('name') || '').trim();
+    const name = display.toLowerCase();
+    if (!/^[a-z0-9_]{1,16}$/.test(name)) return new Response('bad name', { status: 400 });
+    const now = Date.now();
+
+    if (request.method === 'POST') {
+      this.ctx.storage.sql.exec(
+        `INSERT INTO seen (name, display, first, last, hits) VALUES (?, ?, ?, ?, 1)
+         ON CONFLICT(name) DO UPDATE SET display = ?, last = ?, hits = hits + 1`,
+        name, display, now, now, display, now);
+      return new Response('ok');
+    }
+    const rows = [...this.ctx.storage.sql.exec(
+      `SELECT display, first, last, hits FROM seen WHERE name = ?`, name)];
+    return Response.json(rows.length
+      ? { seen: true, name: rows[0].display, firstSeen: rows[0].first,
+          lastSeen: rows[0].last, sessions: rows[0].hits }
+      : { seen: false });
+  }
+}
+
+const registry = (env, name) =>
+  env.REGISTRY.get(env.REGISTRY.idFromName('global'));
+
+/**
+ * Server blacklist. Read is public - every mod install fetches this on join.
+ * Write requires the ADMIN_KEY secret, so only whoever set that secret can
+ * add or remove a server. Set it once with: wrangler secret put ADMIN_KEY
+ */
+export class Blacklist extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    // kind is 'server' or 'player'; id = kind + ':' + value, so both share one table.
+    this.ctx.storage.sql.exec(
+      `CREATE TABLE IF NOT EXISTS blocked (
+         id TEXT PRIMARY KEY, kind TEXT NOT NULL, value TEXT NOT NULL, display TEXT NOT NULL,
+         reason TEXT, added INTEGER NOT NULL
+       )`);
+  }
+  async fetch(request) {
+    const url = new URL(request.url);
+    if (request.method === 'GET') {
+      const rows = [...this.ctx.storage.sql.exec(`SELECT kind, value, display, reason FROM blocked`)];
+      return Response.json({
+        servers: rows.filter(r => r.kind === 'server').map(r => r.value),
+        players: rows.filter(r => r.kind === 'player').map(r => r.display),
+        detail: rows.map(r => ({ kind: r.kind, value: r.value, display: r.display, reason: r.reason })),
+      });
+    }
+    const kind = (url.searchParams.get('kind') || 'server').trim().toLowerCase();
+    // display keeps whatever case was typed; value (lowercase) is the actual key,
+    // since matching a player or server must never depend on capitalization.
+    const displayRaw = (url.searchParams.get('value') || url.searchParams.get('server') || '').trim();
+    const value = displayRaw.toLowerCase();
+    if (!value || (kind !== 'server' && kind !== 'player')) {
+      return new Response('missing or bad value', { status: 400 });
+    }
+    const id = kind + ':' + value;
+    if (request.method === 'POST') {
+      const reason = (url.searchParams.get('reason') || '').slice(0, 200);
+      this.ctx.storage.sql.exec(
+        `INSERT INTO blocked (id, kind, value, display, reason, added) VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT(id) DO UPDATE SET display = ?, reason = ?`,
+        id, kind, value, displayRaw, reason, Date.now(), displayRaw, reason);
+      return new Response('ok');
+    }
+    if (request.method === 'DELETE') {
+      this.ctx.storage.sql.exec(`DELETE FROM blocked WHERE id = ?`, id);
+      return new Response('ok');
+    }
+    return new Response('method not allowed', { status: 405 });
+  }
+}
+
+const blacklist = (env) => env.BLACKLIST.get(env.BLACKLIST.idFromName('global'));
+
+/**
+ * One-shot "get off this server now" signal, separate from the ban list because
+ * it is meant to fire once and be done, not accumulate like a blacklist does.
+ * The mod polls its own name every ~20s while connected; a timestamp newer than
+ * the last one it acted on means disconnect immediately.
+ */
+export class Kicks extends DurableObject {
+  constructor(ctx, env) {
+    super(ctx, env);
+    this.ctx.storage.sql.exec(
+      `CREATE TABLE IF NOT EXISTS kicks (name TEXT PRIMARY KEY, at INTEGER NOT NULL)`);
+  }
+  async fetch(request) {
+    const url = new URL(request.url);
+    const name = (url.searchParams.get('name') || '').trim().toLowerCase();
+    if (!/^[a-z0-9_]{1,16}$/.test(name)) return new Response('bad name', { status: 400 });
+
+    if (request.method === 'POST') {
+      this.ctx.storage.sql.exec(
+        `INSERT INTO kicks (name, at) VALUES (?, ?)
+         ON CONFLICT(name) DO UPDATE SET at = ?`, name, Date.now(), Date.now());
+      return new Response('ok');
+    }
+    const rows = [...this.ctx.storage.sql.exec(`SELECT at FROM kicks WHERE name = ?`, name)];
+    return Response.json({ at: rows.length ? rows[0].at : 0 });
+  }
+}
+
+const kicks = (env) => env.KICKS.get(env.KICKS.idFromName('global'));
+
+const CORS = {
+  'access-control-allow-origin': '*',
+  // GET/POST/DELETE for the admin actions, plus x-admin-key - without that
+  // header explicitly allowed, the browser's preflight check silently blocks
+  // every write (and /verify) before it is ever sent. This was the actual
+  // cause of "pressing the button does nothing."
+  'access-control-allow-methods': 'GET,POST,DELETE,OPTIONS',
+  'access-control-allow-headers': 'x-admin-key, content-type',
+  'access-control-max-age': '86400',
+  'content-type': 'application/json; charset=utf-8',
+};
+
+const json = (obj, status = 200) =>
+  new Response(JSON.stringify(obj, null, 2), { status, headers: CORS });
+
+async function getJSON(url, opts = {}) {
+  const r = await fetch(url, {
+    ...opts,
+    headers: { 'user-agent': 'KlisTeamMod/1.0 (+https://lojjkli.site)', ...(opts.headers || {}) },
+  });
+  if (!r.ok) throw new Error('HTTP ' + r.status);
+  return r.json();
+}
+
+/** Tier sites. Each returns whatever it can; shape is normalised by `pick`. */
+const SOURCES = [
+  // Documented format: api.yeahjenni.xyz/<list>/player/<ign>
+  // Lists it supports: mctiers (mctiers.com), mctiersio, ocetiers.
+  { id: 'mctiers',  url: (u, n) => `https://api.yeahjenni.xyz/mctiers/player/${n}`,   pick: aggregator },
+  { id: 'mctiersio',url: (u, n) => `https://api.yeahjenni.xyz/mctiersio/player/${n}`, pick: aggregator },
+  { id: 'ocetiers', url: (u, n) => `https://api.yeahjenni.xyz/ocetiers/player/${n}`,  pick: aggregator },
+
+  // Direct, in case the aggregator is down.
+  { id: 'mctiers_direct', url: (u) => `https://mctiers.com/api/profile/${u}`,
+    pick: (d) => ({ overall: d.overall ?? null, points: d.points ?? null, modes: d.rankings ?? null }) },
+
+  // Same aggregator, other list names. It uses one URL shape for every list it
+  // supports, so if it covers these they work immediately; if not they 404 and
+  // the row is simply marked unavailable. Costs nothing to try.
+  { id: 'subtiers',  url: (u, n) => `https://api.yeahjenni.xyz/subtiers/player/${n}`,  pick: aggregator },
+  { id: 'pvptiers',  url: (u, n) => `https://api.yeahjenni.xyz/pvptiers/player/${n}`,  pick: aggregator },
+
+  // Real endpoints, taken from the TierTagger mod jar: base /api with
+  // /profile/<uuid> and /profile/by-name/<name>. by-name avoids any uuid
+  // formatting mismatch, so it is tried first.
+  { id: 'subtiers_byname', url: (u, n) => `https://subtiers.net/api/profile/by-name/${n}`, pick: passthrough },
+  { id: 'subtiers_direct', url: (u) => `https://subtiers.net/api/profile/${u}`,            pick: passthrough },
+  { id: 'mctiers_byname',  url: (u, n) => `https://mctiers.com/api/profile/by-name/${n}`,  pick: passthrough },
+  // confirmed from the Tiers mod jar
+  { id: 'pvptiers',        url: (u) => `https://pvptiers.com/api/profile/${u}`,            pick: passthrough },
+
+  // MCPVP: no endpoint found in either tier mod, so these are candidates derived
+  // from the public profile URL (mcpvp.com/profile/<name>). Check ?debug=1 - the
+  // one that answers is the keeper, delete the rest.
+  { id: 'mcpvp',        url: (u, n) => `https://www.mcpvp.com/api/profile/${n}`,  pick: passthrough },
+  { id: 'mcpvp_alt',    url: (u, n) => `https://mcpvp.com/api/profile/${n}`,      pick: passthrough },
+  { id: 'mcpvp_uuid',   url: (u) => `https://www.mcpvp.com/api/profile/${u}`,     pick: passthrough },
+  { id: 'mcpvp_player', url: (u, n) => `https://www.mcpvp.com/api/player/${n}`,   pick: passthrough },
+];
+
+/** api.yeahjenni.xyz shape: gameModes.<mode>.{tier,isLT}, plus tier/score/ranked. */
+function aggregator(d) {
+  return {
+    tier: d.tier ?? null,
+    ranked: d.ranked ?? null,
+    score: d.score ?? null,
+    position: d.leaderboardPosition ?? null,
+    modes: d.gameModes ?? null,
+  };
+}
+
+/**
+ * Shape used by mctiers and subtiers, confirmed from TierTagger: the response has
+ * `rankings` keyed by gamemode, each { tier, pos, attained, retired, peak }, plus
+ * `overall`, `points` and `region` at the top. `pos` 0 means high tier.
+ */
+function passthrough(d) {
+  const modes = d.rankings ?? d.gamemodes ?? d.gameModes ?? d.kitRanks ?? null;
+  return {
+    overall: d.overall ?? null,
+    points: d.points ?? null,
+    region: d.region ?? null,
+    modes,
+    raw: modes ? undefined : d,   // keep the body only when nothing was recognised
+  };
+}
 
 
-/* ===========================================================
-   API
-   =========================================================== */
+/**
+ * Resolve a name to a UUID. Mojang rate limits and sometimes blocks datacenter
+ * IPs outright, and Workers run from datacenters, so fall back to mirrors rather
+ * than reporting a live account as nonexistent.
+ */
+async function resolveName(name, status) {
+  const attempts = [
+    ['mojang',   `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`,
+                 (d) => (d && d.id ? { uuid: d.id, name: d.name } : null)],
+    ['playerdb', `https://playerdb.co/api/player/minecraft/${encodeURIComponent(name)}`,
+                 (d) => (d && d.data && d.data.player
+                          ? { uuid: String(d.data.player.raw_id || d.data.player.id).replace(/-/g, ''),
+                              name: d.data.player.username } : null)],
+    ['minetools', `https://api.minetools.eu/uuid/${encodeURIComponent(name)}`,
+                 (d) => (d && d.id ? { uuid: d.id, name: d.name } : null)],
+  ];
 
-async function apiRequest(url, options = {}) {
+  for (const [id, url, parse] of attempts) {
+    try {
+      const r = await fetch(url, { headers: { 'user-agent': 'KlisTeamMod/1.0 (+https://lojjkli.site)' } });
+      if (r.status === 204 || r.status === 404) { status['resolve_' + id] = 'not found (404)'; continue; }
+      if (!r.ok) { status['resolve_' + id] = 'HTTP ' + r.status; continue; }
+      const parsed = parse(await r.json());
+      if (parsed && parsed.uuid) { status['resolve_' + id] = 'ok'; return parsed; }
+      status['resolve_' + id] = 'no uuid in response';
+    } catch (e) {
+      status['resolve_' + id] = String(e.message);
+    }
+  }
+  return null;
+}
 
-  try {
+async function textures(uuid) {
+  const p = await getJSON(`https://sessionserver.mojang.com/session/minecraft/profile/${uuid}`);
+  const prop = (p.properties || []).find((x) => x.name === 'textures');
+  if (!prop) return {};
+  const decoded = JSON.parse(atob(prop.value));
+  const skin = decoded.textures?.SKIN;
+  return {
+    skin: skin?.url ?? null,
+    slim: skin?.metadata?.model === 'slim',
+    cape: decoded.textures?.CAPE?.url ?? null,
+  };
+}
 
-    const response = await fetch(url, {
-      ...options,
+/** laby.net: name history, capes. Path has moved before, so v3 then v2. */
+async function laby(uuid) {
+  for (const v of ['v3', 'v2']) {
+    try {
+      const d = await getJSON(`https://laby.net/api/${v}/user/${uuid}/profile`);
+      return {
+        nameHistory: (d.username_history || d.name_history || []).map((h) => ({
+          name: h.username ?? h.name,
+          changedAt: h.changed_at ?? h.changedToAt ?? null,
+          accurate: h.accurate ?? null,
+        })),
+        skins: d.skins ?? null,   // present on some versions, null on others
+      };
+    } catch (e) { /* try the next path */ }
+  }
+  throw new Error('no laby endpoint answered');
+}
 
-      headers: {
-        "Accept": "application/json",
-        ...(options.headers || {})
+export default {
+  async fetch(request, env, ctx) {
+    const url = new URL(request.url);
+
+    if (request.method === 'OPTIONS') return new Response(null, { headers: CORS });
+    // clients announce themselves here on startup
+    if (url.pathname === '/seen') {
+      const name = (url.searchParams.get('name') || '').trim();
+      if (!/^[A-Za-z0-9_]{1,16}$/.test(name)) return json({ error: 'bad name' }, 400);
+      await registry(env).fetch(new Request(
+        `https://r/?name=${encodeURIComponent(name)}`, { method: 'POST' }));
+      return json({ ok: true });
+    }
+
+    // Lets the admin page confirm a key before showing anything, without
+    // touching storage. Read-only, but still requires the correct key - this
+    // is what gates the page itself, separate from the write checks below.
+    if (url.pathname === '/verify') {
+      const key = (request.headers.get('x-admin-key') || url.searchParams.get('key') || '').toLowerCase();
+      const ok = !!env.ADMIN_KEY && key === env.ADMIN_KEY.toLowerCase();
+      return json({ ok }, ok ? 200 : 401);
+    }
+
+    if (url.pathname === '/blacklist') {
+      if (request.method === 'GET') {
+        const r = await blacklist(env).fetch('https://b/');
+        const body = await r.text();
+        return new Response(body, { headers: CORS });
       }
-    });
-
-    return response;
-
-  } catch (error) {
-
-    console.error(
-      "API request failed:",
-      error
-    );
-
-    throw error;
-  }
-}
-
-
-/* ===========================================================
-   UNLOCK
-   =========================================================== */
-
-async function unlock() {
-
-  playClickSound();
-
-  const key =
-    $("key").value.trim();
-
-  const button =
-    $("unlockBtn");
-
-
-  if (!key) {
-
-    setMessage(
-      "Enter the admin key.",
-      "error"
-    );
-
-    $("key").focus();
-
-    return;
-  }
-
-
-  button.disabled = true;
-
-  setMessage("Checking...");
-
-
-  try {
-
-    const response =
-      await apiRequest(
-        `${API}/verify`,
-        {
-          method: "GET",
-
-          headers: {
-            "x-admin-key": key
-          }
-        }
-      );
-
-
-    if (!response.ok) {
-
-      if (
-        response.status === 401 ||
-        response.status === 403
-      ) {
-
-        setMessage(
-          "Wrong admin key.",
-          "error"
-        );
-
-      } else {
-
-        setMessage(
-          `Server returned HTTP ${response.status}.`,
-          "error"
-        );
+      // write: needs the admin key. Case does not matter on either side.
+      const key = (request.headers.get('x-admin-key') || url.searchParams.get('key') || '').toLowerCase();
+      if (!env.ADMIN_KEY || key !== env.ADMIN_KEY.toLowerCase()) {
+        return json({ error: 'unauthorized' }, 401);
       }
-
-      button.disabled = false;
-
-      return;
+      const kind   = url.searchParams.get('kind') || 'server';
+      const value  = url.searchParams.get('value') || url.searchParams.get('server') || '';
+      const reason = url.searchParams.get('reason') || '';
+      const r = await blacklist(env).fetch(
+        `https://b/?kind=${encodeURIComponent(kind)}&value=${encodeURIComponent(value)}`
+        + `&reason=${encodeURIComponent(reason)}`,
+        { method: request.method });
+      return json({ ok: r.ok });
     }
 
+    if (url.pathname === '/kick') {
+      const name = (url.searchParams.get('name') || '').trim();
+      if (!/^[A-Za-z0-9_]{1,16}$/.test(name)) return json({ error: 'bad name' }, 400);
 
-    setMessage(
-      "Unlocked.",
-      "success"
-    );
-
-
-    $("loginCard").style.display = "none";
-    $("panels").style.display = "block";
-
-
-    await refreshBlacklist();
-    await refreshOnline();
-
-
-    if (!window.onlineTimer) {
-
-      window.onlineTimer =
-        setInterval(
-          refreshOnline,
-          15000
-        );
+      if (request.method === 'GET') {
+        const r = await kicks(env).fetch(`https://k/?name=${encodeURIComponent(name)}`);
+        const body = await r.text();
+        return new Response(body, { headers: CORS });
+      }
+      const key = (request.headers.get('x-admin-key') || url.searchParams.get('key') || '').toLowerCase();
+      if (!env.ADMIN_KEY || key !== env.ADMIN_KEY.toLowerCase()) {
+        return json({ error: 'unauthorized' }, 401);
+      }
+      const r = await kicks(env).fetch(`https://k/?name=${encodeURIComponent(name)}`, { method: 'POST' });
+      return json({ ok: r.ok });
     }
 
-  } catch (error) {
-
-    console.error(error);
-
-    setMessage(
-      "Could not connect to the API. Check the API or CORS configuration.",
-      "error"
-    );
-
-    button.disabled = false;
-  }
-}
-
-
-/* ===========================================================
-   BLACKLIST
-   =========================================================== */
-
-async function refreshBlacklist() {
-
-  try {
-
-    const response =
-      await apiRequest(
-        `${API}/blacklist`
-      );
-
-
-    if (!response.ok) {
-      throw new Error(
-        `Blacklist HTTP ${response.status}`
-      );
+    // Who has used the mod recently - "online now" is approximate: whichever
+    // players' clients have checked in within the window.
+    if (url.pathname === '/online') {
+      const minutes = Math.max(1, Math.min(60, parseInt(url.searchParams.get('minutes') || '5', 10)));
+      const r = await registry(env).fetch(`https://r/?list=1&since=${Date.now() - minutes * 60000}`);
+      const body = await r.text();
+      return new Response(body, { headers: CORS });
     }
 
-
-    const data =
-      await response.json();
-
-
-    const details =
-      Array.isArray(data.detail)
-        ? data.detail
-        : [];
-
-
-    /* SERVERS */
-
-    $("serverList")
-      .querySelector("tbody")
-      .innerHTML =
-
-      details
-
-        .filter(
-          x => x.kind === "server"
-        )
-
-        .map(row => `
-
-          <tr>
-
-            <td>
-              ${escapeHtml(row.value)}
-            </td>
-
-            <td class="reason">
-              ${escapeHtml(row.reason)}
-            </td>
-
-            <td class="btns">
-
-              <button
-                class="ghost"
-                onclick="removeItem(
-                  'server',
-                  ${JSON.stringify(row.value)}
-                )"
-              >
-                Remove
-              </button>
-
-            </td>
-
-          </tr>
-
-        `)
-
-        .join("")
-
-        ||
-
-        `
-          <tr>
-            <td class="empty">
-              No servers blocked
-            </td>
-          </tr>
-        `;
-
-
-    /* PLAYERS */
-
-    $("playerList")
-      .querySelector("tbody")
-      .innerHTML =
-
-      details
-
-        .filter(
-          x => x.kind === "player"
-        )
-
-        .map(row => `
-
-          <tr>
-
-            <td class="who">
-
-              ${head(row.display)}
-
-              ${escapeHtml(row.display)}
-
-            </td>
-
-            <td class="reason">
-              ${escapeHtml(row.reason)}
-            </td>
-
-            <td class="btns">
-
-              <button
-                class="warn"
-                onclick="kick(
-                  ${JSON.stringify(row.display)}
-                )"
-              >
-                Kick
-              </button>
-
-              <button
-                class="ghost"
-                onclick="removeItem(
-                  'player',
-                  ${JSON.stringify(row.value)}
-                )"
-              >
-                Unban
-              </button>
-
-            </td>
-
-          </tr>
-
-        `)
-
-        .join("")
-
-        ||
-
-        `
-          <tr>
-            <td class="empty">
-              Nobody banned
-            </td>
-          </tr>
-        `;
-
-  } catch (error) {
-
-    console.error(
-      "Blacklist error:",
-      error
-    );
-  }
-}
-
-
-/* ===========================================================
-   ONLINE
-   =========================================================== */
-
-async function refreshOnline() {
-
-  try {
-
-    const response =
-      await apiRequest(
-        `${API}/online?minutes=5`
-      );
-
-
-    if (!response.ok) {
-      throw new Error(
-        `Online HTTP ${response.status}`
-      );
+    if (!url.pathname.startsWith('/player/')) {
+      return json({ ok: true, usage: '/player/<username> or /seen?name=<username>' });
     }
 
+    const name = decodeURIComponent(url.pathname.slice('/player/'.length)).trim();
+    if (!/^[A-Za-z0-9_]{1,16}$/.test(name)) return json({ error: 'bad username' }, 400);
 
-    const data =
-      await response.json();
+    const debug = url.searchParams.get('debug') === '1';
+    const cacheKey = new Request(`https://lookup/${name.toLowerCase()}`, request);
+    const cached = await caches.default.match(cacheKey);
+    if (cached && !debug) return cached;
 
+    const status = {};
+    const profile = await resolveName(name, status);
+    if (!profile) {
+      // say which lookups failed and how, instead of blaming the username
+      return json({ error: 'could not resolve username', name, _status: status }, 404);
+    }
+    const out = { name: profile.name, uuid: profile.uuid, tiers: {} };
 
-    const players =
-      Array.isArray(data.players)
-        ? data.players
-        : [];
+    // skin + cape. sessionserver blocks datacenter IPs the same way the name API
+    // does, so fall back to a mirror rather than returning no skin at all.
+    try {
+      const tex = await textures(profile.uuid);
+      Object.assign(out, tex);
+      status.mojang_textures = tex.skin ? 'ok' : 'no skin in profile';
+    } catch (e) {
+      status.mojang_textures = String(e.message);
+    }
+    // Pre-rendered 3D body shots, so the client doesn't have to build a model.
+    out.render3d = `https://visage.surgeplay.com/full/256/${profile.uuid}`;
+    out.render3dAlt = `https://render.crafty.gg/3d/full/${profile.uuid}`;
 
-
-    $("onlineList")
-      .querySelector("tbody")
-      .innerHTML =
-
-      players
-
-        .map(player => {
-
-          const secondsAgo =
-            Math.max(
-              0,
-              Math.round(
-                (Date.now() - player.last) / 1000
-              )
-            );
-
-
-          return `
-
-            <tr>
-
-              <td class="who">
-
-                <span class="dot"></span>
-
-                ${head(player.name)}
-
-                ${escapeHtml(player.name)}
-
-              </td>
-
-
-              <td class="time">
-
-                ${secondsAgo}s ago
-
-              </td>
-
-
-              <td class="btns">
-
-                <button
-                  class="warn"
-                  onclick="kick(
-                    ${JSON.stringify(player.name)}
-                  )"
-                >
-                  Kick
-                </button>
-
-
-                <button
-                  class="danger"
-                  onclick="banFromOnline(
-                    ${JSON.stringify(player.name)}
-                  )"
-                >
-                  Ban
-                </button>
-
-              </td>
-
-            </tr>
-
-          `;
-
-        })
-
-        .join("")
-
-        ||
-
-        `
-          <tr>
-            <td class="empty">
-              Nobody currently active
-            </td>
-          </tr>
-        `;
-
-  } catch (error) {
-
-    console.error(
-      "Online error:",
-      error
-    );
-  }
-}
-
-
-/* ===========================================================
-   WRITE
-   =========================================================== */
-
-async function write(
-  kind,
-  value,
-  reason,
-  method
-) {
-
-  playClickSound();
-
-  const key =
-    $("key").value.trim();
-
-
-  if (!key) {
-
-    setMessage(
-      "Enter the admin key first.",
-      "error"
-    );
-
-    return false;
-  }
-
-
-  if (!value) {
-
-    setMessage(
-      "Nothing entered.",
-      "error"
-    );
-
-    return false;
-  }
-
-
-  const params =
-    new URLSearchParams();
-
-
-  params.set(
-    "kind",
-    kind
-  );
-
-  params.set(
-    "value",
-    value
-  );
-
-
-  if (reason) {
-
-    params.set(
-      "reason",
-      reason
-    );
-  }
-
-
-  try {
-
-    const response =
-      await apiRequest(
-        `${API}/blacklist?${params.toString()}`,
-        {
-          method,
-
-          headers: {
-            "x-admin-key": key
-          }
-        }
-      );
-
-
-    if (!response.ok) {
-
-      setMessage(
-        `Failed: HTTP ${response.status}`,
-        "error"
-      );
-
-      return false;
+    if (!out.skin) {
+      out.skin = `https://crafatar.com/skins/${profile.uuid}`;
+      out.skinSource = 'crafatar';
+      status.skin_fallback = 'crafatar';
     }
 
-
-    setMessage(
-      "Saved.",
-      "success"
-    );
-
-    return true;
-
-  } catch (error) {
-
-    console.error(error);
-
-    setMessage(
-      "Could not reach the API.",
-      "error"
-    );
-
-    return false;
-  }
-}
-
-
-/* ===========================================================
-   ADD SERVER
-   =========================================================== */
-
-async function addServer() {
-
-  const value =
-    $("server").value
-      .trim()
-      .toLowerCase();
-
-  const reason =
-    $("serverReason")
-      .value
-      .trim();
-
-
-  const success =
-    await write(
-      "server",
-      value,
-      reason,
-      "POST"
-    );
-
-
-  if (success) {
-
-    $("server").value = "";
-    $("serverReason").value = "";
-
-    await refreshBlacklist();
-  }
-}
-
-
-/* ===========================================================
-   ADD PLAYER
-   =========================================================== */
-
-async function addPlayer() {
-
-  const value =
-    $("player").value.trim();
-
-  const reason =
-    $("playerReason")
-      .value
-      .trim();
-
-
-  const success =
-    await write(
-      "player",
-      value,
-      reason,
-      "POST"
-    );
-
-
-  if (success) {
-
-    $("player").value = "";
-    $("playerReason").value = "";
-
-    await refreshBlacklist();
-  }
-}
-
-
-/* ===========================================================
-   BAN ONLINE PLAYER
-   =========================================================== */
-
-async function banFromOnline(name) {
-
-  const success =
-    await write(
-      "player",
-      name,
-      "banned from online list",
-      "POST"
-    );
-
-
-  if (success) {
-
-    await refreshBlacklist();
-    await refreshOnline();
-  }
-}
-
-
-/* ===========================================================
-   REMOVE
-   =========================================================== */
-
-async function removeItem(
-  kind,
-  value
-) {
-
-  const success =
-    await write(
-      kind,
-      value,
-      "",
-      "DELETE"
-    );
-
-
-  if (success) {
-
-    await refreshBlacklist();
-  }
-}
-
-
-/* ===========================================================
-   KICK
-   =========================================================== */
-
-async function kick(name) {
-
-  playClickSound();
-
-  const key =
-    $("key").value.trim();
-
-
-  if (!key) {
-
-    setMessage(
-      "Enter the admin key first.",
-      "error"
-    );
-
-    return;
-  }
-
-
-  try {
-
-    const response =
-      await apiRequest(
-        `${API}/kick?name=${encodeURIComponent(name)}`,
-        {
-          method: "POST",
-
-          headers: {
-            "x-admin-key": key
-          }
-        }
-      );
-
-
-    if (response.ok) {
-
-      setMessage(
-        `Kick sent for ${name}.`,
-        "success"
-      );
-
-    } else {
-
-      setMessage(
-        `Kick failed: HTTP ${response.status}`,
-        "error"
-      );
-    }
-
-  } catch (error) {
-
-    console.error(error);
-
-    setMessage(
-      "Could not reach the API.",
-      "error"
-    );
-  }
-}
-
-
-/* ===========================================================
-   ENTER TO UNLOCK
-   =========================================================== */
-
-$("key").addEventListener(
-  "keydown",
-  event => {
-
-    if (event.key === "Enter") {
-
-      event.preventDefault();
-
-      unlock();
-    }
-  }
-);
-
-
-/* ===========================================================
-   BUTTON SOUNDS
-   =========================================================== */
-
-document.addEventListener(
-  "click",
-  event => {
-
-    const button =
-      event.target.closest("button");
-
-    if (!button) {
-      return;
-    }
-
-    /*
-     * Avoid playing the click twice for actions
-     * that already call playClickSound().
-     */
-  }
-);
-</script>
-
-</body>
-</html>
+    // name history / skin gallery
+    try {
+      Object.assign(out, await laby(profile.uuid));
+      status.laby = 'ok';
+    } catch (e) { status.laby = String(e.message); }
+
+    // tier sites, all in parallel — a slow one shouldn't hold up the rest
+    await Promise.all(SOURCES.map(async (src) => {
+      try {
+        const d = await getJSON(src.url(profile.uuid, encodeURIComponent(profile.name)));
+        out.tiers[src.id] = src.pick(d);
+        status[src.id] = 'ok';
+      } catch (e) {
+        out.tiers[src.id] = null;
+        status[src.id] = String(e.message);
+      }
+    }));
+
+    // has this player ever run the mod?
+    try {
+      const r = await registry(env).fetch(`https://r/?name=${encodeURIComponent(profile.name.toLowerCase())}`);
+      out.klisTeamMod = await r.json();
+      status.registry = 'ok';
+    } catch (e) { status.registry = String(e.message); }
+
+    if (debug) out._status = status;
+
+    const res = json(out);
+    res.headers.set('cache-control', `public, max-age=${CACHE_SECONDS}`);
+    if (!debug) ctx.waitUntil?.(caches.default.put(cacheKey, res.clone()));
+    return res;
+  },
+};
