@@ -52,11 +52,15 @@
 
   <div class="card">
     <label for="key">Admin key</label>
-    <input id="key" type="password" placeholder="set once with: wrangler secret put ADMIN_KEY"
-           autocomplete="off">
+    <div class="row">
+      <div><input id="key" type="password" placeholder="enter the key to unlock this page"
+           autocomplete="off" onkeydown="if(event.key==='Enter')unlock()"></div>
+      <div style="flex:0 0 auto"><button onclick="unlock()">Unlock</button></div>
+    </div>
     <div id="msg"></div>
   </div>
 
+  <div id="panels" style="display:none">
   <div class="card">
     <h2>Blocked servers</h2>
     <div class="row">
@@ -80,6 +84,7 @@
   <div class="card">
     <h2>Using the mod right now <span style="color:var(--faint);font-weight:400">(last 5 min)</span></h2>
     <table id="onlineList"><tbody></tbody></table>
+  </div>
   </div>
 </div>
 
@@ -172,9 +177,18 @@ async function remove(kind, value) {
   if (await write(kind, value, '', 'DELETE')) refreshBlacklist();
 }
 
-refreshBlacklist();
-refreshOnline();
-setInterval(refreshOnline, 15000);
+async function unlock() {
+  const key = $('key').value.trim();
+  if (!key) { $('msg').textContent = 'Enter the key.'; return; }
+  const r = await fetch(`${API}/verify`, { headers: { 'x-admin-key': key } });
+  if (!r.ok) { $('msg').textContent = 'Wrong key.'; return; }
+  $('msg').textContent = '';
+  $('key').closest('.card').style.display = 'none';
+  $('panels').style.display = '';
+  refreshBlacklist();
+  refreshOnline();
+  setInterval(refreshOnline, 15000);
+}
 </script>
 </body>
 </html>

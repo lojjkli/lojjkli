@@ -307,6 +307,15 @@ export default {
       return json({ ok: true });
     }
 
+    // Lets the admin page confirm a key before showing anything, without
+    // touching storage. Read-only, but still requires the correct key - this
+    // is what gates the page itself, separate from the write checks below.
+    if (url.pathname === '/verify') {
+      const key = (request.headers.get('x-admin-key') || url.searchParams.get('key') || '').toLowerCase();
+      const ok = !!env.ADMIN_KEY && key === env.ADMIN_KEY.toLowerCase();
+      return json({ ok }, ok ? 200 : 401);
+    }
+
     if (url.pathname === '/blacklist') {
       if (request.method === 'GET') {
         const r = await blacklist(env).fetch('https://b/');
