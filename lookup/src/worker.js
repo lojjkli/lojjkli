@@ -172,6 +172,14 @@ const CORS = {
 
 const norm = (v) => String(v || '').trim().toLowerCase();
 
+/** Must mirror ModAccess.normalizeServer in the mod, or blocks never match. */
+function normalizeServer(v) {
+  let a = norm(v);
+  while (a.endsWith('.')) a = a.slice(0, -1);
+  if (a.endsWith(':25565')) a = a.slice(0, -6);
+  return a;
+}
+
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj, null, 2), { status, headers: CORS });
 
@@ -351,7 +359,12 @@ export default {
         return json({ error: 'unauthorized' }, 401);
       }
       const kind   = url.searchParams.get('kind') || 'server';
-      const value  = url.searchParams.get('value') || url.searchParams.get('server') || '';
+      let   value  = url.searchParams.get('value') || url.searchParams.get('server') || '';
+      // The mod reports its server as lowercase, without a trailing dot and with
+      // the default :25565 stripped. Typing "Play.Example.com:25565" in the admin
+      // panel stored a string the client could never match, so the block silently
+      // did nothing. Normalise both sides identically.
+      if (kind === 'server') value = normalizeServer(value);
       const reason = url.searchParams.get('reason') || '';
       const r = await blacklist(env).fetch(
         `https://b/?kind=${encodeURIComponent(kind)}&value=${encodeURIComponent(value)}`
@@ -384,7 +397,7 @@ export default {
     // fast, shared interval instead.
     if (url.pathname === '/status') {
       const name = (url.searchParams.get('name') || '').trim().toLowerCase();
-      const server = (url.searchParams.get('server') || '').trim().toLowerCase();
+      const server = normalizeServer(url.searchParams.get('server') || '');
       if (!/^[a-z0-9_]{1,16}$/.test(name)) return json({ error: 'bad name' }, 400);
 
       const [blRes, kRes] = await Promise.all([

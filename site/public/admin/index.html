@@ -7,415 +7,270 @@
 
 <title>lojjkli · Welcome back, Kli</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Space+Grotesk:wght@500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
 <style>
   :root {
-    --void: #020202;
-    --black: #050505;
-    --card: #0d0d0d;
-    --card-hover: #111111;
-    --line: #1f1f1f;
-    --line-bright: #333333;
-
-    --text: #f4f4f4;
-    --dim: #9a9a9a;
-    --faint: #5e5e5e;
-
-    --green: #22c55e;
-    --red: #ef4444;
-    --amber: #f59e0b;
-
-    --r-sm: 8px;
-    --r-md: 12px;
-    --r-lg: 16px;
-
-    --display: "Space Grotesk", sans-serif;
-    --body: "Inter", sans-serif;
-    --mono: "JetBrains Mono", monospace;
+    --void:#020202; --surface:#070707; --card:#0C0C0C; --raised:#121212;
+    --line:#1C1C1C; --line-bright:#2E2E2E; --line-hot:#454545;
+    --text:#F4F4F4; --dim:#9C9C9C; --faint:#5F5F5F; --ghost:#3A3A3A;
+    --green:#22c55e; --red:#ef4444; --amber:#f59e0b;
+    --r-xs:6px; --r-sm:9px; --r-md:13px; --r-lg:18px;
+    --display:"Space Grotesk",sans-serif;
+    --body:"Inter",sans-serif;
+    --mono:"JetBrains Mono",monospace;
   }
 
-  * { box-sizing: border-box; }
-
-  html { background: var(--void); scroll-behavior: smooth; }
+  * { box-sizing:border-box; }
+  html { background:var(--void); }
 
   body {
-    margin: 0;
-    min-height: 100vh;
+    margin:0; min-height:100vh; color:var(--text);
+    font:15px/1.6 var(--body);
+    -webkit-font-smoothing:antialiased;
     background:
-      radial-gradient(circle at 50% -10%, rgba(255,255,255,.055), transparent 34%),
+      radial-gradient(900px 500px at 50% -20%, rgba(255,255,255,.055), transparent 70%),
       var(--void);
-    color: var(--text);
-    font: 15px/1.6 var(--body);
   }
 
+  /* One fixed layer for the grid texture. Fixed + pointer-events:none means it
+     never participates in layout or hit-testing, so it costs nothing as the
+     tables below repaint every second. */
   body::before {
-    content: "";
-    position: fixed;
-    inset: 0;
-    pointer-events: none;
-    z-index: 0;
-    opacity: .25;
+    content:""; position:fixed; inset:0; z-index:0; pointer-events:none; opacity:.5;
     background:
-      linear-gradient(rgba(255,255,255,.018) 1px, transparent 1px),
-      linear-gradient(90deg, rgba(255,255,255,.018) 1px, transparent 1px);
-    background-size: 48px 48px;
-    mask-image: linear-gradient(to bottom, black, transparent 80%);
+      linear-gradient(rgba(255,255,255,.014) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(255,255,255,.014) 1px, transparent 1px);
+    background-size:56px 56px;
+    -webkit-mask-image:linear-gradient(to bottom, #000, transparent 70%);
+    mask-image:linear-gradient(to bottom, #000, transparent 70%);
   }
 
+  /* ---------- intro ---------- */
   #intro {
-    position: fixed;
-    inset: 0;
-    z-index: 99999;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: radial-gradient(circle at center, #111 0%, #050505 42%, #020202 75%);
-    opacity: 1;
-    cursor: pointer;
-    transition: opacity .6s cubic-bezier(.77,0,.18,1), visibility .6s;
+    position:fixed; inset:0; z-index:9999; cursor:pointer;
+    display:flex; align-items:center; justify-content:center;
+    background:radial-gradient(circle at center,#0E0E0E 0%,#050505 45%,#020202 78%);
+    transition:opacity .55s cubic-bezier(.77,0,.18,1), visibility .55s;
   }
-
-  #intro::before {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: repeating-linear-gradient(0deg, rgba(255,255,255,.025) 0px, rgba(255,255,255,.025) 1px, transparent 1px, transparent 4px);
-    opacity: .3;
-    pointer-events: none;
-  }
-
   #intro::after {
-    content: "";
-    position: absolute;
-    inset: 0;
-    background: radial-gradient(ellipse at center, transparent 35%, rgba(0,0,0,.75) 100%);
-    pointer-events: none;
+    content:""; position:absolute; inset:0; pointer-events:none;
+    background:radial-gradient(ellipse at center, transparent 38%, rgba(0,0,0,.8) 100%);
   }
-
-  .intro-content {
-    position: relative;
-    z-index: 2;
-    width: min(90vw, 700px);
-    text-align: center;
-    animation: introEnter 1.6s cubic-bezier(.2,.8,.2,1) both;
-  }
-
+  #intro.hide { opacity:0; visibility:hidden; pointer-events:none; }
+  .intro-content { position:relative; z-index:2; width:min(92vw,720px); text-align:center; }
   .intro-overline {
-    margin-bottom: 14px;
-    color: #666;
-    font: 500 10px var(--mono);
-    letter-spacing: .34em;
-    text-transform: uppercase;
-    opacity: 0;
-    animation: fadeUp .8s ease .35s forwards;
+    margin-bottom:16px; color:#5A5A5A; font:500 10px var(--mono);
+    letter-spacing:.4em; text-transform:uppercase;
+    opacity:0; animation:fadeUp .7s ease .25s forwards;
   }
-
-  /* Decorative only - the real page heading is .brand-name below, so this
-     is not a second <h1>: screen readers should skip straight past it.
-     One glowing sweep crosses the static text once, rather than animating
-     each letter separately - a single deliberate moment instead of a
-     16-node stagger that has to be kept in sync by hand. */
   .intro-title {
-    margin: 0;
-    font: 700 clamp(34px, 7.5vw, 76px)/1.05 var(--display);
-    letter-spacing: -.04em;
-    white-space: nowrap;
-    background: linear-gradient(100deg, #444 0%, #444 42%, #ffffff 50%, #444 58%, #444 100%);
-    background-size: 260% 100%;
-    -webkit-background-clip: text;
-    background-clip: text;
-    color: transparent;
-    opacity: 0;
-    animation: fadeUp .7s ease .4s forwards, introSweep 1.7s cubic-bezier(.2,.8,.2,1) .45s forwards;
+    margin:0; font:700 clamp(32px,7vw,72px)/1.04 var(--display);
+    letter-spacing:-.045em; white-space:nowrap;
+    background:linear-gradient(100deg,#3E3E3E 0%,#3E3E3E 42%,#FFFFFF 50%,#3E3E3E 58%,#3E3E3E 100%);
+    background-size:260% 100%; -webkit-background-clip:text; background-clip:text; color:transparent;
+    opacity:0; animation:fadeUp .7s ease .35s forwards, sweep 1.8s cubic-bezier(.2,.8,.2,1) .4s forwards;
   }
-
   .intro-line {
-    width: 0;
-    height: 1px;
-    margin: 22px auto 16px;
-    background: linear-gradient(90deg, transparent, rgba(255,255,255,.8), transparent);
-    animation: lineGrow 1s ease .8s forwards;
+    width:0; height:1px; margin:24px auto 18px;
+    background:linear-gradient(90deg,transparent,rgba(255,255,255,.75),transparent);
+    animation:lineGrow 1s ease .75s forwards;
   }
-
   .intro-sub {
-    color: #696969;
-    font: 500 10px var(--mono);
-    letter-spacing: .3em;
-    text-transform: uppercase;
-    opacity: 0;
-    animation: fadeUp .8s ease 1.1s forwards;
+    color:#6A6A6A; font:500 10px var(--mono); letter-spacing:.32em; text-transform:uppercase;
+    opacity:0; animation:fadeUp .7s ease 1s forwards;
   }
-
   .intro-status {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 56px;
-    text-align: center;
-    color: #555;
-    font: 500 10px var(--mono);
-    letter-spacing: .14em;
-    text-transform: uppercase;
-    opacity: 0;
-    animation: fadeUp .8s ease 1.3s forwards;
+    position:absolute; left:0; right:0; bottom:58px; text-align:center;
+    color:#565656; font:500 10px var(--mono); letter-spacing:.15em; text-transform:uppercase;
+    opacity:0; animation:fadeUp .7s ease 1.2s forwards;
   }
-
   .intro-dot {
-    display: inline-block;
-    vertical-align: middle;
-    margin-right: 9px;
-    margin-bottom: 1px;
-    width: 6px;
-    height: 6px;
-    border-radius: 50%;
-    background: #fff;
-    box-shadow: 0 0 10px rgba(255,255,255,.55);
-    animation: pulse 1.3s ease-in-out infinite;
+    display:inline-block; vertical-align:middle; margin:0 9px 1px 0;
+    width:6px; height:6px; border-radius:50%; background:#fff;
+    box-shadow:0 0 10px rgba(255,255,255,.6); animation:pulse 1.3s ease-in-out infinite;
   }
-
   .intro-progress {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 32px;
-    width: min(260px, 60vw);
-    height: 1px;
-    margin: 0 auto;
-    background: #171717;
-    overflow: hidden;
+    position:absolute; left:0; right:0; bottom:34px; width:min(260px,60vw);
+    height:1px; margin:0 auto; background:#171717; overflow:hidden;
   }
-
-  .intro-progress-bar {
-    width: 40%;
-    height: 100%;
-    background: #aaa;
-    animation: scan 1.8s ease-in-out infinite;
-  }
-
+  .intro-progress-bar { width:38%; height:100%; background:#9A9A9A; animation:scan 1.9s ease-in-out infinite; }
   .intro-skip {
-    position: absolute;
-    left: 0;
-    right: 0;
-    bottom: 16px;
-    text-align: center;
-    color: #3a3a3a;
-    font: 500 9px var(--mono);
-    letter-spacing: .12em;
-    text-transform: uppercase;
-    opacity: 0;
-    animation: fadeUp .8s ease 1.6s forwards;
+    position:absolute; left:0; right:0; bottom:16px; text-align:center;
+    color:var(--ghost); font:500 9px var(--mono); letter-spacing:.14em; text-transform:uppercase;
+    opacity:0; animation:fadeUp .7s ease 1.5s forwards;
   }
 
-  #intro.hide { opacity: 0; visibility: hidden; pointer-events: none; }
+  /* ---------- shell ---------- */
+  .wrap { position:relative; z-index:1; width:min(100%,1080px); margin:0 auto; padding:52px 26px 110px; }
 
-  .wrap {
-    position: relative;
-    z-index: 1;
-    width: min(100%, 760px);
-    margin: 0 auto;
-    padding: 64px 24px 100px;
+  .topbar {
+    display:flex; align-items:flex-end; justify-content:space-between; gap:20px;
+    padding-bottom:22px; margin-bottom:30px; border-bottom:1px solid var(--line);
   }
-
-  .brand {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 12px;
-    margin-bottom: 34px;
-  }
-
-  .brand-name { margin: 0; font: 700 30px/1 var(--display); letter-spacing: -.045em; }
-
+  .brand-name { margin:0; font:700 clamp(26px,3.4vw,34px)/1 var(--display); letter-spacing:-.05em; }
   .brand-sub {
-    margin: 8px 0 0;
-    color: var(--faint);
-    font: 500 10px var(--mono);
-    letter-spacing: .16em;
-    text-transform: uppercase;
+    margin:9px 0 0; color:var(--faint);
+    font:500 10px var(--mono); letter-spacing:.22em; text-transform:uppercase;
   }
-
-  .brand-actions { display: flex; align-items: center; gap: 8px; flex: none; }
+  .topbar-right { display:flex; align-items:center; gap:10px; flex:none; }
 
   .iconbtn {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-    gap: 6px;
-    background: transparent;
-    color: var(--faint);
-    border: 1px solid var(--line-bright);
-    border-radius: var(--r-sm);
-    font: 500 11px var(--mono);
-    padding: 8px 10px;
-    line-height: 1;
+    display:inline-flex; align-items:center; gap:7px;
+    background:transparent; color:var(--dim); cursor:pointer;
+    border:1px solid var(--line-bright); border-radius:var(--r-sm);
+    font:500 11px var(--mono); letter-spacing:.08em; text-transform:uppercase;
+    padding:9px 13px; line-height:1; transition:border-color .18s ease, color .18s ease;
   }
-  .iconbtn svg { width: 14px; height: 14px; display: block; }
-  .iconbtn:hover { color: #ddd; background: #171717; }
+  .iconbtn:hover { color:var(--text); border-color:var(--line-hot); }
+  #lockBtn { display:none; }
 
-  #lockBtn { display: none; }
+  /* ---------- login ---------- */
+  .login-shell { display:flex; justify-content:center; }
+  #loginCard {
+    /* Margin lives on the card, not the flex wrapper: the script hides the card
+       by setting its own display to none, and padding on the wrapper would have
+       stayed behind as an unexplained gap above the panels. */
+    margin:34px 0 10px;
+    width:min(100%,430px); background:var(--card);
+    border:1px solid var(--line); border-radius:var(--r-lg); padding:30px;
+    box-shadow:0 30px 90px rgba(0,0,0,.5);
+  }
+  .login-title { margin:0 0 4px; font:600 17px var(--display); letter-spacing:-.015em; }
+  .login-hint { margin:0 0 22px; color:var(--faint); font-size:13px; }
 
-  h2 { margin: 0 0 14px; color: #c7c7c7; font: 600 14px var(--display); }
-  h2 .h2-icon { width: 15px; height: 15px; margin-right: 8px; vertical-align: -3px; color: var(--faint); }
+  /* ---------- cards ---------- */
+  .grid { display:grid; grid-template-columns:1fr 1fr; gap:18px; }
+  @media (max-width:900px) { .grid { grid-template-columns:1fr; } }
 
   .card {
-    position: relative;
-    background: linear-gradient(145deg, rgba(255,255,255,.025), rgba(255,255,255,.008)), var(--card);
-    border: 1px solid var(--line);
-    border-radius: var(--r-lg);
-    padding: 20px;
-    margin-bottom: 18px;
-    box-shadow: 0 18px 60px rgba(0,0,0,.18);
-    transition: border-color .2s ease, background .2s ease;
+    background:var(--card); border:1px solid var(--line); border-radius:var(--r-lg);
+    padding:22px; margin-bottom:18px; transition:border-color .2s ease;
   }
-  .card:hover { border-color: #2b2b2b; }
-  .card.flash { animation: cardFlash 1s ease; }
+  .grid .card { margin-bottom:0; display:flex; flex-direction:column; }
+  .card:hover { border-color:var(--line-bright); }
 
+  .card-head { display:flex; align-items:center; justify-content:space-between; gap:12px; margin-bottom:18px; }
+  h2 {
+    margin:0; display:flex; align-items:center; gap:9px;
+    font:600 13px var(--display); letter-spacing:.01em; color:#DCDCDC;
+  }
+  h2 svg { width:15px; height:15px; color:var(--faint); flex:none; }
+  .count {
+    color:var(--faint); font:500 10px var(--mono); letter-spacing:.1em;
+    border:1px solid var(--line); border-radius:999px; padding:3px 9px;
+  }
+
+  /* ---------- form ---------- */
   label {
-    display: block;
-    margin-bottom: 9px;
-    color: var(--faint);
-    font: 500 10px var(--mono);
-    letter-spacing: .13em;
-    text-transform: uppercase;
+    display:block; margin-bottom:8px; color:var(--faint);
+    font:500 10px var(--mono); letter-spacing:.16em; text-transform:uppercase;
   }
-
   input {
-    width: 100%;
-    padding: 11px 13px;
-    background: #080808;
-    color: var(--text);
-    border: 1px solid var(--line);
-    border-radius: var(--r-sm);
-    outline: none;
-    font: 14px var(--mono);
-    transition: border-color .2s ease, box-shadow .2s ease, background .2s ease;
+    width:100%; padding:11px 13px; background:var(--surface); color:var(--text);
+    border:1px solid var(--line); border-radius:var(--r-sm); outline:none;
+    font:13px var(--mono);
+    transition:border-color .18s ease, box-shadow .18s ease;
   }
-  input::placeholder { color: #454545; }
-  input:focus { border-color: #404040; background: #0a0a0a; box-shadow: 0 0 0 3px rgba(255,255,255,.025); }
+  input::placeholder { color:#3E3E3E; }
+  input:focus { border-color:var(--line-hot); box-shadow:0 0 0 3px rgba(255,255,255,.04); }
 
-  .row { display: flex; gap: 10px; }
-  .row > div { flex: 1; min-width: 0; }
+  .row { display:flex; gap:9px; }
+  .row > div { flex:1; min-width:0; }
 
   button {
-    position: relative;
-    background: #f1f1f1;
-    border: 1px solid #f1f1f1;
-    border-radius: var(--r-sm);
-    color: #050505;
-    padding: 10px 17px;
-    font: 600 12px var(--body);
-    cursor: pointer;
-    white-space: nowrap;
-    transition: transform .15s ease, opacity .15s ease, background .15s ease;
+    background:var(--text); border:1px solid var(--text); border-radius:var(--r-sm);
+    color:#050505; padding:10px 18px; cursor:pointer; white-space:nowrap;
+    font:600 12px var(--body); letter-spacing:.01em;
+    transition:opacity .15s ease, transform .1s ease, background .15s ease, border-color .15s ease;
   }
-  button:hover { transform: translateY(-1px); }
-  button:active { transform: translateY(0) scale(.98); }
-  button:disabled { opacity: .45; cursor: not-allowed; transform: none; }
+  button:hover { opacity:.88; }
+  button:active { transform:translateY(1px); }
+  button:disabled { opacity:.4; cursor:not-allowed; transform:none; }
+  button.danger { background:var(--red); border-color:var(--red); color:#fff; }
+  button.warn   { background:transparent; border-color:rgba(245,158,11,.5); color:var(--amber); }
+  button.warn:hover { background:rgba(245,158,11,.1); }
+  button.ghost  { background:transparent; border-color:var(--line-bright); color:var(--dim); }
+  button.ghost:hover { background:var(--raised); color:var(--text); }
+  .btn-sm { padding:7px 12px; font-size:11px; }
 
-  button.danger { color: #fff; background: var(--red); border-color: var(--red); }
-  button.warn { color: #1a1204; background: var(--amber); border-color: var(--amber); }
-  button.ghost { color: #a0a0a0; background: transparent; border-color: var(--line-bright); }
-  button.ghost:hover { background: #171717; color: #ddd; }
+  #msg { min-height:17px; margin-top:12px; font:500 11px var(--mono); color:var(--dim); }
+  #msg.error { color:var(--red); }
+  #msg.success { color:var(--green); }
 
-  #msg { min-height: 18px; margin-top: 11px; font: 500 11px var(--mono); color: var(--dim); }
-  #msg.error { color: var(--red); }
-  #msg.success { color: var(--green); }
+  /* ---------- tables ---------- */
+  .table-wrap { flex:1; overflow-x:auto; }
+  table { width:100%; border-collapse:collapse; }
+  thead th {
+    text-align:left; padding:0 10px 10px 0; border-bottom:1px solid var(--line);
+    color:var(--ghost); font:500 9px var(--mono); letter-spacing:.18em; text-transform:uppercase;
+    white-space:nowrap;
+  }
+  thead th:last-child { text-align:right; padding-right:0; }
+  td {
+    padding:11px 10px 11px 0; border-bottom:1px solid var(--line);
+    color:#DEDEDE; font:13px var(--mono); vertical-align:middle;
+  }
+  tbody tr:last-child td { border-bottom:0; }
+  tbody tr { transition:background .15s ease; }
+  tbody tr:hover { background:rgba(255,255,255,.022); }
+  td.reason, td.time { color:var(--faint); }
+  td.ver { color:var(--dim); font-size:12px; }
+  td.btns { width:1%; text-align:right; white-space:nowrap; padding-right:0; }
+  td.btns button { margin-left:6px; padding:7px 12px; font-size:11px; }
 
-  table { width: 100%; border-collapse: collapse; margin-top: 5px; }
-  td { padding: 10px 8px; border-bottom: 1px solid var(--line); color: #ddd; font: 13px var(--mono); vertical-align: middle; }
-  tr:last-child td { border-bottom: 0; }
-  td.reason, td.time { color: var(--dim); }
-  td.btns { width: 1%; text-align: right; white-space: nowrap; }
-  td.btns button { margin-left: 5px; }
-
-  /* .who is a span *inside* a <td>, not the cell itself - a <td> switched
-     to display:flex stops behaving like a table cell and can size itself
-     out of step with its neighbours, which is what was throwing the text
-     in this row out of line with the others. */
-  .who { display: inline-flex; align-items: center; gap: 9px; font-weight: 500; }
-  .who .name { line-height: 1; }
-
+  .who { display:inline-flex; align-items:center; gap:10px; font-weight:500; }
+  .who .name { line-height:1; color:var(--text); }
   .head {
-    width: 24px; height: 24px; flex: none; border-radius: var(--r-sm);
-    background: #080808; border: 1px solid var(--line); image-rendering: pixelated;
+    width:24px; height:24px; flex:none; border-radius:var(--r-xs);
+    background:var(--surface); border:1px solid var(--line); image-rendering:pixelated;
   }
-
   .dot {
-    width: 7px; height: 7px; flex: none; border-radius: 50%;
-    background: var(--green); box-shadow: 0 0 8px rgba(34,197,94,.75);
-    animation: onlinePulse 1.8s ease-in-out infinite;
+    width:6px; height:6px; flex:none; border-radius:50%; background:var(--green);
+    box-shadow:0 0 8px rgba(34,197,94,.7); animation:onlinePulse 1.9s ease-in-out infinite;
   }
-
-  .empty { color: var(--faint); }
-
-  /* Relay state and version for each active player. "relay" means that client
-     reported an open room connection on its last check-in, not merely that the
-     mod is loaded. */
   .tag {
-    display: inline-block;
-    padding: 2px 7px;
-    border: 1px solid var(--line-bright);
-    border-radius: 999px;
-    color: var(--faint);
-    font: 500 10px var(--mono);
-    letter-spacing: .06em;
+    display:inline-block; padding:3px 9px; border:1px solid var(--line-bright);
+    border-radius:999px; color:var(--faint); font:500 10px var(--mono); letter-spacing:.07em;
   }
-  .tag.on { color: var(--green); border-color: rgba(34,197,94,.45); }
-  td.ver { color: var(--dim); font-size: 12px; }
+  .tag.on { color:var(--green); border-color:rgba(34,197,94,.42); }
+  .empty { color:var(--ghost); text-align:center; padding:30px 0 !important; font-size:12px; }
 
-  /* Kli, watching from the corner. A plain <img src="...gif"> plays on its
-     own - no JS, no canvas, nothing to keep running - so this costs one
-     cached image request and nothing at runtime. Hidden once the viewport
-     is too narrow to have room beside the panel. */
+  #onlineRefreshed { color:var(--ghost); font:500 10px var(--mono); letter-spacing:.06em; }
+
+  /* ---------- mascot ---------- */
   .mascot {
-    position: fixed;
-    right: 26px;
-    bottom: 26px;
-    width: 108px;
-    height: 108px;
-    z-index: 5;
-    image-rendering: pixelated;
-    filter: drop-shadow(0 0 20px rgba(255,255,255,.10));
-    pointer-events: none;
-    opacity: .92;
+    position:fixed; right:28px; bottom:26px; width:104px; height:104px; z-index:5;
+    image-rendering:pixelated; opacity:.9; pointer-events:none;
+    filter:drop-shadow(0 0 22px rgba(255,255,255,.1));
   }
-  @media (max-width: 980px) { .mascot { display: none; } }
+  @media (max-width:1180px) { .mascot { display:none; } }
 
-  .refresh-row { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
-  .refresh-row h2 { margin: 0; }
-  #onlineRefreshed { color: var(--faint); font: 500 10px var(--mono); }
+  @keyframes fadeUp { from { opacity:0; transform:translateY(8px);} to { opacity:1; transform:translateY(0);} }
+  @keyframes sweep { from { background-position:140% 0; } to { background-position:-40% 0; } }
+  @keyframes lineGrow { to { width:min(280px,62vw); } }
+  @keyframes scan { 0% { transform:translateX(-120%);} 100% { transform:translateX(360%);} }
+  @keyframes pulse { 0%,100% { opacity:.35; transform:scale(.8);} 50% { opacity:1; transform:scale(1.15);} }
+  @keyframes onlinePulse { 0%,100% { opacity:.5; } 50% { opacity:1; } }
 
-  @keyframes introEnter { from { opacity: 0; transform: scale(.97); filter: blur(8px); } to { opacity: 1; transform: scale(1); filter: blur(0); } }
-  @keyframes introSweep { from { background-position: 140% 0; } to { background-position: -40% 0; } }
-  @keyframes fadeUp { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-  @keyframes lineGrow { to { width: min(260px, 60vw); } }
-  @keyframes scan { 0% { transform: translateX(-120%); } 100% { transform: translateX(350%); } }
-  @keyframes pulse { 0%,100% { opacity: .35; transform: scale(.8); } 50% { opacity: 1; transform: scale(1.15); } }
-  @keyframes onlinePulse { 0%,100% { opacity: .5; } 50% { opacity: 1; } }
-  @keyframes cardFlash { 0% { border-color: rgba(255,255,255,.4); box-shadow: 0 0 0 3px rgba(255,255,255,.06), 0 18px 60px rgba(0,0,0,.18); } 100% { border-color: var(--line); box-shadow: 0 18px 60px rgba(0,0,0,.18); } }
-
-  @media (max-width: 640px) {
-    .wrap { padding: 38px 15px 70px; }
-    .row { flex-direction: column; }
-    .row > div { width: 100%; }
-    .row button { width: 100%; }
-    .intro-title { white-space: normal; padding: 0 15px; }
-    table, tbody, tr, td { width: 100%; }
-    td.btns { text-align: right; }
-    td.reason { display: none; }
-    td.ver { display: none; }
-    td.time { font-size: 11px; }
-    td.btns button { padding: 8px 10px; }
+  @media (max-width:640px) {
+    .wrap { padding:34px 15px 80px; }
+    .topbar { flex-direction:column; align-items:flex-start; gap:16px; }
+    .row { flex-direction:column; }
+    .row button { width:100%; }
+    .intro-title { white-space:normal; padding:0 14px; }
+    td.reason, td.ver { display:none; }
+    thead th.h-reason, thead th.h-ver { display:none; }
   }
 
   @media (prefers-reduced-motion: reduce) {
     *, *::before, *::after {
-      animation-duration: .01ms !important;
-      animation-iteration-count: 1 !important;
-      transition-duration: .01ms !important;
+      animation-duration:.01ms !important; animation-iteration-count:1 !important;
+      transition-duration:.01ms !important;
     }
-    .intro-title { background-position: -40% 0; opacity: 1; }
+    .intro-title { background-position:-40% 0; opacity:1; }
   }
 </style>
 </head>
@@ -429,84 +284,105 @@
     <div class="intro-line"></div>
     <div class="intro-sub">lojjkli · private administration</div>
   </div>
-  <div class="intro-status" aria-hidden="true">
-    <span class="intro-dot"></span>
-    Secure session initializing
-  </div>
+  <div class="intro-status" aria-hidden="true"><span class="intro-dot"></span>Secure session initializing</div>
   <div class="intro-progress" aria-hidden="true"><div class="intro-progress-bar"></div></div>
-  <div class="intro-skip" aria-hidden="true">click or press any key to skip</div>
+  <div class="intro-skip" aria-hidden="true">click or press any key to continue</div>
 </div>
 
 <img class="mascot" src="kli_looking.gif" alt="" aria-hidden="true">
 
 <div class="wrap">
 
-  <div class="brand">
+  <div class="topbar">
     <div>
       <h1 class="brand-name">lojjkli</h1>
       <p class="brand-sub">KlisTeam Studio · Administration</p>
     </div>
-    <div class="brand-actions">
+    <div class="topbar-right">
       <button id="lockBtn" class="iconbtn" onclick="lock()">Lock</button>
     </div>
   </div>
 
-  <div class="card" id="loginCard">
-    <label for="key">Admin key</label>
-    <div class="row">
-      <div>
-        <input id="key" type="password" placeholder="Enter admin key" autocomplete="current-password" spellcheck="false">
+  <div class="login-shell" id="loginShell">
+    <div class="card" id="loginCard">
+      <h2 class="login-title">Admin access</h2>
+      <p class="login-hint">Enter your key to manage bans, blocks and activity.</p>
+      <label for="key">Admin key</label>
+      <div class="row">
+        <div><input id="key" type="password" placeholder="Enter admin key" autocomplete="current-password" spellcheck="false"></div>
+        <div style="flex:0 0 auto"><button id="unlockBtn" onclick="unlock()">Unlock</button></div>
       </div>
-      <div style="flex:0 0 auto">
-        <button id="unlockBtn" onclick="unlock()">Unlock</button>
-      </div>
+      <div id="msg" role="status" aria-live="polite"></div>
     </div>
-    <div id="msg" role="status" aria-live="polite"></div>
   </div>
 
   <div id="panels" style="display:none">
 
-    <div class="card">
-      <h2>
-        <svg class="h2-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <rect x="4" y="5" width="16" height="5" rx="1.5"/><rect x="4" y="14" width="16" height="5" rx="1.5"/>
-          <line x1="7" y1="7.5" x2="7.01" y2="7.5"/><line x1="7" y1="16.5" x2="7.01" y2="16.5"/>
-          <line x1="3" y1="21" x2="21" y2="3"/>
-        </svg>Blocked servers
-      </h2>
-      <div class="row">
-        <div><input id="server" placeholder="play.example.com"></div>
-        <div><input id="serverReason" placeholder="Reason (optional)"></div>
-        <div style="flex:0 0 auto"><button id="blockBtn" onclick="addServer()">Block</button></div>
+    <div class="grid" style="margin-bottom:18px">
+
+      <div class="card">
+        <div class="card-head">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <rect x="4" y="5" width="16" height="5" rx="1.5"/><rect x="4" y="14" width="16" height="5" rx="1.5"/>
+              <line x1="7" y1="7.5" x2="7.01" y2="7.5"/><line x1="7" y1="16.5" x2="7.01" y2="16.5"/>
+              <line x1="3" y1="21" x2="21" y2="3"/>
+            </svg>Blocked servers
+          </h2>
+        </div>
+        <div class="row" style="margin-bottom:16px">
+          <div><input id="server" placeholder="play.example.com"></div>
+          <div><input id="serverReason" placeholder="Reason (optional)"></div>
+          <div style="flex:0 0 auto"><button id="blockBtn" class="btn-sm" onclick="addServer()">Block</button></div>
+        </div>
+        <div class="table-wrap">
+          <table id="serverList">
+            <thead><tr><th>Server</th><th class="h-reason">Reason</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
       </div>
-      <table id="serverList"><tbody></tbody></table>
+
+      <div class="card">
+        <div class="card-head">
+          <h2>
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+              <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/>
+              <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
+            </svg>Banned players
+          </h2>
+        </div>
+        <div class="row" style="margin-bottom:16px">
+          <div><input id="player" placeholder="Username"></div>
+          <div><input id="playerReason" placeholder="Reason (optional)"></div>
+          <div style="flex:0 0 auto"><button id="banBtn" class="danger btn-sm" onclick="addPlayer()">Ban</button></div>
+        </div>
+        <div class="table-wrap">
+          <table id="playerList">
+            <thead><tr><th>Player</th><th class="h-reason">Reason</th><th></th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
     </div>
 
     <div class="card">
-      <h2>
-        <svg class="h2-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-          <path d="M12 3l7 3v6c0 4.5-3 7.5-7 9-4-1.5-7-4.5-7-9V6l7-3z"/>
-          <line x1="9" y1="9" x2="15" y2="15"/><line x1="15" y1="9" x2="9" y2="15"/>
-        </svg>Banned players
-      </h2>
-      <div class="row">
-        <div><input id="player" placeholder="Username"></div>
-        <div><input id="playerReason" placeholder="Reason (optional)"></div>
-        <div style="flex:0 0 auto"><button id="banBtn" class="danger" onclick="addPlayer()">Ban</button></div>
-      </div>
-      <table id="playerList"><tbody></tbody></table>
-    </div>
-
-    <div class="card">
-      <div class="refresh-row">
+      <div class="card-head">
         <h2>
-          <svg class="h2-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
             <path d="M3 12h4l2-7 4 14 2-7h6"/>
-          </svg>Using the mod right now <span style="color:var(--faint);font-weight:400">(last 5 min)</span>
+          </svg>Live activity
+          <span class="count">last 5 min</span>
         </h2>
         <span id="onlineRefreshed"></span>
       </div>
-      <table id="onlineList"><tbody></tbody></table>
+      <div class="table-wrap">
+        <table id="onlineList">
+          <thead><tr><th>Player</th><th>Relay</th><th class="h-ver">Version</th><th>Seen</th><th></th></tr></thead>
+          <tbody></tbody>
+        </table>
+      </div>
     </div>
 
   </div>
@@ -919,6 +795,9 @@ document.addEventListener("click", async event => {
   }
 });
 </script>
+
+</body>
+</html>
 
 </body>
 </html>
