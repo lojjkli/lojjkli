@@ -14,7 +14,7 @@
     --void:#020202; --surface:#0A0A0A; --raised:#101010; --card:#111111;
     --line:#262626; --line-bright:#3C3C3C;
     --text:#F2F2F2; --dim:#A3A3A3; --faint:#6C6C6C; --sub:#6b6b6b;
-    --green:#22c55e; --red:#ef4444;
+    --green:#22c55e; --red:#ef4444; --amber:#f59e0b;
     --display:'Space Grotesk',sans-serif;
     --body:'Inter',sans-serif;
     --mono:'JetBrains Mono',monospace;
@@ -46,6 +46,7 @@
   .dot{width:7px;height:7px;border-radius:50%;background:var(--faint);flex:none}
   .dot.on{background:var(--green);box-shadow:0 0 10px var(--green)}
   .dot.err{background:var(--red)}
+  .dot.warn{background:var(--amber)}
   table{width:100%;border-collapse:collapse}
   th{text-align:left;color:var(--faint);font:500 11px/1 var(--mono);
      letter-spacing:.12em;text-transform:uppercase;
@@ -108,13 +109,20 @@
 <script>
 const RELAY = 'wss://relay.lojjkli.site';
 const STALE_MS = 15000, DROP_MS = 120000;
+const PROTOCOL_VERSION = 1;           // must match RelayShare.PROTOCOL_VERSION
 
 const enc = new TextEncoder();
+const dec = new TextDecoder();
 const $ = id => document.getElementById(id);
 const hex = b => [...b].map(x => x.toString(16).padStart(2,'0')).join('');
 const sha256 = async s => new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(s)));
 
-let ws = null, aesKey = null, players = new Map(), badFrames = 0, goodFrames = 0;
+let ws = null, aesKey = null, players = new Map();
+let goodFrames = 0, badFrames = 0, decryptWarned = false;
+// "The user wants to be connected" - separate from whether a socket happens to be
+// open right now, so a dropped connection can retry without fighting a manual
+// disconnect. The page used to just print "Disconnected" and sit there dead.
+let intended = false, retries = 0, retryTimer = null;
 
 function setStatus(text, state) {
   $('msg').textContent = text;
@@ -123,13 +131,13 @@ function setStatus(text, state) {
 
 // Must match RelayShare.java exactly, or nothing decrypts.
 async function derive(key) {
-  const room = hex(await sha256('klisteam-room|' + key)).slice(0, 32);
+  const roomId = hex(await sha256('klisteam-room|' + key)).slice(0, 32);
   const salt = await sha256('klisteam-crypt|' + key);
   const base = await crypto.subtle.importKey('raw', enc.encode(key), 'PBKDF2', false, ['deriveKey']);
   const aes  = await crypto.subtle.deriveKey(
     { name:'PBKDF2', salt, iterations:120000, hash:'SHA-256' },
     base, { name:'AES-GCM', length:256 }, false, ['decrypt']);
-  return { room, aes };
+  return { roomId, aes };
 }
 
 const DIMS = {
@@ -143,91 +151,161 @@ async function handle(raw) {
   let env;
   try { env = JSON.parse(raw); } catch { return; }
   if (!env || !env.p) return;
+  if (env.v !== undefined && env.v !== PROTOCOL_VERSION) return;   // mod does the same check
   try {
     const bytes = Uint8Array.from(atob(env.p), c => c.charCodeAt(0));
     const pt = await crypto.subtle.decrypt(
       { name:'AES-GCM', iv: bytes.slice(0,12) }, aesKey, bytes.slice(12));
-    const o = JSON.parse(new TextDecoder().decode(pt));
+    const o = JSON.parse(dec.decode(pt));
     if (!o.n) return;
+
     goodFrames++;
-    players.set(o.n.toLowerCase(), { ...o, at: Date.now() });
-    setStatus('Connected · ' + goodFrames + ' updates', 'on');
+    // Ping-wheel markers ride the same socket and carry the *marker's* x/y/z, not
+    // the sender's. Storing them as a position was teleporting a player's row to
+    // wherever they last pinged, which is most of what looked broken here.
+    if (o.k === 'ping') return;
+
+    players.set(o.n.toLowerCase(), Object.assign({}, o, { at: Date.now() }));
+    if (!decryptWarned) setStatus('Connected · ' + goodFrames + ' updates', 'on');
   } catch {
     // GCM refused it: almost always a different team key in the room
     badFrames++;
-    if (badFrames === 5) setStatus('Receiving frames but cannot decrypt — wrong room password?', 'err');
+    if (badFrames >= 5 && !decryptWarned) {
+      decryptWarned = true;   // latched, so the next good frame can't wipe the warning
+      setStatus('Receiving frames but cannot decrypt \u2014 wrong room password?', 'err');
+    }
   }
 }
 
+function openSocket(roomId) {
+  const sock = new WebSocket(RELAY + '/' + roomId);
+  ws = sock;
+  let pingTimer = null;
+
+  sock.onopen = () => {
+    retries = 0;
+    setStatus('Connected \u00b7 waiting for positions', 'on');
+    $('go').textContent = 'Disconnect';
+    $('go').classList.add('off');
+    // keeps the connection past Cloudflare's idle timeout. Captured in this
+    // closure rather than hung off the shared `ws`, so an old socket closing
+    // late can't clear the current socket's timer.
+    pingTimer = setInterval(() => { try { sock.send('ping'); } catch {} }, 30000);
+  };
+
+  sock.onmessage = e => handle(e.data);
+
+  sock.onerror = () => { /* onclose always follows; handled there */ };
+
+  sock.onclose = () => {
+    clearInterval(pingTimer);
+    if (ws === sock) ws = null;
+    if (!intended) {
+      $('go').textContent = 'Connect';
+      $('go').classList.remove('off');
+      setStatus('Disconnected');
+      return;
+    }
+    // Wanted to stay connected: back off and retry rather than going dead.
+    retries++;
+    const wait = Math.min(30000, 1000 * Math.pow(2, Math.min(retries, 5)));
+    setStatus('Connection lost \u2014 retrying in ' + Math.round(wait / 1000) + 's\u2026', 'warn');
+    clearTimeout(retryTimer);
+    retryTimer = setTimeout(() => { if (intended) openSocket(roomId); }, wait);
+  };
+}
+
+function disconnect() {
+  intended = false;
+  clearTimeout(retryTimer);
+  retries = 0;
+  if (ws) { try { ws.close(); } catch {} ws = null; }
+  $('go').textContent = 'Connect';
+  $('go').classList.remove('off');
+  setStatus('Not connected');
+}
+
 function connect() {
+  // Checked before the room field is validated: with the old order, clearing the
+  // room box left you unable to press Disconnect.
+  if (intended) { disconnect(); return; }
+
   const room = $('room').value.trim();
   const pass = $('key').value.trim();
   if (!room) { setStatus('Enter the room name', 'err'); return; }
   // must match RelayShare.secret() in the mod, character for character
   const key = room.toLowerCase() + '|' + pass;
 
-  if (ws) { ws.close(); ws = null; $('go').textContent = 'Connect'; $('go').classList.remove('off'); return; }
-
-  setStatus('Deriving key…');
-  derive(key).then(({ room, aes }) => {
+  setStatus('Deriving key\u2026');
+  derive(key).then(({ roomId, aes }) => {
     aesKey = aes;
     goodFrames = badFrames = 0;
-    setStatus('Connecting to room ' + room.slice(0,8) + '…');
-    ws = new WebSocket(RELAY + '/' + room);
-
-    ws.onopen = () => {
-      setStatus('Connected · waiting for positions', 'on');
-      $('go').textContent = 'Disconnect';
-      $('go').classList.add('off');
-      // keeps the connection past Cloudflare's idle timeout
-      ws._ping = setInterval(() => { try { ws.send('ping'); } catch {} }, 30000);
-    };
-    ws.onmessage = e => handle(e.data);
-    ws.onerror = () => setStatus('Connection failed — is the relay up?', 'err');
-    ws.onclose = () => {
-      clearInterval(ws && ws._ping);
-      ws = null;
-      $('go').textContent = 'Connect';
-      $('go').classList.remove('off');
-      setStatus('Disconnected', 'err');
-    };
+    decryptWarned = false;
+    players.clear();
+    intended = true;
+    retries = 0;
+    setStatus('Connecting to room ' + roomId.slice(0,8) + '\u2026');
+    openSocket(roomId);
   }).catch(e => setStatus('Could not derive key: ' + e.message, 'err'));
+}
+
+// Declared once, at module scope: these used to be consts inside the map callback
+// that the "sharing off" branch referenced *above* their own declaration, which
+// threw a ReferenceError, killed the whole draw(), and froze the table for good
+// the moment any teammate turned sharing off.
+const clean = v => String(v == null ? '' : v).replace(/[<>&"']/g, '');
+const td = (cls, v) => '<td class="' + cls + '">' + clean(v) + '</td>';
+const safeName = n => String(n == null ? '' : n).replace(/[^A-Za-z0-9_]/g, '');
+const num = v => (v != null && Number.isFinite(Number(v))) ? Math.round(Number(v)) : '?';
+
+function headImg(name) {
+  // mc-heads renders by username; crafatar is the fallback if it misses
+  return '<img class="head" alt="" loading="lazy"'
+    + ' src="https://mc-heads.net/avatar/' + name + '/52"'
+    + ' onerror="this.onerror=null;this.src=\'https://crafatar.com/avatars/' + name
+    + '?size=52&overlay\'">';
+}
+
+function rowHtml(p, now) {
+  const age = Math.round((now - p.at) / 1000);
+  const stale = now - p.at > STALE_MS;
+  const name = safeName(p.n);
+  const seen = age < 2 ? 'now' : age + 's ago';
+  const who = '<td class="name"><span class="who">' + headImg(name)
+            + '<span>' + clean(p.n) + '</span></span></td>';
+
+  // Present in the room but not publishing coordinates.
+  if (p.off) {
+    return '<tr class="' + (stale ? 'stale' : '') + '">'
+      + who
+      + '<td class="muted" colspan="2">sharing turned off</td>'
+      + td('muted', p.sa || '\u2014')
+      + td('muted', seen)
+      + '</tr>';
+  }
+
+  const dim = DIMS[p.d] || String(p.d || '\u2014').replace(/^.*:/, '');
+  return '<tr class="' + (stale ? 'stale' : '') + '">'
+    + who
+    + td('coords', num(p.x) + ', ' + num(p.y) + ', ' + num(p.z))
+    + td('muted', dim)
+    + td('muted', p.sa || '\u2014')
+    + td('muted', seen)
+    + '</tr>';
 }
 
 function draw() {
   const now = Date.now();
   for (const [k, p] of players) if (now - p.at > DROP_MS) players.delete(k);
 
-  const list = [...players.values()].sort((a,b) => a.n.localeCompare(b.n));
+  const list = [...players.values()].sort((a,b) => String(a.n).localeCompare(String(b.n)));
   $('empty').style.display = list.length ? 'none' : 'block';
-  $('rows').innerHTML = list.map(p => {
-    const age = Math.round((now - p.at) / 1000);
-    const stale = now - p.at > STALE_MS;
-    const dim = DIMS[p.d] || (p.d || '-').replace(/^.*:/, '');
-    // present in the room but not publishing coordinates
-    if (p.off) {
-      return '<tr class="' + (stale ? 'stale' : '') + '">'
-        + '<td class="name"><span class="who">' + head + '<span>' + safe + '</span></span></td>'
-        + '<td class="muted" colspan="2">sharing turned off</td>'
-        + td('muted', p.sa || '-')
-        + td('muted', age < 2 ? 'now' : age + 's ago')
-        + '</tr>';
-    }
-    const td = (cls, v) => '<td class="' + cls + '">' + String(v).replace(/[<>&]/g, '') + '</td>';
-    const safe = String(p.n).replace(/[^A-Za-z0-9_]/g, '');
-    // mc-heads renders by username; crafatar is the fallback if it misses
-    const head = '<img class="head" alt="" loading="lazy"'
-      + ' src="https://mc-heads.net/avatar/' + safe + '/52"'
-      + ' onerror="this.onerror=null;this.src=\'https://crafatar.com/avatars/' + safe
-      + '?size=52&overlay\'">';
-    return '<tr class="' + (stale ? 'stale' : '') + '">'
-      + '<td class="name"><span class="who">' + head + '<span>' + safe + '</span></span></td>'
-      + td('coords', p.x + ', ' + p.y + ', ' + p.z)
-      + td('muted', dim)
-      + td('muted', p.sa || '—')
-      + td('muted', age < 2 ? 'now' : age + 's ago')
-      + '</tr>';
-  }).join('');
+  try {
+    $('rows').innerHTML = list.map(p => rowHtml(p, now)).join('');
+  } catch (e) {
+    // One malformed frame should never be able to stop the table updating again.
+    console.error('draw failed', e);
+  }
 }
 
 setInterval(draw, 1000);
