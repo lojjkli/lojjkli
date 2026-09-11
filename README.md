@@ -18,12 +18,12 @@ relay, which matters because deploying a Worker drops its open WebSockets.
 
 2. **Create an API token.** Dashboard → My Profile → API Tokens → Create Token →
    *Edit Cloudflare Workers* template. Restrict it to the `lojjkli.site` zone.
-   Copy the token — it is shown only once.
+   Copy the token - it is shown only once.
 
 3. **Add repo secrets.** GitHub repo → Settings → Secrets and variables →
    Actions → New repository secret:
-   - `CLOUDFLARE_API_TOKEN` — the token from step 2
-   - `CLOUDFLARE_ACCOUNT_ID` — dashboard sidebar, or `wrangler whoami`
+   - `CLOUDFLARE_API_TOKEN` - the token from step 2
+   - `CLOUDFLARE_ACCOUNT_ID` - dashboard sidebar, or `wrangler whoami`
 
 4. **Push to `main`.** Both Workers deploy. The `custom_domain` routes create
    their own DNS records, so there is nothing to add by hand.
@@ -39,8 +39,8 @@ models/sword.glb
 models/utrm.glb
 ```
 
-Put them in `site/public/models/`. They are not in the HTML — unlike the images,
-which are inlined as base64 — so without them the viewer stays empty.
+Put them in `site/public/models/`. They are not in the HTML - unlike the images,
+which are inlined as base64 - so without them the viewer stays empty.
 
 If any file is over 25 MB, Workers assets will reject it and you will need R2
 instead. Check with `ls -lh site/public/models/`.
@@ -57,7 +57,7 @@ cd relay && wrangler deploy
 `lojjkli.site/team` (from `site/public/team/index.html`) shows live positions from your
 relay room. Enter the same team key you use in the mod: the page derives the room id and
 AES key in your browser and decrypts locally, so the relay still only ever sees
-ciphertext. It listens only — it never appears as a player, and it can only show frames
+ciphertext. It listens only - it never appears as a player, and it can only show frames
 sent while it is open.
 
 This is also the fastest end-to-end test, and it needs no teammate: open it with your key
@@ -67,7 +67,7 @@ does, sending, encryption, the room, the relay and decryption all work.
 ## Checking the relay
 
 `https://relay.lojjkli.site` in a browser should print `KlisTeam relay online`.
-That is only a health check — the relay speaks WebSocket, not HTTP.
+That is only a health check - the relay speaks WebSocket, not HTTP.
 
 In the mod: `relayUrl` = `wss://relay.lojjkli.site`, `teamKey` = a long random
 string shared with your team, `relayEnabled` = true.

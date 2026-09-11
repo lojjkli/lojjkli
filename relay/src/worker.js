@@ -7,7 +7,7 @@
  *
  * where <roomId> is the SHA-256 of the team key, computed on the client. The
  * relay therefore never learns the team key itself, and if the client also
- * encrypts the payload it never learns any coordinates either — it only sees
+ * encrypts the payload it never learns any coordinates either - it only sees
  * opaque strings arriving and being fanned out.
  *
  * Deliberately knows nothing about the message format. Adding fields (dimension,
@@ -26,11 +26,11 @@ export default {
 
     // RFC 6455 makes this value case-insensitive and clients disagree on casing
     // ("websocket" vs "WebSocket"). A strict === here answers the handshake with a
-    // plain 200, which the client rejects — and the site looks fine in a browser,
+    // plain 200, which the client rejects - and the site looks fine in a browser,
     // so the failure appears to be on the client side.
     const upgrade = (request.headers.get("Upgrade") || "").toLowerCase();
     if (upgrade !== "websocket") {
-      // plain GET — useful for checking the deploy actually works
+      // plain GET - useful for checking the deploy actually works
       return new Response("KlisTeam relay online\n", {
         status: 200,
         headers: { "content-type": "text/plain" },

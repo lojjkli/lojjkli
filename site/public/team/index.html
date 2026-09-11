@@ -172,7 +172,7 @@ async function handle(raw) {
     badFrames++;
     if (badFrames >= 5 && !decryptWarned) {
       decryptWarned = true;   // latched, so the next good frame can't wipe the warning
-      setStatus('Receiving frames but cannot decrypt \u2014 wrong room password?', 'err');
+      setStatus('Receiving frames but cannot decrypt - wrong room password?', 'err');
     }
   }
 }
@@ -209,7 +209,7 @@ function openSocket(roomId) {
     // Wanted to stay connected: back off and retry rather than going dead.
     retries++;
     const wait = Math.min(30000, 1000 * Math.pow(2, Math.min(retries, 5)));
-    setStatus('Connection lost \u2014 retrying in ' + Math.round(wait / 1000) + 's\u2026', 'warn');
+    setStatus('Connection lost - retrying in ' + Math.round(wait / 1000) + 's\u2026', 'warn');
     clearTimeout(retryTimer);
     retryTimer = setTimeout(() => { if (intended) openSocket(roomId); }, wait);
   };
@@ -279,17 +279,17 @@ function rowHtml(p, now) {
     return '<tr class="' + (stale ? 'stale' : '') + '">'
       + who
       + '<td class="muted" colspan="2">sharing turned off</td>'
-      + td('muted', p.sa || '\u2014')
+      + td('muted', p.sa || '-')
       + td('muted', seen)
       + '</tr>';
   }
 
-  const dim = DIMS[p.d] || String(p.d || '\u2014').replace(/^.*:/, '');
+  const dim = DIMS[p.d] || String(p.d || '-').replace(/^.*:/, '');
   return '<tr class="' + (stale ? 'stale' : '') + '">'
     + who
     + td('coords', num(p.x) + ', ' + num(p.y) + ', ' + num(p.z))
     + td('muted', dim)
-    + td('muted', p.sa || '\u2014')
+    + td('muted', p.sa || '-')
     + td('muted', seen)
     + '</tr>';
 }

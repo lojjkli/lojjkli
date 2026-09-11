@@ -6,7 +6,7 @@
  *
  * Every source is optional. If one 404s, rate-limits or changes its schema, that
  * source is marked unavailable and the rest still return. Endpoints for the tier
- * sites are guesses in places — use ?debug=1 to see which ones actually answer,
+ * sites are guesses in places - use ?debug=1 to see which ones actually answer,
  * then fix the URL in SOURCES below without touching anything else.
  */
 
@@ -27,6 +27,13 @@ export class Registry extends DurableObject {
          name TEXT PRIMARY KEY, display TEXT NOT NULL,
          first INTEGER NOT NULL, last INTEGER NOT NULL, hits INTEGER NOT NULL
        )`);
+    // CREATE TABLE IF NOT EXISTS does nothing to a table that already exists, so
+    // a deployed Registry would keep the old 5-column schema forever and every
+    // write below would fail. ALTER is the only thing that migrates it; it throws
+    // once the column is there, which is the normal steady state.
+    for (const col of ['version TEXT', 'relay INTEGER DEFAULT 0']) {
+      try { this.ctx.storage.sql.exec(`ALTER TABLE seen ADD COLUMN ${col}`); } catch (e) { /* already migrated */ }
+    }
   }
   async fetch(request) {
     const url = new URL(request.url);
@@ -36,7 +43,7 @@ export class Registry extends DurableObject {
     if (url.searchParams.get('list') === '1') {
       const since = parseInt(url.searchParams.get('since') || '0', 10);
       const rows = [...this.ctx.storage.sql.exec(
-        `SELECT display AS name, last FROM seen WHERE last > ? ORDER BY last DESC LIMIT 200`, since)];
+        `SELECT display AS name, last, version, relay FROM seen WHERE last > ? ORDER BY last DESC LIMIT 200`, since)];
       return Response.json({ players: rows });
     }
 
@@ -48,17 +55,20 @@ export class Registry extends DurableObject {
     const now = Date.now();
 
     if (request.method === 'POST') {
+      const version = (url.searchParams.get('version') || '').trim().slice(0, 32) || null;
+      const relay = url.searchParams.get('relay') === '1' ? 1 : 0;
       this.ctx.storage.sql.exec(
-        `INSERT INTO seen (name, display, first, last, hits) VALUES (?, ?, ?, ?, 1)
-         ON CONFLICT(name) DO UPDATE SET display = ?, last = ?, hits = hits + 1`,
-        name, display, now, now, display, now);
+        `INSERT INTO seen (name, display, first, last, hits, version, relay) VALUES (?, ?, ?, ?, 1, ?, ?)
+         ON CONFLICT(name) DO UPDATE SET display = ?, last = ?, hits = hits + 1, version = ?, relay = ?`,
+        name, display, now, now, version, relay, display, now, version, relay);
       return new Response('ok');
     }
     const rows = [...this.ctx.storage.sql.exec(
-      `SELECT display, first, last, hits FROM seen WHERE name = ?`, name)];
+      `SELECT display, first, last, hits, version, relay FROM seen WHERE name = ?`, name)];
     return Response.json(rows.length
       ? { seen: true, name: rows[0].display, firstSeen: rows[0].first,
-          lastSeen: rows[0].last, sessions: rows[0].hits }
+          lastSeen: rows[0].last, sessions: rows[0].hits,
+          version: rows[0].version || null, relay: !!rows[0].relay }
       : { seen: false });
   }
 }
@@ -310,8 +320,11 @@ export default {
     if (url.pathname === '/seen') {
       const name = (url.searchParams.get('name') || '').trim();
       if (!/^[A-Za-z0-9_]{1,16}$/.test(name)) return json({ error: 'bad name' }, 400);
+      const version = (url.searchParams.get('version') || '').trim();
+      const relay = url.searchParams.get('relay') === '1' ? '1' : '0';
       await registry(env).fetch(new Request(
-        `https://r/?name=${encodeURIComponent(name)}`, { method: 'POST' }));
+        `https://r/?name=${encodeURIComponent(name)}`
+        + `&version=${encodeURIComponent(version)}&relay=${relay}`, { method: 'POST' }));
       return json({ ok: true });
     }
 
@@ -442,7 +455,7 @@ export default {
       status.laby = 'ok';
     } catch (e) { status.laby = String(e.message); }
 
-    // tier sites, all in parallel — a slow one shouldn't hold up the rest
+    // tier sites, all in parallel - a slow one shouldn't hold up the rest
     await Promise.all(SOURCES.map(async (src) => {
       try {
         const d = await getJSON(src.url(profile.uuid, encodeURIComponent(profile.name)));
