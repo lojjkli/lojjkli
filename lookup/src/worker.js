@@ -160,6 +160,8 @@ const CORS = {
   'content-type': 'application/json; charset=utf-8',
 };
 
+const norm = (v) => String(v || '').trim().toLowerCase();
+
 const json = (obj, status = 200) =>
   new Response(JSON.stringify(obj, null, 2), { status, headers: CORS });
 
@@ -317,9 +319,11 @@ export default {
     // touching storage. Read-only, but still requires the correct key - this
     // is what gates the page itself, separate from the write checks below.
     if (url.pathname === '/verify') {
-      const key = (request.headers.get('x-admin-key') || url.searchParams.get('key') || '').toLowerCase();
-      const ok = !!env.ADMIN_KEY && key === env.ADMIN_KEY.toLowerCase();
-      return json({ ok }, ok ? 200 : 401);
+      const key = norm(request.headers.get('x-admin-key') || url.searchParams.get('key') || '');
+      const ok = !!env.ADMIN_KEY && key === norm(env.ADMIN_KEY);
+      // keySet distinguishes "secret was never set" from "key is wrong" - it
+      // leaks nothing but turns a dead end into a one-line diagnosis.
+      return json({ ok, keySet: !!env.ADMIN_KEY }, ok ? 200 : 401);
     }
 
     if (url.pathname === '/blacklist') {
@@ -329,8 +333,8 @@ export default {
         return new Response(body, { headers: CORS });
       }
       // write: needs the admin key. Case does not matter on either side.
-      const key = (request.headers.get('x-admin-key') || url.searchParams.get('key') || '').toLowerCase();
-      if (!env.ADMIN_KEY || key !== env.ADMIN_KEY.toLowerCase()) {
+      const key = norm(request.headers.get('x-admin-key') || url.searchParams.get('key') || '');
+      if (!env.ADMIN_KEY || key !== norm(env.ADMIN_KEY)) {
         return json({ error: 'unauthorized' }, 401);
       }
       const kind   = url.searchParams.get('kind') || 'server';
@@ -352,12 +356,36 @@ export default {
         const body = await r.text();
         return new Response(body, { headers: CORS });
       }
-      const key = (request.headers.get('x-admin-key') || url.searchParams.get('key') || '').toLowerCase();
-      if (!env.ADMIN_KEY || key !== env.ADMIN_KEY.toLowerCase()) {
+      const key = norm(request.headers.get('x-admin-key') || url.searchParams.get('key') || '');
+      if (!env.ADMIN_KEY || key !== norm(env.ADMIN_KEY)) {
         return json({ error: 'unauthorized' }, 401);
       }
       const r = await kicks(env).fetch(`https://k/?name=${encodeURIComponent(name)}`, { method: 'POST' });
       return json({ ok: r.ok });
+    }
+
+    // One round trip for the client's own per-tick check: am I banned, is this
+    // server blocked, has a kick been queued. Used to be three separate polls
+    // (a full blacklist fetch, a kick fetch, and a once-per-join server check)
+    // each on its own timer - this is what let the client poll all three on one
+    // fast, shared interval instead.
+    if (url.pathname === '/status') {
+      const name = (url.searchParams.get('name') || '').trim().toLowerCase();
+      const server = (url.searchParams.get('server') || '').trim().toLowerCase();
+      if (!/^[a-z0-9_]{1,16}$/.test(name)) return json({ error: 'bad name' }, 400);
+
+      const [blRes, kRes] = await Promise.all([
+        blacklist(env).fetch('https://b/'),
+        kicks(env).fetch(`https://k/?name=${encodeURIComponent(name)}`),
+      ]);
+      const bl = await blRes.json();
+      const kick = await kRes.json();
+
+      return json({
+        banned: bl.players.some((p) => p.toLowerCase() === name),
+        serverBlocked: server ? bl.servers.includes(server) : false,
+        kickAt: kick.at || 0,
+      });
     }
 
     // Who has used the mod recently - "online now" is approximate: whichever
