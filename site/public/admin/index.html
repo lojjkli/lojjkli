@@ -626,7 +626,14 @@ async function refreshOnline() {
     const response = await apiRequest(`${API}/online?minutes=5`);
     if (!response.ok) throw new Error(`Online HTTP ${response.status}`);
 
-    const data = await response.json();
+    let data;
+    try {
+      data = await response.json();
+    } catch (parseError) {
+      // A 200 carrying HTML (an error page, or something in front of the API)
+      // used to surface as the same opaque "refresh failed" as a dead network.
+      throw new Error("API returned a non-JSON response");
+    }
     const players = Array.isArray(data.players) ? data.players : [];
 
     $("onlineList").querySelector("tbody").innerHTML = players
@@ -643,7 +650,12 @@ async function refreshOnline() {
 
   } catch (error) {
     console.error("Online error:", error);
-    $("onlineRefreshed").textContent = "refresh failed";
+    // "refresh failed" on its own gives nothing to act on. Show what actually
+    // went wrong: an HTTP status means the API answered and rejected us, a
+    // timeout or network error means it was never reached at all.
+    $("onlineRefreshed").textContent = (error && error.message)
+      ? String(error.message).slice(0, 60)
+      : "refresh failed";
   }
 }
 

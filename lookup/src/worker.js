@@ -42,8 +42,19 @@ export class Registry extends DurableObject {
     // separate from the per-name lookup below, which needs a valid username.
     if (url.searchParams.get('list') === '1') {
       const since = parseInt(url.searchParams.get('since') || '0', 10);
-      const rows = [...this.ctx.storage.sql.exec(
-        `SELECT display AS name, last, version, relay FROM seen WHERE last > ? ORDER BY last DESC LIMIT 200`, since)];
+      let rows;
+      try {
+        rows = [...this.ctx.storage.sql.exec(
+          `SELECT display AS name, last, version, relay FROM seen WHERE last > ? ORDER BY last DESC LIMIT 200`, since)];
+      } catch (e) {
+        // If the ALTER in the constructor did not take for any reason, selecting
+        // version/relay throws "no such column" and the whole activity list dies.
+        // The names and timestamps are the part that matters, so serve those
+        // rather than failing the request outright.
+        rows = [...this.ctx.storage.sql.exec(
+          `SELECT display AS name, last FROM seen WHERE last > ? ORDER BY last DESC LIMIT 200`, since)]
+          .map((r) => ({ ...r, version: null, relay: 0 }));
+      }
       return Response.json({ players: rows });
     }
 
@@ -351,7 +362,10 @@ export default {
       if (request.method === 'GET') {
         const r = await blacklist(env).fetch('https://b/');
         const body = await r.text();
-        return new Response(body, { headers: CORS });
+        return new Response(body, {
+          status: r.status,
+          headers: { ...CORS, 'content-type': 'application/json' },
+        });
       }
       // write: needs the admin key. Case does not matter on either side.
       const key = norm(request.headers.get('x-admin-key') || url.searchParams.get('key') || '');
@@ -380,7 +394,10 @@ export default {
       if (request.method === 'GET') {
         const r = await kicks(env).fetch(`https://k/?name=${encodeURIComponent(name)}`);
         const body = await r.text();
-        return new Response(body, { headers: CORS });
+        return new Response(body, {
+          status: r.status,
+          headers: { ...CORS, 'content-type': 'application/json' },
+        });
       }
       const key = norm(request.headers.get('x-admin-key') || url.searchParams.get('key') || '');
       if (!env.ADMIN_KEY || key !== norm(env.ADMIN_KEY)) {
@@ -420,7 +437,14 @@ export default {
       const minutes = Math.max(1, Math.min(60, parseInt(url.searchParams.get('minutes') || '5', 10)));
       const r = await registry(env).fetch(`https://r/?list=1&since=${Date.now() - minutes * 60000}`);
       const body = await r.text();
-      return new Response(body, { headers: CORS });
+      // Pass the Durable Object's status through. Hardcoding 200 here meant a DO
+      // failure reached the admin page as a successful response with an error page
+      // for a body, so the only symptom was a generic "refresh failed" with no way
+      // to see the actual cause.
+      return new Response(body, {
+        status: r.status,
+        headers: { ...CORS, 'content-type': 'application/json' },
+      });
     }
 
     if (!url.pathname.startsWith('/player/')) {
