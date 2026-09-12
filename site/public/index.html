@@ -8,7 +8,8 @@
 <meta property="og:title" content="lojjkli - 3D Modeler &amp; Developer">
 <meta property="og:description" content="Clean, optimized 3D models for games and environments. 180+ satisfied customers, 280+ models delivered.">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://zzzzz-works.xyz">
+<meta property="og:url" content="https://lojjkli.site">
+<link rel="canonical" href="https://lojjkli.site/">
 <meta name="theme-color" content="#0A0A0A">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -204,11 +205,35 @@
   .skill-col h3 .ic{width:20px;height:20px;color:var(--violet-bright);flex:none}
   .skill-col ul{list-style:none;display:flex;flex-direction:column;gap:11px}
   .skill-col li{font-size:.9rem;color:var(--dim);display:flex;gap:10px;align-items:flex-start}
-  .skill-col li .chk{color:var(--violet);flex:none;margin-top:1px}
-  .skill-col li .tld{color:var(--faint);flex:none;margin-top:1px;font-weight:700}
+  .skill-col li .chk{color:var(--violet);flex:none;margin-top:1px;
+    text-shadow:0 0 8px rgba(255,255,255,.55),0 0 16px rgba(255,255,255,.25)}
+  .skill-col li .tld{color:#ffd54f;flex:none;margin-top:1px;font-weight:700;
+    text-shadow:0 0 8px rgba(255,213,79,.75),0 0 16px rgba(255,213,79,.35)}
+  .skill-col li .no{color:#ff5c5c;flex:none;margin-top:1px;font-weight:700;
+    text-shadow:0 0 8px rgba(255,92,92,.7),0 0 16px rgba(255,92,92,.3)}
   .skill-col li .pend{color:var(--faint)}
+  /* Tooltip only activates on spans that carry data-tip, so it never appears on
+     the Modeling column's checks - "Can code" would be meaningless there. */
+  .skill-col li [data-tip]{position:relative;cursor:default}
+  .skill-col li [data-tip]::after{
+    content:attr(data-tip);position:absolute;left:50%;bottom:135%;
+    transform:translateX(-50%) translateY(4px);
+    background:rgba(10,10,10,.95);color:var(--text);font-family:var(--mono);font-size:.68rem;
+    white-space:nowrap;padding:5px 9px;border-radius:6px;border:1px solid var(--line-bright);
+    opacity:0;pointer-events:none;transition:opacity .15s ease,transform .15s ease;z-index:5;
+  }
+  .skill-col li [data-tip]:hover::after{
+    opacity:1;transform:translateX(-50%) translateY(0);
+  }
 
-  .spotlight{display:grid;grid-template-columns:1.05fr 1fr;gap:34px;align-items:center;border:1px solid var(--line);border-radius:18px;padding:30px;background:linear-gradient(180deg,var(--raised),var(--surface))}
+  .spotlight{max-width:720px;margin-left:auto;margin-right:auto;border:1px solid var(--line);border-radius:18px;padding:30px;background:linear-gradient(180deg,var(--raised),var(--surface))}
+  /* Each tool is its own self-contained panel, top to bottom: badge, title,
+     blurb, preview, features, tags, action - no grid, no side-by-side
+     columns, nothing to misalign against the other panel.
+     The preview spans the full content width: capped and centered, it sat
+     indented relative to every other element in the card and left a ragged
+     edge down the whole panel. */
+  .spot-visual{width:100%;margin:0 0 34px}
   /* ZValues app preview - mirrors the real desktop app palette */
   .zv-app{
     --zv-bg:#0a0a0a;--zv-card:#111111;--zv-bd:#242424;--zv-text:#e8e8e8;
@@ -237,7 +262,7 @@
   .zv-trade{display:grid;grid-template-columns:1fr 1fr;gap:9px;padding:11px}
   .zv-side{border:1px solid var(--zv-bd);border-radius:9px;padding:9px;background:var(--zv-card)}
   .zv-sidehdr{margin-bottom:8px}
-  .zv-pill{font-family:var(--mono);font-size:9.5px;font-weight:700;border-radius:999px;padding:3px 10px;display:inline-block}
+  .zv-pill{font-family:var(--mono);font-size:9.5px;font-weight:700;border-radius:999px;padding:3px 10px;display:inline-flex;align-items:center;gap:4px}
   .zv-pill-you{color:var(--zv-green);border:1px solid rgba(34,197,94,.4);background:rgba(34,197,94,.08)}
   .zv-pill-them{color:#d2d2d2;border:1px solid rgba(255,255,255,.32);background:rgba(255,255,255,.07)}
   .zv-statcard{display:flex;gap:7px;margin-bottom:8px}
@@ -248,7 +273,7 @@
   .zv-statval{font-family:var(--display);font-weight:700;font-size:13px;color:var(--zv-val)}
   .zv-statval.zv-dem{font-size:11px}
   .zv-srow{display:flex;gap:5px;margin-bottom:7px}
-  .zv-search{flex:1;border:1px solid var(--zv-bd);border-radius:6px;padding:4px 8px;color:var(--zv-sub);font-size:9.5px;background:var(--zv-bg)}
+  .zv-search{flex:1;display:flex;align-items:center;gap:5px;border:1px solid var(--zv-bd);border-radius:6px;padding:4px 8px;color:var(--zv-sub);font-size:9.5px;background:var(--zv-bg)}
   .zv-bbtn{font-family:var(--mono);font-size:9px;color:var(--zv-pp);border:1px solid var(--zv-ppbd);border-radius:6px;padding:4px 7px;background:var(--zv-ppbg);white-space:nowrap}
   .zv-slots{display:flex;flex-direction:column;gap:5px}
   .zv-slot{display:flex;align-items:center;justify-content:space-between;border:1px solid var(--zv-bd);border-radius:6px;padding:5px 8px;background:var(--zv-bg)}
@@ -258,13 +283,97 @@
   .zv-actions{display:flex;gap:7px;padding:0 11px 12px}
   .zv-accept{flex:1;text-align:center;background:var(--zv-green);color:#021;border-radius:8px;padding:7px;font-family:var(--display);font-weight:800;font-size:11px}
   .zv-copy{font-family:var(--mono);font-size:10px;color:var(--zv-pp);border:1px solid var(--zv-ppbd);border-radius:8px;padding:7px 11px;background:var(--zv-ppbg)}
-  .spot-body h3{font-family:var(--display);font-weight:700;font-size:1.55rem;margin:12px 0 12px;letter-spacing:-.01em}
-  .spot-body p{color:var(--dim);margin-bottom:16px}
+  .zv-i{width:11px;height:11px;display:block;flex:none}
+  .zv-copy{display:inline-flex;align-items:center;gap:5px;font-family:var(--mono);font-size:10px;color:var(--zv-pp);border:1px solid var(--zv-ppbd);border-radius:8px;padding:7px 11px;background:var(--zv-ppbg)}
+  .zv-accept{display:flex;align-items:center;justify-content:center;gap:6px}
+  .zv-tool,.zv-ob,.zv-bbtn{display:inline-flex;align-items:center;gap:4px}
+  .zv-staticon svg{width:9px;height:9px}
+  .zv-wbtn svg{width:9px;height:9px}
+  .spotlight h3{font-family:var(--display);font-weight:700;font-size:1.55rem;margin:12px 0 12px;letter-spacing:-.01em}
+  .spot-desc{color:var(--dim);margin-bottom:16px}
   .feat{list-style:none;display:flex;flex-direction:column;gap:9px;margin:0 0 18px;padding:0}
   .feat li{font-size:.92rem;color:var(--dim);display:flex;gap:10px;align-items:flex-start}
   .feat li::before{content:"▸";color:var(--violet);flex:none}
   .spot-tags{font-family:var(--mono);font-size:.72rem;color:var(--lilac);margin-bottom:18px;line-height:1.9}
-  @media(max-width:880px){.spotlight{grid-template-columns:1fr;padding:22px}}
+  /* Standalone badge for spotlight cards. The old markup reused .render .badge,
+     which only has real styles when nested inside .render, so it needed a wall
+     of inline CSS just to fake position:static here - exactly the kind of
+     leftover clutter that reads as messy at the top of the card. */
+  .spot-badge{
+    display:inline-block;font-family:var(--mono);font-size:.62rem;letter-spacing:.12em;
+    text-transform:uppercase;color:var(--lilac);background:rgba(255,255,255,.04);
+    border:1px solid var(--line-bright);padding:4px 10px;border-radius:6px;margin-bottom:12px;
+  }
+
+  /* Request-access CTA. Both tools are handed out personally rather than
+     downloaded, so the card has to say that plainly instead of leaving a bare
+     "Ask me about it" link doing all the work. */
+  .spot-cta{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:2px}
+  .req-note{font-family:var(--mono);font-size:.7rem;color:var(--faint);margin:12px 0 0}
+  .spotlight+.spotlight{margin-top:22px}
+
+  /* KlisTeamMod preview, v3. The previous version tried to fake a 3D scene
+     with a wall and a blurred colour bleeding through it using absolutely
+     positioned percentages - it read as an ambiguous coloured blob rather than
+     "glowing through a wall", and every size inside it was a fixed pixel value
+     that didn't scale down, so it broke on narrow screens. This is a plain
+     flex list instead: it can only reflow correctly because nothing inside it
+     depends on a fixed width or an exact aspect ratio. It still borrows its
+     chrome from the other two showcases rather than inventing a third style -
+     .vp-corner/.vp-tag are the exact classes the 3D viewer uses, and .km-chip
+     matches .zv-tool's numbers (9.5px / 6px radius / 3px 7px padding). */
+  .km{border:1px solid var(--line-bright);border-radius:16px;overflow:hidden;
+    box-shadow:0 30px 80px -30px rgba(255,255,255,.14);background:#08080a}
+  .km-frame{position:relative;padding:36px 16px 16px;
+    background:
+      radial-gradient(120% 160% at 70% 0%,rgba(255,255,255,.06),transparent 55%),
+      linear-gradient(180deg,#111114,#08080a);
+  }
+  .km-live{position:absolute;top:14px;right:16px;display:flex;align-items:center;gap:6px;
+    font-family:var(--mono);font-size:.68rem;color:var(--lilac);letter-spacing:.04em}
+  .km-live b{width:6px;height:6px;border-radius:50%;background:#5bff9b;box-shadow:0 0 8px #5bff9b;
+    display:inline-block;flex:none}
+  .km-list{display:flex;flex-direction:column;gap:9px}
+  .km-item{display:flex;align-items:center;gap:11px;border:1px solid var(--line);
+    border-radius:10px;padding:9px 12px;background:rgba(255,255,255,.02);min-width:0}
+  .km-head{width:15px;height:15px;border-radius:4px;background:var(--gc);flex:none;
+    box-shadow:0 0 0 3px #0a0a0c,0 0 12px 3px var(--gc)}
+  .km-name{font-family:var(--mono);font-size:.78rem;color:#eef1f7;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
+  .km-hp{font-family:var(--mono);font-size:.72rem;color:#ff8a8a;flex:none}
+  .km-wp{margin-left:auto;display:flex;align-items:center;gap:5px;flex:none;
+    font-family:var(--mono);font-size:.7rem;color:var(--lilac);white-space:nowrap}
+  .km-wp svg{width:11px;height:11px;color:#ffc857;flex:none}
+  .km-foot{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line);background:rgba(255,255,255,.02)}
+  .km-chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;color:var(--faint);
+    border:1px solid var(--line-bright);border-radius:6px;padding:3px 7px;background:rgba(255,255,255,.03)}
+  .km-chip.on{color:#5bff9b;border-color:rgba(91,255,155,.4);background:rgba(91,255,155,.08)}
+  @media(max-width:880px){.spotlight{padding:22px}}
+  @media(max-width:400px){
+    .km-frame{padding:32px 12px 12px}
+    .km-item{padding:8px 10px;gap:8px}
+    .km-name{font-size:.72rem}
+  }
+  /* Ambient toggle. Synthesised in the browser rather than an audio file - no
+     asset to license, nothing to host, and it can't autoplay with sound before
+     a click anyway, so a toggle is the only honest design regardless. */
+  .music-toggle{
+    position:fixed;right:22px;bottom:22px;z-index:40;display:flex;align-items:center;gap:8px;
+    font-family:var(--mono);font-size:.7rem;letter-spacing:.03em;color:var(--dim);
+    background:rgba(10,10,10,.75);backdrop-filter:blur(6px);
+    border:1px solid var(--line-bright);border-radius:999px;padding:9px 14px 9px 11px;
+    cursor:pointer;transition:border-color .2s ease,color .2s ease;
+  }
+  .music-toggle:hover{color:var(--text);border-color:var(--violet)}
+  .music-toggle svg{width:15px;height:15px;flex:none}
+  .music-toggle .bars{display:flex;align-items:flex-end;gap:2px;height:11px;width:15px}
+  .music-toggle .bars span{width:3px;background:var(--faint);border-radius:1px;height:4px;transition:background .2s ease}
+  .music-toggle.on .bars span{background:#5bff9b;animation:musicBar 1.1s ease-in-out infinite}
+  .music-toggle.on .bars span:nth-child(2){animation-delay:.15s}
+  .music-toggle.on .bars span:nth-child(3){animation-delay:.3s}
+  @keyframes musicBar{0%,100%{height:4px}50%{height:11px}}
+  @media(max-width:640px){.music-toggle{right:14px;bottom:14px;padding:8px 12px 8px 10px}}
+
 
   .contact{
     border:1px solid var(--line-bright);border-radius:20px;padding:54px 44px;
@@ -558,36 +667,38 @@
     <div class="sec-head">
       <div class="eyebrow">Tools &amp; Code</div>
       <h2>Tools I've built</h2>
-      <p>I build my own tools too. Here's one I made and still use.</p>
+      <p>I build my own tools too. Both of these are ones I made, use, and hand out myself.</p>
     </div>
     <div class="spotlight">
-      <div class="spot-visual">
+      <span class="spot-badge">Windows Desktop App</span>
+        <h3>ZValues</h3>
+        <p class="spot-desc">A trade calculator I built for Murder Mystery 2. It uses value websites to get the current values and works out whether a trade is actually worth it, so you don't get scammed. I've made over +1,000 value with it.</p>
+        <div class="spot-visual">
         <div class="zv-app">
           <div class="zv-titlebar">
             <div class="zv-tb-drag"><img class="zv-tb-logo" src="data:image/png;base64,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" alt="Z"><span class="zv-tb-title">Values</span></div>
-            <div class="zv-tb-ctrl"><span class="zv-wbtn">&#8211;</span><span class="zv-wbtn">&#9633;</span><span class="zv-wbtn zv-wclose">&#10005;</span></div>
+            <div class="zv-tb-ctrl"><span class="zv-wbtn"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="5" y1="12" x2="19" y2="12"/></svg></span><span class="zv-wbtn"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><rect x="6" y="6" width="12" height="12" rx="1"/></svg></span><span class="zv-wbtn zv-wclose"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="6" x2="18" y2="18"/><line x1="18" y1="6" x2="6" y2="18"/></svg></span></div>
           </div>
           <div class="zv-toolbar">
-            <span class="zv-tool">&#9432;</span>
-            <span class="zv-tool">&#9733;</span>
-            <span class="zv-tool">&#8646; Compare</span>
-            <span class="zv-tool">&#8660; vs</span>
-            <span class="zv-tool">&#8634; History</span>
-            <span class="zv-tool zv-tool-inv">&#9783; Inventory</span>
+            <span class="zv-tool"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="9"/><line x1="12" y1="11" x2="12" y2="16"/><circle cx="12" cy="7.5" r=".6" fill="currentColor" stroke="none"/></svg></span>
+            <span class="zv-tool"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><path d="M12 3l2.6 5.7 6.2.6-4.7 4.2 1.4 6.1L12 16.8l-5.5 2.8 1.4-6.1-4.7-4.2 6.2-.6z"/></svg></span>
+            <span class="zv-tool"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h11M11 4l3 3-3 3"/><path d="M20 17H9M13 14l-3 3 3 3"/></svg>Compare</span>
+            <span class="zv-tool"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 0 3-6.7"/><path d="M3 4v5h5"/><path d="M12 8v4l3 2"/></svg>History</span>
+            <span class="zv-tool zv-tool-inv"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Inventory</span>
           </div>
           <div class="zv-vbar">
             <div class="zv-vtxt">You are winning by 4.2%</div>
             <div class="zv-vsub">Even on list &middot; you win on real value</div>
-            <div class="zv-obtns"><span class="zv-ob zv-ob-w">&#9650; Win</span><span class="zv-ob zv-ob-t">&#9644; Tie</span><span class="zv-ob zv-ob-l">&#9660; Lose</span></div>
+            <div class="zv-obtns"><span class="zv-ob zv-ob-w"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 15 12 9 18 15"/></svg>Win</span><span class="zv-ob zv-ob-t"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="6" y1="12" x2="18" y2="12"/></svg>Tie</span><span class="zv-ob zv-ob-l"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>Lose</span></div>
           </div>
           <div class="zv-trade">
             <div class="zv-side">
-              <div class="zv-sidehdr"><span class="zv-pill zv-pill-you">&#8595; You</span></div>
+              <div class="zv-sidehdr"><span class="zv-pill zv-pill-you"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><polyline points="6 13 12 19 18 13"/></svg>You</span></div>
               <div class="zv-statcard">
-                <div class="zv-statc"><span class="zv-staticon">&#36;</span><div><div class="zv-statlbl">VALUE</div><div class="zv-statval">7,700</div></div></div>
-                <div class="zv-statc"><span class="zv-staticon zv-ic-dem">&#9650;</span><div><div class="zv-statlbl">DEMAND</div><div class="zv-statval zv-dem">7/10</div></div></div>
+                <div class="zv-statc"><span class="zv-staticon">$</span><div><div class="zv-statlbl">VALUE</div><div class="zv-statval">7,700</div></div></div>
+                <div class="zv-statc"><span class="zv-staticon zv-ic-dem"><svg class="zv-i" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 5 20 19 4 19"/></svg></span><div><div class="zv-statlbl">DEMAND</div><div class="zv-statval zv-dem">7/10</div></div></div>
               </div>
-              <div class="zv-srow"><span class="zv-search">Search item&hellip;</span><span class="zv-bbtn">&#9783; Items</span></div>
+              <div class="zv-srow"><span class="zv-search"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="20" y1="20" x2="15.2" y2="15.2"/></svg>Search item&hellip;</span><span class="zv-bbtn"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Items</span></div>
               <div class="zv-slots">
                 <div class="zv-slot"><span class="zv-iname">Traveler&#39;s Gun</span><span class="zv-ival">6,200</span></div>
                 <div class="zv-slot"><span class="zv-iname">Chroma Treat</span><span class="zv-ival">1,500</span></div>
@@ -595,12 +706,12 @@
               </div>
             </div>
             <div class="zv-side">
-              <div class="zv-sidehdr"><span class="zv-pill zv-pill-them">&#8593; Them</span></div>
+              <div class="zv-sidehdr"><span class="zv-pill zv-pill-them"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="19" x2="12" y2="5"/><polyline points="6 11 12 5 18 11"/></svg>Them</span>
               <div class="zv-statcard">
-                <div class="zv-statc"><span class="zv-staticon">&#36;</span><div><div class="zv-statlbl">VALUE</div><div class="zv-statval">8,025</div></div></div>
-                <div class="zv-statc"><span class="zv-staticon zv-ic-dem">&#9650;</span><div><div class="zv-statlbl">DEMAND</div><div class="zv-statval zv-dem">6/10</div></div></div>
+                <div class="zv-statc"><span class="zv-staticon">$</span><div><div class="zv-statlbl">VALUE</div><div class="zv-statval">8,025</div></div></div>
+                <div class="zv-statc"><span class="zv-staticon zv-ic-dem"><svg class="zv-i" viewBox="0 0 24 24" fill="currentColor" stroke="none"><polygon points="12 5 20 19 4 19"/></svg></span><div><div class="zv-statlbl">DEMAND</div><div class="zv-statval zv-dem">6/10</div></div></div>
               </div>
-              <div class="zv-srow"><span class="zv-search">Search item&hellip;</span><span class="zv-bbtn">&#9783; Items</span></div>
+              <div class="zv-srow"><span class="zv-search"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="10.5" cy="10.5" r="6.5"/><line x1="20" y1="20" x2="15.2" y2="15.2"/></svg>Search item&hellip;</span><span class="zv-bbtn"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7" rx="1"/><rect x="14" y="3" width="7" height="7" rx="1"/><rect x="3" y="14" width="7" height="7" rx="1"/><rect x="14" y="14" width="7" height="7" rx="1"/></svg>Items</span></div>
               <div class="zv-slots">
                 <div class="zv-slot"><span class="zv-iname">Celestial</span><span class="zv-ival">5,400</span></div>
                 <div class="zv-slot"><span class="zv-iname">Seer</span><span class="zv-ival">2,625</span></div>
@@ -608,22 +719,76 @@
               </div>
             </div>
           </div>
-          <div class="zv-actions"><span class="zv-accept">&#10003; Accept Trade</span><span class="zv-copy">&#10697; Copy</span></div>
+          <div class="zv-actions"><span class="zv-accept"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>Accept Trade</span><span class="zv-copy"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>Copy</span></div>
+        
+      </div>
         </div>
       </div>
-      <div class="spot-body">
-        <span class="badge" style="position:static;display:inline-block;margin-bottom:6px">Windows Desktop App</span>
-        <h3 class="zbrand"><img class="zword" src="data:image/png;base64,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" alt="ZValues"></h3>
-        <p>A trade calculator I built for Murder Mystery 2. It uses value websites to get the current values and works out whether a trade is actually worth it, so you don't get scammed. I've made over +1,000 value with it.</p>
-        <ul class="feat">
+      <ul class="feat">
           <li>Pulls live values from value websites</li>
           <li>Tracks your inventory, with item images</li>
           <li>Tells you if a trade is a win or a loss</li>
           <li>Just one .exe, no install needed</li>
         </ul>
         <div class="spot-tags">Python · requests · BeautifulSoup · tkinter · HTML/CSS · PyInstaller</div>
-        <a class="card-link" href="#contact">Ask me about it →</a>
+        <div class="spot-cta">
+          <a class="btn" href="#contact">Request access</a>
+        </div>
+        <p class="req-note">Sent personally, not a public download</p>
+    </div>
+
+    <div class="spotlight">
+      <span class="spot-badge">Minecraft Mod</span>
+        <h3>KlisTeamMod</h3>
+        <p class="spot-desc">A Fabric client mod for playing with a team. Friends glow through walls in a colour you pick, with name labels and health above them, and anyone out of render range turns into a waypoint so you can still find them.</p>
+        <div class="spot-visual">
+        <div class="km">
+          <div class="km-frame">
+            <div class="vp-tag"><span>KlisTeamMod</span><span>Fabric 1.21.11</span></div>
+            <div class="km-live"><b></b>our-team</div>
+
+            <div class="km-list">
+              <div class="km-item">
+                <span class="km-head" style="--gc:#5bff9b"></span>
+                <span class="km-name">Kli</span>
+                <span class="km-hp">&#9829; 20</span>
+              </div>
+              <div class="km-item">
+                <span class="km-head" style="--gc:#7aa2ff"></span>
+                <span class="km-name">Alex</span>
+                <span class="km-hp">&#9829; 14</span>
+              </div>
+              <div class="km-item">
+                <span class="km-head" style="--gc:#ffc857"></span>
+                <span class="km-name">Steve</span>
+                <span class="km-wp">
+                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
+                  118m
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="km-foot">
+            <span class="km-chip on">Glow</span>
+            <span class="km-chip on">Labels</span>
+            <span class="km-chip on">Hearts</span>
+            <span class="km-chip">Relay</span>
+          </div>
+        
       </div>
+      </div>
+      <ul class="feat">
+          <li>Glow through walls, per player or per group</li>
+          <li>Name labels, health and distance on your HUD</li>
+          <li>Waypoints for teammates out of render range</li>
+          <li>Encrypted relay rooms, so only your team sees you</li>
+          <li>Ping wheel and Xaero's Minimap support</li>
+        </ul>
+        <div class="spot-tags">Java 21 &#183; Fabric &#183; Mixin &#183; Cloudflare Workers &#183; AES-GCM</div>
+        <div class="spot-cta">
+          <a class="btn" href="#contact">Request access</a>
+        </div>
+        <p class="req-note">Given out personally, same as the calculator - find my other mods below</p>
     </div>
   </div>
 </section>
@@ -651,10 +816,11 @@
       <div class="skill-col">
         <h3><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6-6 6 6 6M16 6l6 6-6 6M14 4l-4 16"/></svg>Code</h3>
         <ul>
-          <li><span class="chk">✓</span>Python</li>
-          <li><span class="chk">✓</span>HTML</li>
-          <li><span class="tld">~</span>Lua / Luau</li>
-          <li><span class="tld">~</span>Java</li>
+          <li><span class="chk" data-tip="Can code">✓</span>Python</li>
+          <li><span class="chk" data-tip="Can code">✓</span>HTML</li>
+          <li><span class="tld" data-tip="Only a bit">~</span>Lua / Luau</li>
+          <li><span class="tld" data-tip="Only a bit">~</span>Java</li>
+          <li><span class="tld" data-tip="Only a bit">~</span>Rust</li>
         </ul>
       </div>
 
@@ -662,9 +828,9 @@
         <h3><svg class="ic" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M14.7 6.3a4 4 0 0 0-5.4 5.4L3 18v3h3l6.3-6.3a4 4 0 0 0 5.4-5.4l-2.7 2.7-2.3-2.3z"/></svg>Software</h3>
         <ul>
           <li><span class="chk">✓</span>Blender (mostly)</li>
-          <li><span class="tld">~</span>Unreal Engine</li>
-          <li><span class="tld">~</span>Unity</li>
-          <li><span class="chk">✓</span>Roblox Studio</li>
+          <li><span class="chk">✓</span>IntelliJ</li>
+          <li><span class="no" data-tip="Never used">✕</span>Unreal Engine</li>
+          <li><span class="no" data-tip="Never used">✕</span>Unity</li>
         </ul>
       </div>
 
@@ -678,15 +844,24 @@
       <div class="eyebrow">Get in touch</div>
       <h2>Let's work together</h2>
       <p>Need a model or a full set? Message me on Discord and I'll get back to you. Discord is the only place I take commissions now.</p>
-      <div class="socials one">
+      <div class="socials two">
         <a class="social" href="https://discord.com/users/799725823044354048" target="_blank" rel="noopener" aria-label="Discord">
           <svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4.5A18 18 0 0 0 15.5 3l-.3.5a14 14 0 0 1 4 2C17 4.2 13.5 4 12 4s-5 .2-7.2 1.5a14 14 0 0 1 4-2L8.5 3A18 18 0 0 0 4 4.5C1.5 8.3 1 12 1.2 15.6A18 18 0 0 0 6.7 18l.7-1.1c-.6-.2-1.2-.5-1.7-.8l.4-.3c3.3 1.5 6.9 1.5 10.2 0l.4.3c-.5.3-1.1.6-1.7.8l.7 1.1a18 18 0 0 0 5.5-2.4c.3-4.2-.5-7.8-3.2-11.1zM8.7 13.6c-.9 0-1.6-.8-1.6-1.8s.7-1.8 1.6-1.8 1.6.8 1.6 1.8-.7 1.8-1.6 1.8zm6.6 0c-.9 0-1.6-.8-1.6-1.8s.7-1.8 1.6-1.8 1.6.8 1.6 1.8-.7 1.8-1.6 1.8z"/></svg>
           <span class="name">Discord</span><span class="sub">lojjkli</span>
+        </a>
+        <a class="social" href="https://modrinth.com/user/lojjkli" target="_blank" rel="noopener" aria-label="Modrinth">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg>
+          <span class="name">Modrinth</span><span class="sub">lojjkli</span>
         </a>
       </div>
     </div>
   </div>
 </section>
+
+<button class="music-toggle" id="musicToggle" type="button" aria-pressed="false" aria-label="Toggle ambient background music">
+  <span class="bars"><span></span><span></span><span></span></span>
+  <span id="musicLabel">Ambient</span>
+</button>
 
 <footer>
   <div class="wrap">
@@ -709,14 +884,14 @@
       <div class="foot-col">
         <h4>Find me</h4>
         <a href="https://discord.com/users/799725823044354048" target="_blank" rel="noopener">Discord (contact me here)</a>
-        <a href="https://www.roblox.com/users/1534153669/profile" target="_blank" rel="noopener">Roblox</a>
+        <a href="https://modrinth.com/user/lojjkli" target="_blank" rel="noopener">Modrinth</a>
       </div>
     </div>
     <div class="foot-bot">
       <small>© 2026 lojjkli (kli). All rights reserved.</small>
       <div class="foot-social">
         <a href="https://discord.com/users/799725823044354048" target="_blank" rel="noopener" aria-label="Discord"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4.5A18 18 0 0 0 15.5 3l-.3.5a14 14 0 0 1 4 2C17 4.2 13.5 4 12 4s-5 .2-7.2 1.5a14 14 0 0 1 4-2L8.5 3A18 18 0 0 0 4 4.5C1.5 8.3 1 12 1.2 15.6A18 18 0 0 0 6.7 18l.7-1.1c-.6-.2-1.2-.5-1.7-.8l.4-.3c3.3 1.5 6.9 1.5 10.2 0l.4.3c-.5.3-1.1.6-1.7.8l.7 1.1a18 18 0 0 0 5.5-2.4c.3-4.2-.5-7.8-3.2-11.1zM8.7 13.6c-.9 0-1.6-.8-1.6-1.8s.7-1.8 1.6-1.8 1.6.8 1.6 1.8-.7 1.8-1.6 1.8zm6.6 0c-.9 0-1.6-.8-1.6-1.8s.7-1.8 1.6-1.8 1.6.8 1.6 1.8-.7 1.8-1.6 1.8z"/></svg></a>
-        <a href="https://www.roblox.com/users/1534153669/profile" target="_blank" rel="noopener" aria-label="Roblox"><svg viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M4.8 2 22 5.6 19.2 22 2 18.4 4.8 2Zm5.2 8 4.2.9-.9 4.2-4.2-.9.9-4.2Z"/></svg></a>
+        <a href="https://modrinth.com/user/lojjkli" target="_blank" rel="noopener" aria-label="Modrinth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg></a>
       </div>
     </div>
   </div>
@@ -732,8 +907,20 @@
     utrm:    { uri:"models/utrm.glb",    name:"UTRM_SWORD_V3", verts:"4,253",  note:"game-ready", th:22, ph:72 }
   };
   var mv = document.getElementById('mv');
+  if(!mv) return;
   var nameEl = document.getElementById('mv-name');
   var noteEl = document.getElementById('mv-note');
+
+  // model-viewer fires 'error' when a .glb is missing or malformed. Nothing was
+  // listening, so a missing model left an empty box with no explanation - the
+  // default state of a fresh checkout, since the .glb files are added by hand
+  // and are not in the repo.
+  var failed = false;
+  mv.addEventListener('error', function(){
+    failed = true;
+    if(nameEl) nameEl.textContent = 'MODEL NOT FOUND';
+    if(noteEl) noteEl.innerHTML = '<b>GLB</b> · missing from /models/';
+  });
   var swatches = Array.prototype.slice.call(document.querySelectorAll('.swatch'));
   var reduce = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   var base = {th:22, ph:72};
@@ -742,10 +929,11 @@
   function setModel(key){
     var m = MODELS[key]; if(!m) return;
     base = {th:m.th, ph:m.ph};
+    failed = false;
     mv.setAttribute('src', m.uri);
     mv.setAttribute('camera-orbit', m.th + 'deg ' + m.ph + 'deg auto');
-    nameEl.innerHTML = m.name + ' · <b>' + m.verts + '</b> verts';
-    noteEl.innerHTML = '<b>GLB</b> · ' + m.note;
+    if(nameEl) nameEl.innerHTML = m.name + ' · <b>' + m.verts + '</b> verts';
+    if(noteEl) noteEl.innerHTML = '<b>GLB</b> · ' + m.note;
     swatches.forEach(function(s){ s.setAttribute('aria-selected', s.dataset.model === key ? 'true':'false'); });
     userPause = false; t0 = (window.performance ? performance.now() : Date.now());
   }
@@ -768,9 +956,19 @@
     if(e.detail && e.detail.source === 'user-interaction'){ userPause = true; }
   });
 
+  // Only animate while the viewer is actually on screen and the tab is visible.
+  // This used to run 60 setAttribute calls a second for the life of the page,
+  // each one re-parsed by model-viewer, even with the section scrolled past.
+  var onScreen = true;
+  if(window.IntersectionObserver){
+    new IntersectionObserver(function(entries){
+      onScreen = entries[0].isIntersecting;
+    }, {threshold:0.01}).observe(mv);
+  }
+
   function idle(now){
     requestAnimationFrame(idle);
-    if(reduce || userPause) return;
+    if(reduce || userPause || failed || !onScreen || document.hidden) return;
     var sway = 15 * Math.sin((now - t0) / 2200);
     mv.setAttribute('camera-orbit', (base.th + sway) + 'deg ' + base.ph + 'deg auto');
   }
@@ -789,8 +987,18 @@
   var lookX=0,lookY=0,lookTX=0,lookTY=0,nextLook=2.5+Math.random()*4,lookHold=0;
   var sy=1,blinking=false,blinkPhase=0,doubleQ=false,nextBlink=1.2+Math.random()*3;
   var t=0,last=performance.now();
+  // Same treatment as the model viewer: this face drives several SVG transforms
+  // per frame and was running forever, hero section on screen or not.
+  var faceVisible = true;
+  if(window.IntersectionObserver){
+    new IntersectionObserver(function(entries){
+      faceVisible = entries[0].isIntersecting;
+    }, {threshold:0.01}).observe(svg);
+  }
+
   function frame(now){
     requestAnimationFrame(frame);
+    if(!faceVisible || document.hidden){ last = now; return; }
     var dt=Math.min(0.05,(now-last)/1000); last=now; t+=dt;
     var tx=40*Math.sin(0.62*t)+22*Math.sin(0.97*t+1.3);
     var ty=24*Math.sin(0.73*t+0.5)+15*Math.sin(1.27*t);
@@ -860,6 +1068,262 @@
   }
   window.addEventListener("scroll",onScroll,{passive:true});
   onScroll();
+})();
+</script>
+
+<script>
+(function(){
+  var btn = document.getElementById('musicToggle');
+  var label = document.getElementById('musicLabel');
+  if (!btn) return;
+
+  var ctx = null, master = null, filter = null, convolver = null, wetGain = null, sub = null;
+  var voices = [], chordTimer = null, chimeTimer = null, chordIndex = 0, playing = false;
+
+  // Six ordinary diatonic chords in a major key, in a vi-IV-I-V-iii-ii
+  // circular motion - a generic, widely-used progression shape, not a
+  // transcription of any specific piece. Five voices each so every voice has
+  // somewhere to glide to on the next chord; chord[0] doubles as the root the
+  // sub-bass oscillator follows, an octave down.
+  var CHORDS = [
+    [110.00, 130.81, 164.81, 196.00, 246.94], // Am9
+    [87.31,  110.00, 130.81, 164.81, 220.00], // Fmaj7
+    [130.81, 164.81, 196.00, 246.94, 293.66], // Cmaj9
+    [98.00,  123.47, 146.83, 164.81, 196.00], // G6
+    [82.41,  98.00,  123.47, 146.83, 196.00], // Em7
+    [73.42,  87.31,  110.00, 130.81, 164.81], // Dm9
+  ];
+
+  // The sparse melody notes are only ever drawn from the chord currently
+  // playing (plus its octave), so whatever plays always sits inside the
+  // harmony instead of being able to clash with it.
+  function chimePoolFor(chord) {
+    return chord.concat(chord.map(function (f) { return f * 2; }));
+  }
+
+  // A generated impulse response - a burst of noise shaped into a decay curve
+  // - rather than a recorded or borrowed one, so the warmth comes from an
+  // algorithm, not an asset.
+  function makeReverbImpulse(seconds, decay) {
+    var rate = ctx.sampleRate;
+    var length = Math.floor(rate * seconds);
+    var buf = ctx.createBuffer(2, length, rate);
+    for (var ch = 0; ch < 2; ch++) {
+      var data = buf.getChannelData(ch);
+      for (var i = 0; i < length; i++) {
+        data[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / length, decay);
+      }
+    }
+    return buf;
+  }
+
+  // Every 24s, glide all five pad voices - and the sub-bass an octave under
+  // the new root - to the next chord over 4 seconds. This is the actual fix
+  // for "is it just the same thing over and over": the first version was one
+  // fixed chord forever; this cycles through six in a real progression shape.
+  function scheduleChordChange() {
+    chordTimer = setTimeout(function () {
+      chordIndex = (chordIndex + 1) % CHORDS.length;
+      var chord = CHORDS[chordIndex];
+      var now = ctx.currentTime;
+      voices.forEach(function (v, i) {
+        v.osc.frequency.cancelScheduledValues(now);
+        v.osc.frequency.setValueAtTime(v.osc.frequency.value, now);
+        v.osc.frequency.exponentialRampToValueAtTime(chord[i], now + 4);
+      });
+      if (sub) {
+        sub.frequency.cancelScheduledValues(now);
+        sub.frequency.setValueAtTime(sub.frequency.value, now);
+        sub.frequency.exponentialRampToValueAtTime(chord[0] / 2, now + 4);
+      }
+      scheduleChordChange();
+    }, 24000);
+  }
+
+  // A soft plucked note - or occasionally two, a third or fifth apart - at a
+  // random, irregular interval. The "warm piano over a pad" ambient-game-music
+  // feel. Deliberately not built from any actual melody: which note plays is
+  // picked at random from the current chord each time, so it's generative,
+  // not a transcription of anything.
+  function scheduleChime() {
+    chimeTimer = setTimeout(function () {
+      playChime();
+      if (Math.random() < 0.3) {
+        setTimeout(playChime, 90 + Math.random() * 60);
+      }
+      scheduleChime();
+    }, 2800 + Math.random() * 4200);
+  }
+
+  function playChime() {
+    var pool = chimePoolFor(CHORDS[chordIndex]);
+    var f = pool[Math.floor(Math.random() * pool.length)];
+    var now = ctx.currentTime;
+
+    var osc = ctx.createOscillator();
+    osc.type = 'triangle';
+    osc.frequency.value = f;
+
+    var g = ctx.createGain();
+    g.gain.setValueAtTime(0.0001, now);
+    g.gain.exponentialRampToValueAtTime(0.085, now + 0.02);
+    g.gain.exponentialRampToValueAtTime(0.0001, now + 2.6);
+
+    osc.connect(g);
+    g.connect(filter);
+    osc.start(now);
+    osc.stop(now + 2.8);
+  }
+
+  function start() {
+    var AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    ctx = new AC();
+
+    master = ctx.createGain();
+    master.gain.value = 0.0001;
+    master.connect(ctx.destination);
+    master.gain.linearRampToValueAtTime(0.06, ctx.currentTime + 3);
+
+    filter = ctx.createBiquadFilter();
+    filter.type = 'lowpass';
+    filter.frequency.value = 1100;
+    filter.Q.value = 0.3;
+
+    var dryGain = ctx.createGain();
+    dryGain.gain.value = 0.75;
+    filter.connect(dryGain);
+    dryGain.connect(master);
+
+    convolver = ctx.createConvolver();
+    convolver.buffer = makeReverbImpulse(2.8, 2.0);
+    wetGain = ctx.createGain();
+    wetGain.gain.value = 0.36;
+    filter.connect(convolver);
+    convolver.connect(wetGain);
+    wetGain.connect(master);
+
+    // A short, quiet slapback delay alongside the reverb - the "shimmer" that
+    // makes a pad feel wide and considered rather than just wet. Low feedback
+    // so it decays in two or three repeats instead of smearing into noise.
+    var delay = ctx.createDelay(1.0);
+    delay.delayTime.value = 0.34;
+    var feedback = ctx.createGain();
+    feedback.gain.value = 0.22;
+    var delayMix = ctx.createGain();
+    delayMix.gain.value = 0.16;
+    filter.connect(delay);
+    delay.connect(feedback);
+    feedback.connect(delay);
+    delay.connect(delayMix);
+    delayMix.connect(master);
+
+    // A quiet sine an octave under the root - the "grounding" a pad needs to
+    // feel warm rather than thin. Follows the root down as the chord changes.
+    sub = ctx.createOscillator();
+    sub.type = 'sine';
+    sub.frequency.value = CHORDS[0][0] / 2;
+    var subGain = ctx.createGain();
+    subGain.gain.value = 0.05;
+    sub.connect(subGain);
+    subGain.connect(master);
+    sub.start();
+
+    chordIndex = 0;
+    voices = CHORDS[0].map(function (f, i) {
+      var osc = ctx.createOscillator();
+      osc.type = (i % 2 === 0) ? 'sine' : 'triangle';
+      osc.frequency.value = f;
+      osc.detune.value = Math.random() * 6 - 3;
+
+      var g = ctx.createGain();
+      var base = 0.4 / CHORDS[0].length;
+      g.gain.value = base;
+
+      var lfo = ctx.createOscillator();
+      lfo.frequency.value = 0.04 + Math.random() * 0.05;
+      var lfoGain = ctx.createGain();
+      lfoGain.gain.value = base * 0.45;
+      lfo.connect(lfoGain);
+      lfoGain.connect(g.gain);
+      lfo.start();
+
+      osc.connect(g);
+      if (ctx.createStereoPanner) {
+        var pan = ctx.createStereoPanner();
+        pan.pan.value = (i / (CHORDS[0].length - 1)) * 1.5 - 0.75;
+        g.connect(pan);
+        pan.connect(filter);
+      } else {
+        g.connect(filter);
+      }
+      osc.start();
+      return { osc: osc, gain: g, lfo: lfo };
+    });
+
+    scheduleChordChange();
+    scheduleChime();
+  }
+
+  function stop() {
+    if (!ctx) return;
+    clearTimeout(chordTimer);
+    clearTimeout(chimeTimer);
+    chordTimer = null;
+    chimeTimer = null;
+
+    var now = ctx.currentTime;
+    var closingCtx = ctx;
+    master.gain.cancelScheduledValues(now);
+    master.gain.setValueAtTime(master.gain.value, now);
+    master.gain.linearRampToValueAtTime(0.0001, now + 1.1);
+    setTimeout(function () {
+      try { closingCtx.close(); } catch (e) {}
+    }, 1300);
+
+    ctx = null;
+    voices = [];
+    sub = null;
+  }
+
+  function setPlaying(next) {
+    playing = next;
+    btn.classList.toggle('on', playing);
+    btn.setAttribute('aria-pressed', playing ? 'true' : 'false');
+    label.textContent = playing ? 'Ambient · On' : 'Ambient';
+    if (playing) start(); else stop();
+  }
+
+  btn.addEventListener('click', function () { setPlaying(!playing); });
+
+  // Tab hidden for a while - stop synthesising rather than run an inaudible
+  // engine in a background tab indefinitely.
+  document.addEventListener('visibilitychange', function () {
+    if (document.hidden && playing) setPlaying(false);
+  });
+
+  // Browsers refuse to let any page produce sound before the visitor has
+  // interacted with it at all - that's an anti-annoyance policy the browser
+  // itself enforces, not something a website can code around. This starts the
+  // moment that's actually allowed: immediately, if the browser permits it -
+  // otherwise the instant the very first click, key press, or touch happens
+  // anywhere on the page, which for most visitors is within a second or two
+  // regardless.
+  function autoStart() {
+    setPlaying(true);
+    if (ctx && ctx.state === 'suspended') {
+      var resumeOnce = function () {
+        if (ctx) ctx.resume();
+        document.removeEventListener('pointerdown', resumeOnce);
+        document.removeEventListener('keydown', resumeOnce);
+        document.removeEventListener('touchstart', resumeOnce);
+      };
+      document.addEventListener('pointerdown', resumeOnce, { once: true });
+      document.addEventListener('keydown', resumeOnce, { once: true });
+      document.addEventListener('touchstart', resumeOnce, { once: true });
+    }
+  }
+  autoStart();
 })();
 </script>
 </body>

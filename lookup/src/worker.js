@@ -477,8 +477,15 @@ export default {
       status.mojang_textures = String(e.message);
     }
     // Pre-rendered 3D body shots, so the client doesn't have to build a model.
-    out.render3d = `https://visage.surgeplay.com/full/256/${profile.uuid}`;
-    out.render3dAlt = `https://render.crafty.gg/3d/full/${profile.uuid}`;
+    // Render sources, tried in this order by the mod's Info screen.
+    // Visage used to be first, but it is a single-person hobby service whose own
+    // host has publicly asked projects to stop hammering it, and it frequently
+    // fails or rate limits non-browser user agents - which is every request the
+    // mod makes. Crafatar and mc-heads are the maintained, CORS-friendly ones, so
+    // they go first and Visage stays only as a last resort.
+    out.render3d = `https://crafatar.com/renders/body/${profile.uuid}?overlay&scale=10`;
+    out.render3dAlt = `https://mc-heads.net/body/${profile.uuid}/256`;
+    out.render3dAlt2 = `https://visage.surgeplay.com/full/256/${profile.uuid}`;
 
     if (!out.skin) {
       out.skin = `https://crafatar.com/skins/${profile.uuid}`;

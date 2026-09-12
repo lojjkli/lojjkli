@@ -332,12 +332,11 @@
         </div>
         <div class="row" style="margin-bottom:16px">
           <div><input id="server" placeholder="play.example.com"></div>
-          <div><input id="serverReason" placeholder="Reason (optional)"></div>
           <div style="flex:0 0 auto"><button id="blockBtn" class="btn-sm" onclick="addServer()">Block</button></div>
         </div>
         <div class="table-wrap">
           <table id="serverList">
-            <thead><tr><th>Server</th><th class="h-reason">Reason</th><th></th></tr></thead>
+            <thead><tr><th>Server</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -354,12 +353,11 @@
         </div>
         <div class="row" style="margin-bottom:16px">
           <div><input id="player" placeholder="Username"></div>
-          <div><input id="playerReason" placeholder="Reason (optional)"></div>
           <div style="flex:0 0 auto"><button id="banBtn" class="danger btn-sm" onclick="addPlayer()">Ban</button></div>
         </div>
         <div class="table-wrap">
           <table id="playerList">
-            <thead><tr><th>Player</th><th class="h-reason">Reason</th><th></th></tr></thead>
+            <thead><tr><th>Player</th><th></th></tr></thead>
             <tbody></tbody>
           </table>
         </div>
@@ -607,13 +605,13 @@ async function refreshBlacklist() {
 
     $("serverList").querySelector("tbody").innerHTML = details
       .filter(x => x.kind === "server")
-      .map(row => `<tr><td>${escapeHtml(row.value)}</td><td class="reason">${escapeHtml(row.reason)}</td><td class="btns"><button class="ghost" data-action="remove" data-kind="server" data-value="${escapeHtml(row.value)}">Remove</button></td></tr>`)
-      .join("") || `<tr><td class="empty" colspan="3">No servers blocked</td></tr>`;
+      .map(row => `<tr><td>${escapeHtml(row.value)}</td><td class="btns"><button class="ghost" data-action="remove" data-kind="server" data-value="${escapeHtml(row.value)}">Remove</button></td></tr>`)
+      .join("") || `<tr><td class="empty" colspan="2">No servers blocked</td></tr>`;
 
     $("playerList").querySelector("tbody").innerHTML = details
       .filter(x => x.kind === "player")
-      .map(row => `<tr><td><span class="who">${head(row.display)}<span class="name">${escapeHtml(row.display)}</span></span></td><td class="reason">${escapeHtml(row.reason)}</td><td class="btns"><button class="warn" data-action="kick" data-name="${escapeHtml(row.display)}">Kick</button><button class="ghost" data-action="remove" data-kind="player" data-value="${escapeHtml(row.value)}">Unban</button></td></tr>`)
-      .join("") || `<tr><td class="empty" colspan="3">Nobody banned</td></tr>`;
+      .map(row => `<tr><td><span class="who">${head(row.display)}<span class="name">${escapeHtml(row.display)}</span></span></td><td class="btns"><button class="warn" data-action="kick" data-name="${escapeHtml(row.display)}">Kick</button><button class="ghost" data-action="remove" data-kind="player" data-value="${escapeHtml(row.value)}">Unban</button></td></tr>`)
+      .join("") || `<tr><td class="empty" colspan="2">Nobody banned</td></tr>`;
 
   } catch (error) {
     console.error("Blacklist error:", error);
@@ -697,10 +695,9 @@ async function addServer() {
   button.disabled = true;
   try {
     const value = $("server").value.trim().toLowerCase();
-    const reason = $("serverReason").value.trim();
+    const reason = "";
     if (await write("server", value, reason, "POST")) {
       $("server").value = "";
-      $("serverReason").value = "";
       await refreshBlacklist();
     }
   } finally {
@@ -714,10 +711,9 @@ async function addPlayer() {
   button.disabled = true;
   try {
     const value = $("player").value.trim();
-    const reason = $("playerReason").value.trim();
+    const reason = "";
     if (await write("player", value, reason, "POST")) {
       $("player").value = "";
-      $("playerReason").value = "";
       await refreshBlacklist();
     }
   } finally {
