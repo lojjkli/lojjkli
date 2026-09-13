@@ -1,0 +1,23 @@
+name = "klisteam-mapsync"
+main = "src/worker.js"
+compatibility_date = "2026-01-01"
+
+# Map regions are megabyte-scale binary blobs, which is what R2 is for. They
+# would not fit in KV (25 MB value cap, and priced for small hot values) and
+# storing them in a Durable Object's SQLite would be far worse. R2 also has no
+# egress fees, which matters when several teammates each pull the same regions.
+[[r2_buckets]]
+binding = "MAPS"
+bucket_name = "klisteam-maps"
+
+# The manifest (which regions exist, who uploaded them, and their hashes) lives
+# in KV rather than R2: it is small, read constantly by the polling clients, and
+# KV reads are cheap and edge-cached. Keeping it out of R2 means the every-few-
+# minutes "anything new?" check never touches the bucket at all.
+[[kv_namespaces]]
+binding = "MANIFEST"
+id = "REPLACE_WITH_KV_NAMESPACE_ID"
+
+[[routes]]
+pattern = "maps.lojjkli.site"
+custom_domain = true

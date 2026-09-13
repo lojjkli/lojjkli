@@ -719,9 +719,9 @@
               </div>
             </div>
           </div>
+          </div>
           <div class="zv-actions"><span class="zv-accept"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><polyline points="5 12 10 17 19 7"/></svg>Accept Trade</span><span class="zv-copy"><svg class="zv-i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"><rect x="9" y="9" width="11" height="11" rx="1.5"/><path d="M5 15V5a1 1 0 0 1 1-1h10"/></svg>Copy</span></div>
         
-      </div>
         </div>
       </div>
       <ul class="feat">
@@ -732,9 +732,9 @@
         </ul>
         <div class="spot-tags">Python · requests · BeautifulSoup · tkinter · HTML/CSS · PyInstaller</div>
         <div class="spot-cta">
-          <a class="btn" href="#contact">Request access</a>
+          <a class="btn" href="https://dl.lojjkli.site/ZValues.zip" download>Download for Windows</a>
         </div>
-        <p class="req-note">Sent personally, not a public download</p>
+        <p class="req-note">Free, no install - unzip and run the .exe</p>
     </div>
 
     <div class="spotlight">
@@ -888,7 +888,7 @@
       </div>
     </div>
     <div class="foot-bot">
-      <small>© 2026 lojjkli (kli). All rights reserved.</small>
+      <small>© 2026 lojjkli (kli). All rights reserved. <a href="/terms/" style="color:inherit;text-decoration:underline">Terms</a></small>
       <div class="foot-social">
         <a href="https://discord.com/users/799725823044354048" target="_blank" rel="noopener" aria-label="Discord"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M20 4.5A18 18 0 0 0 15.5 3l-.3.5a14 14 0 0 1 4 2C17 4.2 13.5 4 12 4s-5 .2-7.2 1.5a14 14 0 0 1 4-2L8.5 3A18 18 0 0 0 4 4.5C1.5 8.3 1 12 1.2 15.6A18 18 0 0 0 6.7 18l.7-1.1c-.6-.2-1.2-.5-1.7-.8l.4-.3c3.3 1.5 6.9 1.5 10.2 0l.4.3c-.5.3-1.1.6-1.7.8l.7 1.1a18 18 0 0 0 5.5-2.4c.3-4.2-.5-7.8-3.2-11.1zM8.7 13.6c-.9 0-1.6-.8-1.6-1.8s.7-1.8 1.6-1.8 1.6.8 1.6 1.8-.7 1.8-1.6 1.8zm6.6 0c-.9 0-1.6-.8-1.6-1.8s.7-1.8 1.6-1.8 1.6.8 1.6 1.8-.7 1.8-1.6 1.8z"/></svg></a>
         <a href="https://modrinth.com/user/lojjkli" target="_blank" rel="noopener" aria-label="Modrinth"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2 21 7v10l-9 5-9-5V7z"/><path d="M3 7l9 5 9-5M12 12v10"/></svg></a>
@@ -1304,23 +1304,39 @@
 
   // Browsers refuse to let any page produce sound before the visitor has
   // interacted with it at all - that's an anti-annoyance policy the browser
-  // itself enforces, not something a website can code around. This starts the
-  // moment that's actually allowed: immediately, if the browser permits it -
-  // otherwise the instant the very first click, key press, or touch happens
-  // anywhere on the page, which for most visitors is within a second or two
-  // regardless.
+  // itself enforces, not something a website can code around.
+  //
+  // The first version of this tried to build the whole audio graph at page
+  // load and just call ctx.resume() from the first gesture. That works on
+  // desktop Chrome/Firefox, but not reliably on mobile Safari - WebKit does
+  // not treat "a context built outside a gesture, resumed inside one" as
+  // equivalent to "built inside a gesture", so resume() can silently do
+  // nothing. This is why the ambient sound never actually started on mobile.
+  //
+  // Fixed by trying immediately (some desktop browsers allow it outright),
+  // and if that leaves the context suspended, discarding it and rebuilding
+  // the entire graph from scratch inside the first real gesture's own call
+  // stack - not just resuming the old one.
   function autoStart() {
-    setPlaying(true);
-    if (ctx && ctx.state === 'suspended') {
-      var resumeOnce = function () {
-        if (ctx) ctx.resume();
-        document.removeEventListener('pointerdown', resumeOnce);
-        document.removeEventListener('keydown', resumeOnce);
-        document.removeEventListener('touchstart', resumeOnce);
+    playing = true;
+    btn.classList.add('on');
+    btn.setAttribute('aria-pressed', 'true');
+    label.textContent = 'Ambient · On';
+
+    start();
+
+    if (!ctx || ctx.state === 'suspended') {
+      var beginOnGesture = function () {
+        document.removeEventListener('pointerdown', beginOnGesture);
+        document.removeEventListener('keydown', beginOnGesture);
+        document.removeEventListener('touchstart', beginOnGesture);
+        if (!playing) return;   // toggled off already; respect that
+        stop();                 // discard whatever start() partially built
+        start();                // rebuild fresh, inside this real gesture
       };
-      document.addEventListener('pointerdown', resumeOnce, { once: true });
-      document.addEventListener('keydown', resumeOnce, { once: true });
-      document.addEventListener('touchstart', resumeOnce, { once: true });
+      document.addEventListener('pointerdown', beginOnGesture, { once: true });
+      document.addEventListener('keydown', beginOnGesture, { once: true });
+      document.addEventListener('touchstart', beginOnGesture, { once: true });
     }
   }
   autoStart();

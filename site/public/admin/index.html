@@ -569,7 +569,7 @@ async function unlock() {
     await refreshBlacklist();
     await refreshOnline();
 
-    if (!window.onlineTimer) window.onlineTimer = setInterval(refreshOnline, 15000);
+    if (!window.onlineTimer) window.onlineTimer = setInterval(refreshOnline, 25000);
 
   } catch (error) {
     console.error(error);
