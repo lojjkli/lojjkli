@@ -23,6 +23,19 @@ To get past it:
 This usually only shows up the first time you run it.
 
 
+WHERE DOES MY DATA GET SAVED?
+-------------------------------
+Your inventory, trade history, favourites and settings are saved to:
+
+  C:\Users\<you>\AppData\Local\ZValues
+
+(Paste that into File Explorer's address bar to open it.)
+
+They're kept there rather than next to the .exe, so you can move the .exe
+or replace it with a newer version without losing anything. Deleting that
+folder resets ZValues to a fresh state.
+
+
 HOW DO I USE IT?
 -----------------
 When you open ZValues.exe, a small console window appears while it loads

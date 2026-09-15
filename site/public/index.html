@@ -312,47 +312,34 @@
   .req-note{font-family:var(--mono);font-size:.7rem;color:var(--faint);margin:12px 0 0}
   .spotlight+.spotlight{margin-top:22px}
 
-  /* KlisTeamMod preview, v3. The previous version tried to fake a 3D scene
-     with a wall and a blurred colour bleeding through it using absolutely
-     positioned percentages - it read as an ambiguous coloured blob rather than
-     "glowing through a wall", and every size inside it was a fixed pixel value
-     that didn't scale down, so it broke on narrow screens. This is a plain
-     flex list instead: it can only reflow correctly because nothing inside it
-     depends on a fixed width or an exact aspect ratio. It still borrows its
-     chrome from the other two showcases rather than inventing a third style -
-     .vp-corner/.vp-tag are the exact classes the 3D viewer uses, and .km-chip
-     matches .zv-tool's numbers (9.5px / 6px radius / 3px 7px padding). */
+  /* KlisTeamMod preview, v4. Two abstract attempts at this (a faked 3D
+     scene, then a flex list of fake players) both read as approximations of
+     the mod rather than the mod itself. This uses an actual clip of the real
+     glow effect - re-encoded from a 1920x1080/3.5MB source down to 480px
+     wide and 620KB (cropped its letterbox bars, thinned 172 frames to 58,
+     let gifsicle's frame-diffing do the real compression work - naive
+     resizing alone made it *larger*, since GIF stores per-frame deltas and
+     PIL's encoder doesn't optimize those well). Still borrows its chrome from
+     the other two showcases rather than inventing a third style -
+     .vp-corner/.vp-tag are the exact classes the 3D viewer uses, and
+     .km-chip matches .zv-tool's numbers (9.5px / 6px radius / 3px 7px
+     padding). */
   .km{border:1px solid var(--line-bright);border-radius:16px;overflow:hidden;
     box-shadow:0 30px 80px -30px rgba(255,255,255,.14);background:#08080a}
-  .km-frame{position:relative;padding:36px 16px 16px;
-    background:
-      radial-gradient(120% 160% at 70% 0%,rgba(255,255,255,.06),transparent 55%),
-      linear-gradient(180deg,#111114,#08080a);
-  }
+  .km-frame{position:relative;line-height:0}
+  .km-gif{display:block;width:100%;height:auto}
   .km-live{position:absolute;top:14px;right:16px;display:flex;align-items:center;gap:6px;
-    font-family:var(--mono);font-size:.68rem;color:var(--lilac);letter-spacing:.04em}
+    font-family:var(--mono);font-size:.68rem;color:var(--lilac);letter-spacing:.04em;
+    text-shadow:0 1px 4px rgba(0,0,0,.85)}
   .km-live b{width:6px;height:6px;border-radius:50%;background:#5bff9b;box-shadow:0 0 8px #5bff9b;
     display:inline-block;flex:none}
-  .km-list{display:flex;flex-direction:column;gap:9px}
-  .km-item{display:flex;align-items:center;gap:11px;border:1px solid var(--line);
-    border-radius:10px;padding:9px 12px;background:rgba(255,255,255,.02);min-width:0}
-  .km-head{width:15px;height:15px;border-radius:4px;background:var(--gc);flex:none;
-    box-shadow:0 0 0 3px #0a0a0c,0 0 12px 3px var(--gc)}
-  .km-name{font-family:var(--mono);font-size:.78rem;color:#eef1f7;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;min-width:0}
-  .km-hp{font-family:var(--mono);font-size:.72rem;color:#ff8a8a;flex:none}
-  .km-wp{margin-left:auto;display:flex;align-items:center;gap:5px;flex:none;
-    font-family:var(--mono);font-size:.7rem;color:var(--lilac);white-space:nowrap}
-  .km-wp svg{width:11px;height:11px;color:#ffc857;flex:none}
   .km-foot{display:flex;gap:6px;padding:10px 12px;border-top:1px solid var(--line);background:rgba(255,255,255,.02)}
   .km-chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;color:var(--faint);
     border:1px solid var(--line-bright);border-radius:6px;padding:3px 7px;background:rgba(255,255,255,.03)}
   .km-chip.on{color:#5bff9b;border-color:rgba(91,255,155,.4);background:rgba(91,255,155,.08)}
   @media(max-width:880px){.spotlight{padding:22px}}
   @media(max-width:400px){
-    .km-frame{padding:32px 12px 12px}
-    .km-item{padding:8px 10px;gap:8px}
-    .km-name{font-size:.72rem}
+    .km-live{font-size:.6rem;top:10px;right:12px}
   }
   /* Ambient toggle. Synthesised in the browser rather than an audio file - no
      asset to license, nothing to host, and it can't autoplay with sound before
@@ -435,7 +422,7 @@
     .foot-grid{grid-template-columns:1fr;gap:30px}
     .gizmo{display:none}
     .vp-tag{left:36px;top:13px;font-size:.62rem}
-    .vp-tag span:first-child{display:none}
+    .viewport .vp-tag span:first-child{display:none}
     .vp-readout{left:36px;right:36px;bottom:12px;font-size:.58rem;gap:10px}
     .sec{padding:64px 0}
     .hero{padding:44px 0 62px}
@@ -732,7 +719,7 @@
         </ul>
         <div class="spot-tags">Python · requests · BeautifulSoup · tkinter · HTML/CSS · PyInstaller</div>
         <div class="spot-cta">
-          <a class="btn" href="https://dl.lojjkli.site/ZValues.zip" download>Download for Windows</a>
+          <a class="btn" href="/ZValues.zip" download>Download for Windows</a>
         </div>
         <p class="req-note">Free, no install - unzip and run the .exe</p>
     </div>
@@ -744,29 +731,11 @@
         <div class="spot-visual">
         <div class="km">
           <div class="km-frame">
+            <img class="km-gif" src="km-glow.gif" alt="KlisTeamMod's glow effect outlining a teammate through a dark forest" loading="lazy" width="480" height="256">
+            <span class="vp-corner tl"></span><span class="vp-corner tr"></span>
+            <span class="vp-corner bl"></span><span class="vp-corner br"></span>
             <div class="vp-tag"><span>KlisTeamMod</span><span>Fabric 1.21.11</span></div>
-            <div class="km-live"><b></b>our-team</div>
-
-            <div class="km-list">
-              <div class="km-item">
-                <span class="km-head" style="--gc:#5bff9b"></span>
-                <span class="km-name">Kli</span>
-                <span class="km-hp">&#9829; 20</span>
-              </div>
-              <div class="km-item">
-                <span class="km-head" style="--gc:#7aa2ff"></span>
-                <span class="km-name">Alex</span>
-                <span class="km-hp">&#9829; 14</span>
-              </div>
-              <div class="km-item">
-                <span class="km-head" style="--gc:#ffc857"></span>
-                <span class="km-name">Steve</span>
-                <span class="km-wp">
-                  <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 6 15 12 9 18"/></svg>
-                  118m
-                </span>
-              </div>
-            </div>
+            <div class="km-live"><b></b></div>
           </div>
           <div class="km-foot">
             <span class="km-chip on">Glow</span>

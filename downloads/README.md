@@ -1,64 +1,72 @@
 # Public downloads
 
-Hosts files the website links to for direct download - currently
-`ZValues.zip` (the built `.exe` plus a short README for whoever downloads it).
+`ZValues.zip` (the built `.exe` plus `ZValues-README.txt` for whoever
+downloads it) is served as a **static asset of the site itself**, from
+`site/public/`. The site links to it at `/ZValues.zip`.
 
-## Why a bare R2 bucket, not a Worker
+There is no bucket, no subdomain, no dashboard step, and no separate deploy.
+Drop the file in `site/public/`, push, done.
 
-Two reasons, both learned the hard way earlier in this project:
+## Why not a separate R2 bucket + dl.lojjkli.site
 
-1. **Cost/quota isolation.** Traffic straight from a custom domain to R2 is
-   billed under R2's own request pricing - its own separate 1M Class A + 10M
-   Class B/month free tier - not the Workers 100,000/day pool. That pool is
-   already close to 59,000/day between the mod's ban-poll and the map sync
-   worker (see `../mapsync/README.md`). Public download traffic is exactly the
-   kind of unpredictable spike - one Discord post and it's 10x - that must
-   never be able to eat into the budget the mod actually depends on to enforce
-   bans. Keeping it on a completely separate billing pool makes that structural
-   rather than something to remember.
-2. **Nothing here needs code.** No auth, no per-request logic - just "serve
-   this file to anyone." A Worker in front of that adds a point of failure and
-   a second thing that could hit a rate limit, for zero benefit.
+This folder used to describe exactly that, and the reasoning was wrong.
 
-## One-time setup
+The argument was that unpredictable download traffic - one Discord post and
+it's 10x - could eat into the Workers 100,000 requests/day account pool that
+the mod depends on to enforce bans, so downloads should live on R2's separate
+billing pool.
 
-```bash
-wrangler r2 bucket create klisteam-downloads
-```
+That premise is false. Cloudflare's own docs state it plainly: **"Requests to
+static assets are free and unlimited"**, free plan included. A request only
+counts against the Workers quota when it actually invokes Worker *code*.
+Serving a file out of `site/public/` never does. So there was nothing to
+protect the quota from, and the separate bucket bought nothing while adding a
+bucket to create, a DNS record, a dashboard-only custom-domain step, and a
+second place to remember to upload to.
 
-Then in the Cloudflare dashboard: **R2 → klisteam-downloads → Settings →
-Custom Domains → Connect Domain**, and add `dl.lojjkli.site`. This is a
-dashboard-only step - there is no CLI command for it as of this writing, and
-no wrangler.toml to deploy, since there is no Worker involved at all.
+It also silently broke the download: the subdomain was never actually created,
+so the button pointed at a host that did not resolve
+(`DNS_PROBE_FINISHED_NXDOMAIN`) - complexity that was never needed, failing in
+a way that looked like a site bug.
 
-Public read access on custom domains is on by default for R2; double check it
-under the same Settings tab.
+A same-origin link has a second real advantage: the `download` attribute is
+**ignored on cross-origin links**. At `/ZValues.zip` it actually applies.
 
-## Building and uploading a release
-
-The download is a zip, not a bare `.exe` - `ZValues-README.txt` in this folder
-(the SmartScreen warning, "do I need Python" - no, how to use it) rides along
-in it so anyone who downloads actually sees it, not just people who happen to
-find this repo.
+## Building and publishing a release
 
 ```bash
-# 1. Build the exe on Windows (build.bat in the ZValues source). PyInstaller
-#    does not cross-compile, so this step can't happen anywhere but Windows.
+# 1. Build the exe on Windows (build.bat in the ZValues source).
+#    PyInstaller does not cross-compile, so this step is Windows-only.
 
-# 2. Zip the exe with the README, renaming the README so it reads naturally
-#    once extracted next to the exe:
+# 2. Zip the exe together with the README, renaming it so it reads
+#    naturally once extracted next to the exe:
 cp downloads/ZValues-README.txt README.txt
 zip ZValues.zip ZValues.exe README.txt
 rm README.txt
 
-# 3. Upload
-wrangler r2 object put klisteam-downloads/ZValues.zip --file ./ZValues.zip
+# 3. Put it where the site serves from, and push:
+mv ZValues.zip site/public/ZValues.zip
+git add site/public/ZValues.zip && git commit -m "Release ZValues" && git push
 ```
 
-The site links directly to `https://dl.lojjkli.site/ZValues.zip`. Re-uploading
-under the same name overwrites it in place - no redeploy of anything needed.
+The deploy workflow publishes `site/public/`, so the file goes live with the
+next site deploy. Replacing it is the same three steps again.
 
-## What is NOT here
+## The one real constraint
 
-The actual `.exe`. It has to be built on Windows, per step 1 above - nothing
-running in this repo's tooling (or a Linux sandbox) can produce it.
+Cloudflare caps an **individual static asset at 25 MiB**. A PyInstaller
+`--onefile` build bundling Python, tkinter, requests and bs4 usually lands
+well under that once zipped, but check before pushing:
+
+```bash
+ls -lh site/public/ZValues.zip
+```
+
+If it ever exceeds 25 MiB, that is the point at which moving just this file to
+R2 becomes genuinely necessary rather than imagined - and this file's git
+history has the old setup steps.
+
+## What is NOT in this repo
+
+The `.exe` and the built `.zip`. Both are build output; they get added to
+`site/public/` at release time per the steps above.
