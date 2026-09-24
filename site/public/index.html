@@ -337,14 +337,23 @@
   .km-chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;color:var(--faint);
     border:1px solid var(--line-bright);border-radius:6px;padding:3px 7px;background:rgba(255,255,255,.03)}
   .km-chip.on{color:#5bff9b;border-color:rgba(91,255,155,.4);background:rgba(91,255,155,.08)}
-  /* The List preview. Drawn as inline SVG rather than a screenshot so it
-     costs nothing to load and stays sharp at any width; swap in a real
-     in-game clip the way KlisTeamMod did once one exists. Shares the .km
-     shell and .vp-corner/.vp-tag chrome so it reads as the same family. */
-  .tl-scene{display:block;width:100%;height:auto}
-  .tl-sway{animation:tl-sway 7s ease-in-out infinite}
-  @keyframes tl-sway{0%,100%{transform:translate(0,0)}25%{transform:translate(3px,-2px)}50%{transform:translate(-2px,2px)}75%{transform:translate(2px,1px)}}
-  .tl-list{list-style:none;margin:0;padding:0;border-top:1px solid var(--line);font-family:var(--mono);font-size:.7rem}
+  /* The List preview. The game icon (rendered in Blender from the real
+     avatar and rifle) beside a mock contract file. The icon is square, so it
+     sits in a two-column grid instead of stretching across the whole card;
+     under 560px the two stack. Shares the .km shell and .vp-corner chrome so
+     it reads as the same family as the other two showcases. */
+  .tl-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
+  .tl-img{display:block;width:100%;height:auto;aspect-ratio:1/1;background:#08080a}
+  .tl-side{display:flex;flex-direction:column;border-left:1px solid var(--line)}
+  .tl-head{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);padding:12px 14px;border-bottom:1px solid var(--line)}
+  .tl-side .tl-list{flex:1;display:flex;flex-direction:column;border-top:0}
+  .tl-side .tl-list li{flex:1;align-items:center}
+  .tl-side .km-foot{flex-wrap:wrap}
+  @media(max-width:560px){
+    .tl-grid{grid-template-columns:1fr}
+    .tl-side{border-left:0;border-top:1px solid var(--line)}
+  }
+  .tl-list{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:.7rem}
   .tl-list li{display:flex;justify-content:space-between;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line);color:var(--faint)}
   .tl-list li:last-child{border-bottom:0}
   .tl-list li span:first-child{color:var(--dim)}
@@ -792,56 +801,26 @@
         <p class="spot-desc">A sniper assassin game. You get a list of specific subjects and you have to find and snipe each one. You can also play 1v1s against other people, where whoever snipes the objective first wins. There's ranked too, and a lot more is coming soon.</p>
         <div class="spot-visual">
         <div class="km">
-          <div class="km-frame">
-            <svg class="tl-scene" viewBox="0 0 480 256" role="img" aria-label="Sniper scope aimed at a lit window with a marked subject inside">
-              <defs>
-                <linearGradient id="tlSky" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#16161b"/><stop offset="1" stop-color="#0a0a0c"/></linearGradient>
-                <radialGradient id="tlLens" cx="50%" cy="50%" r="50%"><stop offset=".7" stop-color="#000" stop-opacity="0"/><stop offset="1" stop-color="#000" stop-opacity=".55"/></radialGradient>
-              </defs>
-              <rect width="480" height="256" fill="url(#tlSky)"/>
-              <g fill="#0d0d10">
-                <rect x="0" y="150" width="70" height="106"/><rect x="62" y="118" width="58" height="138"/>
-                <rect x="330" y="132" width="64" height="124"/><rect x="386" y="96" width="94" height="160"/>
-              </g>
-              <rect x="150" y="70" width="180" height="186" fill="#1a1a20"/>
-              <g fill="#26262d">
-                <rect x="166" y="88" width="22" height="16"/><rect x="200" y="88" width="22" height="16"/><rect x="258" y="88" width="22" height="16"/><rect x="292" y="88" width="22" height="16"/>
-                <rect x="166" y="162" width="22" height="16"/><rect x="200" y="162" width="22" height="16"/><rect x="258" y="162" width="22" height="16"/><rect x="292" y="162" width="22" height="16"/>
-                <rect x="166" y="199" width="22" height="16"/><rect x="200" y="199" width="22" height="16"/><rect x="292" y="199" width="22" height="16"/>
-              </g>
-              <g fill="#3a3528"><rect x="166" y="125" width="22" height="16"/><rect x="292" y="125" width="22" height="16"/></g>
-              <rect x="222" y="112" width="36" height="32" fill="#d9c58a" opacity=".85"/>
-              <g fill="#0b0b0d"><circle cx="240" cy="124" r="5"/><path d="M231 144c0-9 4-14 9-14s9 5 9 14z"/></g>
-              <g fill="#3a3528"><rect x="394" y="112" width="14" height="12"/><rect x="440" y="140" width="14" height="12"/><rect x="76" y="136" width="12" height="10"/></g>
-              <g class="tl-sway">
-                <path fill="#020202" fill-rule="evenodd" d="M-40-40H520V296H-40Z M136 128a104 104 0 1 0 208 0a104 104 0 1 0-208 0Z"/>
-                <circle cx="240" cy="128" r="104" fill="url(#tlLens)"/>
-                <circle cx="240" cy="128" r="104" fill="none" stroke="#3c3c3c" stroke-width="2"/>
-                <g stroke="#e8e8e8" stroke-width="1" opacity=".9">
-                  <line x1="136" y1="128" x2="228" y2="128"/><line x1="252" y1="128" x2="344" y2="128"/>
-                  <line x1="240" y1="24" x2="240" y2="116"/><line x1="240" y1="140" x2="240" y2="232"/>
-                </g>
-                <g stroke="#e8e8e8" stroke-width="3" opacity=".9">
-                  <line x1="136" y1="128" x2="176" y2="128"/><line x1="304" y1="128" x2="344" y2="128"/><line x1="240" y1="192" x2="240" y2="232"/>
-                </g>
-                <g fill="#e8e8e8" opacity=".75"><circle cx="240" cy="152" r="1.4"/><circle cx="240" cy="164" r="1.4"/><circle cx="240" cy="176" r="1.4"/><circle cx="216" cy="128" r="1.4"/><circle cx="264" cy="128" r="1.4"/></g>
-                <circle cx="240" cy="128" r="1.8" fill="#ff5a5a"/>
-              </g>
-            </svg>
-            <span class="vp-corner tl"></span><span class="vp-corner tr"></span>
-            <span class="vp-corner bl"></span><span class="vp-corner br"></span>
-            <div class="vp-tag"><span>The List</span><span>Roblox</span></div>
-          </div>
-          <ul class="tl-list" aria-label="Example list of subjects">
-            <li class="done"><span>Subject 01</span><span>Eliminated</span></li>
-            <li class="live"><span>Subject 02</span><span>In sight</span></li>
-            <li><span>Subject 03</span><span>Unknown</span></li>
-          </ul>
-          <div class="km-foot">
-            <span class="km-chip on">Contracts</span>
-            <span class="km-chip on">1v1</span>
-            <span class="km-chip on">Ranked</span>
-            <span class="km-chip soon">More soon</span>
+          <div class="tl-grid">
+            <div class="km-frame tl-frame">
+              <img class="tl-img" src="the-list.jpg" alt="The List game icon: a headless Roblox character leaning back in a chair in a dark room, a sniper rifle set up on the desk under a lamp, and a corkboard of marked subjects on the wall" width="800" height="800" loading="lazy">
+              <span class="vp-corner bl"></span><span class="vp-corner br"></span>
+            </div>
+            <div class="tl-side">
+              <div class="tl-head">Contract file</div>
+              <ul class="tl-list" aria-label="Example list of subjects">
+                <li class="done"><span>Subject 01</span><span>Eliminated</span></li>
+                <li class="live"><span>Subject 02</span><span>In sight</span></li>
+                <li><span>Subject 03</span><span>Unknown</span></li>
+                <li><span>Subject 04</span><span>Unknown</span></li>
+              </ul>
+              <div class="km-foot">
+                <span class="km-chip on">Contracts</span>
+                <span class="km-chip on">1v1</span>
+                <span class="km-chip on">Ranked</span>
+                <span class="km-chip soon">More soon</span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
