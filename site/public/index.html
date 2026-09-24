@@ -337,30 +337,10 @@
   .km-chip{font-family:var(--mono);font-size:9.5px;letter-spacing:.02em;color:var(--faint);
     border:1px solid var(--line-bright);border-radius:6px;padding:3px 7px;background:rgba(255,255,255,.03)}
   .km-chip.on{color:#5bff9b;border-color:rgba(91,255,155,.4);background:rgba(91,255,155,.08)}
-  /* The List preview. The game icon (rendered in Blender from the real
-     avatar and rifle) beside a mock contract file. The icon is square, so it
-     sits in a two-column grid instead of stretching across the whole card;
-     under 560px the two stack. Shares the .km shell and .vp-corner chrome so
-     it reads as the same family as the other two showcases. */
-  .tl-grid{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(0,1fr)}
-  .tl-img{display:block;width:100%;height:auto;aspect-ratio:1/1;background:#08080a}
-  .tl-side{display:flex;flex-direction:column;border-left:1px solid var(--line)}
-  .tl-head{font-family:var(--mono);font-size:.64rem;letter-spacing:.16em;text-transform:uppercase;color:var(--faint);padding:12px 14px;border-bottom:1px solid var(--line)}
-  .tl-side .tl-list{flex:1;display:flex;flex-direction:column;border-top:0}
-  .tl-side .tl-list li{flex:1;align-items:center}
-  .tl-side .km-foot{flex-wrap:wrap}
-  @media(max-width:560px){
-    .tl-grid{grid-template-columns:1fr}
-    .tl-side{border-left:0;border-top:1px solid var(--line)}
-  }
-  .tl-list{list-style:none;margin:0;padding:0;font-family:var(--mono);font-size:.7rem}
-  .tl-list li{display:flex;justify-content:space-between;gap:12px;padding:8px 14px;border-bottom:1px solid var(--line);color:var(--faint)}
-  .tl-list li:last-child{border-bottom:0}
-  .tl-list li span:first-child{color:var(--dim)}
-  .tl-list li.done span:first-child{text-decoration:line-through;color:var(--faint)}
-  .tl-list li.live span{color:#ff5a5a}
-  .tl-list li.live span:last-child::before{content:"";display:inline-block;width:6px;height:6px;border-radius:50%;background:#ff5a5a;box-shadow:0 0 8px #ff5a5a;margin-right:7px;vertical-align:1px}
-  .km-chip.soon{border-style:dashed}
+  /* The List preview: the game's thumbnail, rendered in Blender from the real
+     avatar and rifle. Shares the .km shell and .vp-corner chrome so it reads
+     as the same family as the other two showcases. */
+  .tl-img{display:block;width:100%;height:auto;aspect-ratio:16/9;background:#08080a}
   .spot-soon{font-family:var(--mono);font-size:.78rem;color:var(--dim);border:1px dashed var(--line-bright);border-radius:9px;padding:10px 16px}
   @media(max-width:880px){.spotlight{padding:22px}}
   @media(max-width:400px){
@@ -801,26 +781,9 @@
         <p class="spot-desc">A sniper assassin game. You get a list of specific subjects and you have to find and snipe each one. You can also play 1v1s against other people, where whoever snipes the objective first wins. There's ranked too, and a lot more is coming soon.</p>
         <div class="spot-visual">
         <div class="km">
-          <div class="tl-grid">
-            <div class="km-frame tl-frame">
-              <img class="tl-img" src="the-list.jpg" alt="The List game icon: a headless Roblox character leaning back in a chair in a dark room, a sniper rifle set up on the desk under a lamp, and a corkboard of marked subjects on the wall" width="800" height="800" loading="lazy">
-              <span class="vp-corner bl"></span><span class="vp-corner br"></span>
-            </div>
-            <div class="tl-side">
-              <div class="tl-head">Contract file</div>
-              <ul class="tl-list" aria-label="Example list of subjects">
-                <li class="done"><span>Subject 01</span><span>Eliminated</span></li>
-                <li class="live"><span>Subject 02</span><span>In sight</span></li>
-                <li><span>Subject 03</span><span>Unknown</span></li>
-                <li><span>Subject 04</span><span>Unknown</span></li>
-              </ul>
-              <div class="km-foot">
-                <span class="km-chip on">Contracts</span>
-                <span class="km-chip on">1v1</span>
-                <span class="km-chip on">Ranked</span>
-                <span class="km-chip soon">More soon</span>
-              </div>
-            </div>
+          <div class="km-frame">
+            <img class="tl-img" src="the-list.jpg" alt="The List thumbnail: a headless Roblox character holding a sniper rifle in a dark room, lit by moonlight through the blinds, beside a corkboard of marked subjects and a desk lamp" width="1280" height="720" loading="lazy">
+            <span class="vp-corner bl"></span><span class="vp-corner br"></span>
           </div>
         </div>
       </div>
