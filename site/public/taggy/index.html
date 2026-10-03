@@ -1,0 +1,78 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow">
+  <title>TAGGY · Security control</title>
+  <link rel="stylesheet" href="/taggy/dashboard.css">
+  <script src="/taggy/dashboard.js" defer></script>
+</head>
+<body>
+  <svg class="icon-definitions" aria-hidden="true" xmlns="http://www.w3.org/2000/svg"><defs>
+    <symbol id="icon-shield" viewBox="0 0 24 24"><path d="M12 3 4 6v6c0 5 8 9 8 9s8-4 8-9V6z"/><path d="m8 12 3 3 5-6"/></symbol>
+    <symbol id="icon-bolt" viewBox="0 0 24 24"><path d="m13 2-9 12h7l-1 8 10-13h-8z"/></symbol>
+    <symbol id="icon-recovery" viewBox="0 0 24 24"><path d="M4 10a8 8 0 1 1 1 8M4 4v6h6"/><path d="M12 8v5l3 2"/></symbol>
+    <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol>
+  </defs></svg>
+  <header>
+    <a class="brand" href="/" aria-label="TAGGY · lojjkli home"><img src="/taggy/assets/taggy-logo.png" width="2048" height="768" alt="TAGGY"><span>OWNER CONSOLE</span></a>
+    <div class="header-right"><span class="badge"><svg class="icon"><use href="#icon-lock"/></svg>PRIVATE ACCESS</span><button id="logout" hidden>Sign out everywhere</button></div>
+  </header>
+  <main>
+    <div class="intro">
+      <div class="hero-copy"><p class="eyebrow">BEYOND VERIFICATION.</p><h1>Your community.<br><span>Under your control.</span></h1><p class="muted">Protection. Oversight. Peace of mind.<br>Every connected server, in one place.</p>
+        <div class="feature-path" aria-label="Detect, protect, recover">
+          <div><span><svg class="icon"><use href="#icon-bolt"/></svg></span><small>Detect</small></div>
+          <div><span><svg class="icon"><use href="#icon-shield"/></svg></span><small>Protect</small></div>
+          <div><span><svg class="icon"><use href="#icon-recovery"/></svg></span><small>Recover</small></div>
+        </div>
+      </div>
+      <div class="hero-mark"><img src="/taggy/assets/taggy-logo.png" width="2048" height="768" alt=""><p>A bot by <span>Totally a Game Studios</span></p></div>
+    </div>
+    <p id="status" class="notice" role="status" aria-live="polite">Checking your session…</p>
+    <section id="login" class="login-panel" hidden>
+      <div class="card-icon"><svg class="icon"><use href="#icon-lock"/></svg></div><h2>Your control room awaits.</h2>
+      <p>Sign in with your Discord account. Only the configured TAGGY owner can access server data and controls.</p>
+      <a class="button primary" href="/taggy/auth/login">Continue with Discord <span aria-hidden="true">↗</span></a>
+    </section>
+    <div id="dashboard" class="layout" hidden>
+      <aside><div class="aside-heading"><h2>Connected servers</h2><button id="refresh" aria-label="Refresh server list">↻</button></div><nav id="servers" aria-label="Select a Discord server"></nav><div class="sidebar-note"><svg class="icon"><use href="#icon-lock"/></svg><p>One owner.<br><span>Every connected server.</span></p></div></aside>
+      <div id="detail" hidden>
+        <section class="server-heading"><div><p class="eyebrow">SERVER OVERVIEW</p><h2 id="server-name"></h2><p id="server-meta" class="muted"></p></div><span id="protection-status" class="pill"></span></section>
+        <p id="permissions" class="notice" hidden></p>
+        <div class="overview">
+          <section class="card shield"><div class="card-topline"><p class="eyebrow">JOIN SHIELD</p><span class="card-icon"><svg class="icon"><use href="#icon-shield"/></svg></span></div><h3 id="shield-title">Monitoring new joins</h3><p id="shield-copy" class="muted"></p><div class="actions"><button id="shield-on" class="primary">Activate shield <span aria-hidden="true">↗</span></button><button id="shield-off">End shield</button></div><p class="caption">A shield times out incoming non-staff members. Existing timeouts expire separately.</p></section>
+          <section class="card"><div class="card-topline"><p class="eyebrow">MEMBER RECOVERY</p><span class="card-icon"><svg class="icon"><use href="#icon-recovery"/></svg></span></div><h3>Release a timeout</h3><p class="muted">Review an incident, then remove a member’s timeout when it is safe.</p><form id="release-form"><label for="member-id">Discord member ID</label><div class="inline"><input id="member-id" inputmode="numeric" pattern="[0-9]{1,20}" maxlength="20" placeholder="Paste member ID" required><button type="submit">Release</button></div></form></section>
+        </div>
+        <section class="card settings"><div class="section-heading"><div><p class="eyebrow">PROTECTION POLICY</p><h3>Automatic security</h3></div><span class="caption">Settings apply to this server</span></div>
+          <form id="settings-form">
+            <div class="switches">
+              <label><span><strong>Protection enabled</strong><small>Master switch for automatic responses</small></span><input type="checkbox" name="enabled"></label>
+              <label><span><strong>Join raids</strong><small>Contain rapid bursts of new members</small></span><input type="checkbox" name="antiRaid"></label>
+              <label><span><strong>Spam & mentions</strong><small>Delete spam and temporarily timeout the sender</small></span><input type="checkbox" name="antiSpam"></label>
+              <label><span><strong>Destructive activity</strong><small>Remove manageable dangerous roles after rapid deletions or bans</small></span><input type="checkbox" name="antiNuke"></label>
+            </div>
+            <div class="thresholds">
+              <label>Joins before shield<input type="number" name="joinLimit" min="3" max="100" required></label>
+              <label>Join window (seconds)<input type="number" name="joinWindowSeconds" min="5" max="120" required></label>
+              <label>Shield duration (minutes)<input type="number" name="shieldMinutes" min="1" max="60" required></label>
+              <label>Messages before timeout<input type="number" name="messageLimit" min="3" max="50" required></label>
+              <label>Message window (seconds)<input type="number" name="messageWindowSeconds" min="2" max="30" required></label>
+              <label>Repeated message limit<input type="number" name="duplicateLimit" min="3" max="20" required></label>
+              <label>Mentions per message<input type="number" name="mentionLimit" min="3" max="50" required></label>
+              <label>Timeout duration (minutes)<input type="number" name="timeoutMinutes" min="1" max="1440" required></label>
+              <label>Destructive action limit<input type="number" name="destructiveLimit" min="2" max="20" required></label>
+              <label>Destructive window (seconds)<input type="number" name="destructiveWindowSeconds" min="5" max="60" required></label>
+            </div>
+            <div class="form-footer"><p class="caption">The owner and server owner are trusted. Staff are exempt from spam and join timeouts. Destructive activity still checks staff.</p><button class="primary" type="submit">Save settings</button></div>
+          </form>
+        </section>
+        <section class="card incidents"><div class="section-heading"><div><p class="eyebrow">LIVE ACTIVITY</p><h3>Incident history</h3></div><span class="caption">Refreshes every 15 seconds · latest 300</span></div><div id="incidents"></div></section>
+      </div>
+      <section id="empty" class="card" hidden><h2>No servers connected</h2><p>TAGGY must be connected to Discord and added to a server before it appears here.</p></section>
+    </div>
+  </main>
+  <footer><div class="studio-credit"><span>A bot by</span><img src="/taggy/assets/tags-logo.png" width="1448" height="1086" alt="TAGS"><span>Totally a Game Studios</span></div><span>Owner controls · Discord permissions apply</span><a href="/">lojjkli.site <span aria-hidden="true">↗</span></a></footer>
+</body>
+</html>
