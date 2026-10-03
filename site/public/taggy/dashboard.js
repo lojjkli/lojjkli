@@ -408,9 +408,18 @@ function applyNewCapabilities(){const can=resources?.capabilities?.changeRoles!=
 // Pause media out of view. Reduced-motion users get manual controls and static examples.
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
 const introVideo=$('intro-video');
+const introSound=$('intro-sound');
+function syncSoundControl(){const audible=!introVideo.muted&&introVideo.volume>0;introSound.textContent=audible?'Mute video':'Turn sound on';introSound.setAttribute('aria-pressed',String(audible));$('intro-sound-note').textContent=audible?'Original video sound is on.':'Starts muted. Turn sound on to hear the video.';}
+introSound.addEventListener('click',()=>{const audible=!introVideo.muted&&introVideo.volume>0;introVideo.muted=audible;if(!audible){if(introVideo.volume===0)introVideo.volume=1;void introVideo.play().catch(()=>{$('intro-sound-note').textContent='Use the video play button to start playback.';});}syncSoundControl();});
+introVideo.addEventListener('volumechange',syncSoundControl);
+syncSoundControl();
 let introVisible=false;
 function syncVideoPlayback(){if(introVisible&&!document.hidden&&!document.body.classList.contains('signed-in')&&!reducedMotion.matches)void introVideo.play().catch(()=>{});else introVideo.pause();}
 const observer=new IntersectionObserver(entries=>{for(const entry of entries){if(entry.target===introVideo){introVisible=entry.isIntersecting&&entry.intersectionRatio>=0.35;syncVideoPlayback();}else entry.target.classList.toggle('playing',entry.isIntersecting&&!reducedMotion.matches);}},{threshold:0.35});
 observer.observe(introVideo);for(const demo of document.querySelectorAll('[data-demo]'))observer.observe(demo);
 document.addEventListener('visibilitychange',syncVideoPlayback);
+function videoIsOnScreen(){const rect=introVideo.getBoundingClientRect();return rect.bottom>0&&rect.top<innerHeight;}
+function pauseHiddenVideo(){if(!videoIsOnScreen()||document.hidden||document.body.classList.contains('signed-in'))introVideo.pause();}
+window.addEventListener('scroll',pauseHiddenVideo,{passive:true});
+introVideo.addEventListener('playing',pauseHiddenVideo);
 reducedMotion.addEventListener('change',()=>{syncVideoPlayback();if(reducedMotion.matches)for(const demo of document.querySelectorAll('[data-demo]'))demo.classList.remove('playing');});
