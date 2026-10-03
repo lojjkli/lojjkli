@@ -3,7 +3,13 @@ const $ = id => document.getElementById(id);
 let csrf = '';
 let isSpecialOwner = false;
 let priorityGuild = '';
-let selected = '';
+let selected = new URL(location.href).searchParams.get('server') || '';
+function switchServer(id) {
+  if (busy || (dirty && !confirm('Leave without saving your changes?'))) return;
+  discardDrafts();
+  const url = new URL(location.href); url.searchParams.set('server', id);
+  location.assign(url.href);
+}
 let active = false;
 let busy = false;
 let dirty = false;
@@ -17,6 +23,12 @@ let dmUser = '';
 let channelLoading = '';
 let displayedChannel = '';
 let dmLoading = false;
+let dmRows = []; let dmBefore = null; let dmHistoryLoading = ''; let dmThreads = [];
+function avatar(user, className='dm-avatar') {
+ const fallback=textElement('span',(user.name||user.author||'?').slice(0,2).toUpperCase(),className+' avatar-fallback');
+ try { const url=new URL(user.avatarUrl); if(url.protocol!=='https:'||url.hostname!=='cdn.discordapp.com')return fallback;const img=document.createElement('img');img.src=url.href;img.alt='';img.className=className;img.addEventListener('error',()=>img.replaceWith(fallback));return img; } catch(_){return fallback;}
+}
+
 let resourcesFor = '';
 let resources = null;
 let lookedUpMember = '';
@@ -33,8 +45,8 @@ async function api(path, body) {
   try { data = await response.json(); } catch (_) { throw new Error('The dashboard could not reach TAGGY.'); }
   if (response.status === 401) {
     active = false; csrf = ''; selected = ''; isSpecialOwner = false; resources = null; dmUser = '';
-    $('dm-messages').replaceChildren(); $('dm-threads').replaceChildren(); $('channel-messages').replaceChildren(); $('incidents').replaceChildren();
-    document.body.classList.remove('signed-in'); $('account-name').hidden = true;
+    dmRows=[];dmThreads=[];dmBefore=null;$('dm-profile').replaceChildren();$('dm-chat-header').replaceChildren();$('dm-messages').replaceChildren(); $('dm-threads').replaceChildren(); $('channel-messages').replaceChildren(); $('incidents').replaceChildren();
+    $('header-login').hidden = false; document.body.classList.remove('signed-in'); $('account-name').hidden = true;
     $('dashboard').hidden = true; $('logout').hidden = true; $('login').hidden = false;
     throw new Error('Sign in with Discord to continue.');
   }
@@ -58,19 +70,14 @@ function renderList() {
     else button.append(textElement('span', guild.name.slice(0,2).toUpperCase(), 'server-initials'));
     button.type = 'button'; button.setAttribute('aria-current', String(guild.id === selected));
 
-    button.addEventListener('click', async () => {
-      if (busy || (dirty && !confirm('Discard unsaved settings and switch servers?'))) return;
-      discardDrafts(); selected = guild.id; resourcesFor = ''; lookedUpMember = ''; $('member-result').textContent = 'Look up a member to review their roles.'; $('embed-form').reset(); previewEmbed(); renderList();
-      $('channel-messages').replaceChildren(); $('chat-content').value = '';
-      try { await loadDetail(true); await refreshCurrentTab(); } catch (error) { showStatus(error.message, 'error'); }
-    });
+    button.addEventListener('click', () => switchServer(guild.id));
     $('servers').append(button);
   }
 }
 function renderDetail(data, settings) {
   $('detail').hidden = false;
   $('server-name').textContent = data.name;
-  $('server-meta').textContent = `${data.memberCount.toLocaleString()} members · ${data.id}`;
+  $('server-meta').textContent = `${data.memberCount.toLocaleString()} members`;
   $('protection-status').textContent = data.config.enabled ? 'Protection active' : 'Protection paused';
   $('protection-status').className = `pill ${data.config.enabled ? '' : 'off'}`;
   const missing = Object.entries(data.permissions).filter(([, value]) => !value).map(([key]) => ({
@@ -80,6 +87,10 @@ function renderDetail(data, settings) {
   if (missing.length) warnings.push(`Missing bot permissions: ${missing.join(', ')}. Some responses will fail. Keep TAGGY’s role above members it needs to manage.`);
   if (data.storageError) warnings.push('Security state could not be saved. Check the bot host storage before relying on incident history.');
   $('permissions').hidden = !warnings.length; $('permissions').textContent = warnings.join(' '); $('permissions').className = 'notice error';
+  const fullyAutomatic = data.config.enabled && data.config.antiRaid && data.config.antiSpam && data.config.antiNuke;
+  $('automatic-title').textContent = fullyAutomatic ? 'Automatic protection is on' : 'Some protection is paused';
+  $('automatic-copy').textContent = fullyAutomatic ? 'TAGGY checks new joins, spam and destructive changes automatically. It restricts suspicious activity and alerts the bot owner, even when this page is closed.' : 'Turn on automatic protection to let TAGGY handle join raids, spam and destructive changes. You can tune individual checks under Advanced.';
+  $('automatic-on').hidden = fullyAutomatic;
   const shield = data.shieldUntil > Date.now();
   $('shield-title').textContent = shield ? 'Join shield is active' : 'Monitoring new joins';
   $('shield-copy').textContent = shield
@@ -150,20 +161,26 @@ async function start() {
     const session = await api('session'); csrf = session.csrf; active = true; isSpecialOwner = session.isOwner === true; priorityGuild = session.priorityGuildId || '';
     $('owner-console').hidden = !isSpecialOwner; $('console-label').textContent = isSpecialOwner ? 'OWNER CONSOLE' : 'SERVER DASHBOARD';
     $('scope-note').textContent = isSpecialOwner ? 'Every connected server. Your main server first.' : 'Your servers. Your controls.';
-    document.body.classList.add('signed-in'); $('account-name').hidden = false; $('account-name').textContent = session.username || session.userId; $('dm-tab').hidden = !isSpecialOwner;
+    $('header-login').hidden = true; document.body.classList.add('signed-in'); $('account-name').hidden = false; $('account-name').textContent = session.username || session.userId; $('dm-tab').hidden = !isSpecialOwner;
     $('login').hidden = true; $('dashboard').hidden = false; $('logout').hidden = false;
     await loadList(); showStatus(isSpecialOwner ? 'Your servers are ready.' : 'Pick a server to get started.', 'success');
-  } catch (error) { showStatus(error.message, 'error'); }
+  } catch (error) { if (error.message === 'Sign in with Discord to continue.') { showStatus(''); } else { showStatus(error.message, 'error'); $('login').hidden = false; } }
 }
 setInterval(() => {
   if (active && !busy && !document.hidden) void refreshCurrentTab().catch(error => showStatus(error.message, 'error'));
 }, 15000);
 void start();
 
+$('automatic-on').addEventListener('click', () => { void action(`guilds/${selected}/settings`, { enabled:true, antiRaid:true, antiSpam:true, antiNuke:true }, 'Automatic protection is on.'); });
+
 const roleKeys = ['member', 'unverified', 'owner', 'admin', 'moderator', 'helper', 'builder'];
+const extraRoles = document.createElement('details'); extraRoles.className = 'advanced';
+extraRoles.append(textElement('summary', 'More command roles'));
+const extraRoleFields = document.createElement('div'); extraRoleFields.className = 'thresholds'; extraRoles.append(extraRoleFields);
+$('role-bindings').after(extraRoles);
 for (const key of roleKeys) {
   const label = textElement('label', key[0].toUpperCase() + key.slice(1));
-  const select = document.createElement('select'); select.id = `binding-${key}`; label.append(select); $('role-bindings').append(label);
+  const select = document.createElement('select'); select.id = `binding-${key}`; label.append(select); (['member','unverified','owner'].includes(key) ? $('role-bindings') : extraRoleFields).append(label);
 }
 function options(element, items, blank = 'Disabled') {
   element.replaceChildren(); const empty = textElement('option', blank); empty.value = ''; element.append(empty);
@@ -217,16 +234,29 @@ $('member-role-form').addEventListener('submit', async event => {
   const result = await action(`guilds/${selected}/member-role`, { memberId: lookedUpMember, roleId: $('assign-role').value, operation }, 'Member role updated.');
   if (result) $('lookup-form').requestSubmit();
 });
+function readEmbedFields() { return [...$('embed-field-rows').children].map(row => ({ name:row.querySelector('[data-field=name]').value, value:row.querySelector('[data-field=value]').value, inline:row.querySelector('[data-field=inline]').checked })); }
+function addEmbedField(field = {}) {
+ if ($('embed-field-rows').children.length >= 25) return;
+ const row = document.createElement('fieldset'); row.className = 'embed-field-row';
+ row.append(textElement('legend', 'Extra field'));
+ for (const [key, title, max] of [['name','Heading',256],['value','Text',1024]]) {
+  const label=textElement('label',title); const input=document.createElement(key==='value'?'textarea':'input');
+  input.dataset.field=key; input.maxLength=max; input.required=true; input.value=field[key]||''; label.append(input); row.append(label);
+ }
+ const label=textElement('label','Show side by side'); const inline=document.createElement('input'); inline.type='checkbox'; inline.dataset.field='inline'; inline.checked=field.inline===true; label.append(inline); row.append(label);
+ const remove=textElement('button','Remove field'); remove.type='button'; remove.addEventListener('click',()=>{row.remove();dirtyForms.add('embed-form');dirty=true;previewEmbed();}); row.append(remove); $('embed-field-rows').append(row);
+}
+$('add-embed-field').addEventListener('click',()=>{addEmbedField();dirtyForms.add('embed-form');dirty=true;previewEmbed();});
 function embedBody() {
   const embed = Object.fromEntries(['title', 'description', 'color', 'url', 'image', 'thumbnail', 'footer'].map(key => [key, $(`embed-${key}`).value]));
-  embed.fields = JSON.parse($('embed-fields').value || '[]');
+  embed.fields = readEmbedFields();
   return { channelId: $('embed-channel').value, messageId: $('embed-id').value.trim(), content: $('embed-content').value, embed };
 }
 function previewEmbed() {
   $('preview-title').textContent = $('embed-title').value || 'Your title'; $('preview-description').textContent = $('embed-description').value || 'Your message, styled your way.';
   $('preview-footer').textContent = $('embed-footer').value; $('embed-preview').style.borderLeftColor = $('embed-color').value;
   $('preview-fields').replaceChildren();
-  try { const fields = JSON.parse($('embed-fields').value || '[]'); if (Array.isArray(fields)) for (const field of fields.slice(0, 25)) { const div = document.createElement('div'); div.append(textElement('strong', String(field.name || '')), textElement('p', String(field.value || ''))); $('preview-fields').append(div); } } catch (_) { $('preview-fields').append(textElement('small', 'Fields must be a valid JSON array.')); }
+  for (const field of readEmbedFields()) { const div=document.createElement('div'); div.append(textElement('strong',field.name),textElement('p',field.value)); $('preview-fields').append(div); }
 }
 $('embed-form').addEventListener('input', previewEmbed);
 $('load-embed').addEventListener('click', async () => {
@@ -239,7 +269,7 @@ $('load-embed').addEventListener('click', async () => {
     for (const key of ['title', 'description', 'url']) $(`embed-${key}`).value = embed[key] || '';
     $('embed-color').value = '#' + (embed.color ?? 0xbe8bff).toString(16).padStart(6, '0');
     $('embed-image').value = embed.image?.url || ''; $('embed-thumbnail').value = embed.thumbnail?.url || '';
-    $('embed-footer').value = embed.footer?.text || ''; $('embed-fields').value = JSON.stringify(embed.fields || [], null, 2);
+    $('embed-footer').value = embed.footer?.text || ''; $('embed-field-rows').replaceChildren(); for (const field of embed.fields || []) addEmbedField(field);
     dirtyForms.add('embed-form'); dirty = true; previewEmbed(); showStatus('Message loaded. Publishing will replace its embeds with your edited version.');
   } catch (error) { showStatus(error.message, 'error'); }
 });
@@ -262,11 +292,7 @@ $('welcome-form').addEventListener('submit', async event => {
 });
 previewEmbed();
 
-$('priority-server').addEventListener('click', async () => {
-  if (busy || !priorityGuild || (dirty && !confirm('Discard unsaved drafts and open your main server?'))) return;
-  selected = priorityGuild; resourcesFor = ''; discardDrafts(); lookedUpMember = ''; $('embed-form').reset(); previewEmbed(); renderList();
-  try { await loadDetail(true); } catch (error) { showStatus(error.message, 'error'); }
-});
+$('priority-server').addEventListener('click', () => { if (priorityGuild) switchServer(priorityGuild); });
 
 function renderLogs() {
   $('incidents').replaceChildren(); const query = $('log-search').value.toLowerCase();
@@ -278,7 +304,7 @@ async function loadLogs() { const id = selected; if(!id)return; const data=await
 function renderMessages(element,messages) {
   const nearBottom = element.scrollHeight-element.scrollTop-element.clientHeight<60; element.replaceChildren();
   if(!messages.length) element.append(textElement('p','No messages yet.','muted'));
-  for(const message of messages){const row=textElement('article','',`chat-message ${message.direction==='outgoing'?'outgoing':''}`);row.append(textElement('strong',`${message.author}${message.bot?' · bot':''}`),textElement('time',new Date(message.at).toLocaleString()),textElement('p',message.content||'(attachment)')); for(const attachment of message.attachments||[]){try{const url=new URL(attachment.url);if(url.protocol!=='https:'||!['cdn.discordapp.com','media.discordapp.net'].includes(url.hostname))continue;const link=textElement('a',attachment.name||'Attachment');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';row.append(link);}catch(_){}} element.append(row);}
+  for(const message of messages){const row=textElement('article','',`chat-message ${message.direction==='outgoing'?'outgoing':''}`);if(element.id==='dm-messages')row.append(avatar(message));row.append(textElement('strong',`${message.author}${message.bot?' · bot':''}`),textElement('time',new Date(message.at).toLocaleString()),textElement('p',message.content||'(attachment)')); for(const attachment of message.attachments||[]){try{const url=new URL(attachment.url);if(url.protocol!=='https:'||!['cdn.discordapp.com','media.discordapp.net'].includes(url.hostname))continue;const link=textElement('a',attachment.name||'Attachment');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';row.append(link);}catch(_){}} element.append(row);}
   if(nearBottom) element.scrollTop=element.scrollHeight;
 }
 async function loadChat() {
@@ -289,12 +315,37 @@ async function loadChat() {
   try{const data=await api(`guilds/${guildId}/messages?channelId=${encodeURIComponent(channelId)}`);if(selected===guildId&&$('chat-channel').value===channelId)renderMessages($('channel-messages'),data.messages);}
   finally{if(channelLoading===key)channelLoading='';}
 }
-async function loadDMs() {
-  if(!isSpecialOwner||dmLoading)return;dmLoading=true;
-  try{const data=await api('owner/dms');$('dm-threads').replaceChildren(); if(data.storageError)showStatus('The inbox could not be saved. Check bot storage.','error'); for(const thread of data.threads){const button=textElement('button',thread.name);button.type='button';button.append(textElement('small',thread.preview.slice(0,70)));button.addEventListener('click',()=>selectDM(thread.id));$('dm-threads').append(button);}if(dmUser)await loadDMHistory();}
-  finally{dmLoading=false;}
+function renderDMThreads(){
+ $('dm-threads').replaceChildren();const query=$('dm-search').value.toLowerCase();
+ for(const thread of dmThreads.filter(t=>(t.name+' '+(t.username||'')).toLowerCase().includes(query))){const button=textElement('button','');button.type='button';button.setAttribute('aria-current',String(thread.id===dmUser));button.setAttribute('aria-label',thread.name);button.append(avatar(thread));const copy=textElement('span','','dm-thread-copy');copy.append(textElement('strong',thread.name),textElement('small',thread.preview.slice(0,70)));button.append(copy);button.addEventListener('click',()=>selectDM(thread.id));$('dm-threads').append(button);}
+ if(!$('dm-threads').children.length)$('dm-threads').append(textElement('p','No conversations here yet. Open one with a user ID.','muted'));
 }
-async function loadDMHistory(){if(!isSpecialOwner||!dmUser)return;const user=dmUser;const data=await api(`owner/dms?userId=${encodeURIComponent(user)}`);if(user===dmUser)renderMessages($('dm-messages'),data.messages);}
+function renderDMProfile(user){
+ $('dm-chat-header').replaceChildren(avatar(user),textElement('strong',user.name));
+ const panel=$('dm-profile');panel.replaceChildren(avatar(user,'dm-profile-avatar'),textElement('h3',user.name),textElement('p','@'+(user.username||user.name),'muted'));
+ panel.append(textElement('small','DISCORD USER ID'),textElement('p',user.id,'dm-profile-id'));
+ const link=textElement('a','Open Discord profile ↗');link.href='https://discord.com/users/'+encodeURIComponent(user.id);link.target='_blank';link.rel='noopener noreferrer';panel.append(link,textElement('p','Messages are sent from TAGGY.','caption'));
+}
+async function loadDMs() {
+ if(!isSpecialOwner||dmLoading)return;dmLoading=true;
+ try{const data=await api('owner/dms');dmThreads=data.threads;renderDMThreads();if(data.storageError)showStatus('The inbox could not be saved. Check bot storage.','error');if(dmUser)await loadDMHistory();}
+ finally{dmLoading=false;}
+}
+async function loadDMHistory(older=false){
+ if(!isSpecialOwner||!dmUser||older&&!dmBefore)return;
+ const user=dmUser,key=user+'/'+(older?dmBefore:'latest');if(dmHistoryLoading===key)return;dmHistoryLoading=key;
+ const feed=$('dm-messages'),height=feed.scrollHeight,scroll=feed.scrollTop;
+ $('dm-older').disabled=true;
+ try{const data=await api('owner/dms?userId='+encodeURIComponent(user)+(older?'&before='+encodeURIComponent(dmBefore):''));if(user!==dmUser)return;
+ const merged=new Map(dmRows.map(m=>[m.id,m]));for(const message of data.messages)merged.set(message.id,message);dmRows=[...merged.values()].sort((a,b)=>a.at-b.at);
+ renderMessages(feed,dmRows);if(older)feed.scrollTop=scroll+feed.scrollHeight-height;
+ if(older||!dmBefore){dmBefore=data.before||data.messages[0]?.id||null;$('dm-older').hidden=!data.hasMore;}
+ const profile=data.profile||dmThreads.find(t=>t.id===user)||{id:user,name:user};renderDMProfile(profile);renderDMThreads();
+ $('dm-history-note').textContent=data.warning|| (data.hasMore?'Older messages are available.':'Showing available conversation history.');
+ }finally{if(dmHistoryLoading===key)dmHistoryLoading='';$('dm-older').disabled=false;}
+}
+$('dm-search').addEventListener('input',renderDMThreads);
+$('dm-older').addEventListener('click',()=>void loadDMHistory(true).catch(error=>showStatus(error.message,'error')));
 async function refreshCurrentTab(){if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(false);}
 $('log-search').addEventListener('input',renderLogs);
 $('refresh-logs').addEventListener('click',()=>void loadLogs().catch(error=>showStatus(error.message,'error')));
@@ -305,5 +356,5 @@ $('dm-open-form').addEventListener('submit',event=>{event.preventDefault();selec
 $('refresh-dms').addEventListener('click',()=>void loadDMs().catch(error=>showStatus(error.message,'error')));
 $('dm-form').addEventListener('submit',async event=>{event.preventDefault();if(!isSpecialOwner||!dmUser){showStatus('Open a conversation first.','error');return;}const result=await action('owner/dms',{userId:dmUser,content:$('dm-content').value},'DM sent.');if(result){$('dm-content').value='';clearDraft('dm-form');if(result.warning)showStatus(result.warning,'error');await loadDMs().catch(error=>showStatus(`DM sent. Refresh failed: ${error.message}`,'error'));}});
 
-function selectDM(userId){if(dmUser!==userId&&$('dm-content').value.trim()&&!confirm('Discard this draft and switch conversations?')){$('dm-user-id').value=dmUser;return;}if(dmUser!==userId){$('dm-content').value='';clearDraft('dm-form');}dmUser=userId;$('dm-user-id').value=userId;void loadDMHistory().catch(error=>showStatus(error.message,'error'));}
+function selectDM(userId){if(dmUser!==userId&&$('dm-content').value.trim()&&!confirm('Discard this draft and switch conversations?')){$('dm-user-id').value=dmUser;return;}if(dmUser!==userId){$('dm-content').value='';clearDraft('dm-form');}if(dmUser!==userId){dmRows=[];dmBefore=null;$('dm-messages').replaceChildren();$('dm-older').hidden=true;$('dm-chat-header').textContent='Loading conversation…';$('dm-profile').replaceChildren();}dmUser=userId;$('dm-user-id').value=userId;void loadDMHistory().catch(error=>showStatus(error.message,'error'));}
 function applyCapabilities(){if(!resources||busy)return;const cap=resources.capabilities||{};for(const [selector,key]of [['#roles-form button,#roles-form select','changeRoles'],['#member-role-form button,#assign-role','assignRoles'],['#channel-form button,#control-channel,#slowmode','channels'],['#release-form button,#member-id','timeout'],['#auto-role','autoRole']]){for(const control of document.querySelectorAll(selector))control.disabled=cap[key]===false;} }
