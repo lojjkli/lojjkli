@@ -13,7 +13,8 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
   if (url.origin !== PUBLIC_ORIGIN) return failure(403, 'Use https://lojjkli.site/taggy/');
   if (!['GET', 'POST'].includes(request.method)) return failure(405, 'Method not allowed');
   if (request.method === 'POST' && request.headers.get('Origin') !== PUBLIC_ORIGIN) return failure(403, 'Invalid request origin');
-  if (Number(request.headers.get('Content-Length') || 0) > 65536) return failure(413, 'Request too large');
+  const bodyLimit = /^\/taggy\/api\/(?:owner\/dms|guilds\/\d{1,20}\/chat)$/.test(url.pathname) ? 12*1024*1024 : 65536;
+  if (Number(request.headers.get('Content-Length') || 0) > bodyLimit) return failure(413, 'Request too large');
   if (!env.TAGGY_BACKEND_URL || !env.TAGGY_PROXY_SECRET || env.TAGGY_PROXY_SECRET.length < 32) return failure(503, 'TAGGY dashboard is not configured yet.');
   let target;
   try {
@@ -42,7 +43,7 @@ export async function handleRequest(request, env, fetchImpl = fetch) {
           const { value, done } = await reader.read();
           if (done) break;
           size += value.byteLength;
-          if (size > 65536) { await reader.cancel(); return failure(413, 'Request too large'); }
+          if (size > bodyLimit) { await reader.cancel(); return failure(413, 'Request too large'); }
           chunks.push(value);
         }
       }
