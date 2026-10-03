@@ -4,7 +4,7 @@
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow">
-  <title>TAGGY · Security control</title>
+  <title>TAGGY 2.0 · Server dashboard</title>
   <link rel="stylesheet" href="/taggy/dashboard.css">
   <script src="/taggy/dashboard.js" defer></script>
 </head>
@@ -16,12 +16,12 @@
     <symbol id="icon-lock" viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="11" rx="3"/><path d="M8 10V7a4 4 0 0 1 8 0v3M12 14v3"/></symbol>
   </defs></svg>
   <header>
-    <a class="brand" href="/" aria-label="TAGGY · lojjkli home"><img src="/taggy/assets/taggy-logo.png" width="2048" height="768" alt="TAGGY"><span>OWNER CONSOLE</span></a>
-    <div class="header-right"><span class="badge"><svg class="icon"><use href="#icon-lock"/></svg>PRIVATE ACCESS</span><button id="logout" hidden>Sign out everywhere</button></div>
+    <a class="brand" href="/" aria-label="TAGGY · lojjkli home"><img src="/taggy/assets/taggy-logo.png" width="2048" height="768" alt="TAGGY"><span id="console-label">SERVER DASHBOARD</span></a>
+    <div class="header-right"><span id="account-name" class="account-chip" hidden></span><span class="badge"><svg class="icon"><use href="#icon-lock"/></svg>SECURE ACCESS</span><button id="logout" hidden>Sign out everywhere</button></div>
   </header>
   <main>
     <div class="intro">
-      <div class="hero-copy"><p class="eyebrow">BEYOND VERIFICATION.</p><h1>Your community.<br><span>Under your control.</span></h1><p class="muted">Protection. Oversight. Peace of mind.<br>Every connected server, in one place.</p>
+      <div class="hero-copy"><p class="eyebrow">TAGGY 2.0</p><h1>Your community.<br><span>Under your control.</span></h1><p class="muted">Protection. Oversight. Peace of mind.<br>Every connected server, in one place.</p>
         <div class="feature-path" aria-label="Detect, protect, recover">
           <div><span><svg class="icon"><use href="#icon-bolt"/></svg></span><small>Detect</small></div>
           <div><span><svg class="icon"><use href="#icon-shield"/></svg></span><small>Protect</small></div>
@@ -33,19 +33,22 @@
     <p id="status" class="notice" role="status" aria-live="polite">Checking your session…</p>
     <section id="login" class="login-panel" hidden>
       <div class="card-icon"><svg class="icon"><use href="#icon-lock"/></svg></div><h2>Your control room awaits.</h2>
-      <p>Sign in with your Discord account. Only the configured TAGGY owner can access server data and controls.</p>
+      <p>Sign in with Discord to customize the servers you own or have Manage Server permission in.</p>
       <a class="button primary" href="/taggy/auth/login">Continue with Discord <span aria-hidden="true">↗</span></a>
     </section>
     <div id="dashboard" class="layout" hidden>
-      <aside><div class="aside-heading"><h2>Connected servers</h2><button id="refresh" aria-label="Refresh server list">↻</button></div><nav id="servers" aria-label="Select a Discord server"></nav><div class="sidebar-note"><svg class="icon"><use href="#icon-lock"/></svg><p>One owner.<br><span>Every connected server.</span></p></div></aside>
+      <aside><div class="aside-heading"><h2>Servers</h2><button id="refresh" aria-label="Refresh server list">↻</button></div><nav id="servers" aria-label="Select a Discord server"></nav><div class="sidebar-note"><svg class="icon"><use href="#icon-lock"/></svg><p><span id="scope-note">Your servers.<br>Your controls.</span></p></div></aside>
       <div id="detail" hidden>
-        <section class="server-heading"><div><p class="eyebrow">SERVER OVERVIEW</p><h2 id="server-name"></h2><p id="server-meta" class="muted"></p></div><span id="protection-status" class="pill"></span></section>
+        <section class="server-heading"><div><p class="eyebrow">SERVER</p><h2 id="server-name"></h2><p id="server-meta" class="muted"></p></div><span id="protection-status" class="pill"></span></section>
+        <section id="owner-console" class="card owner-console" hidden><p class="eyebrow">OWNER</p><h3>All your servers</h3><p id="owner-summary" class="muted"></p><button type="button" id="priority-server" class="primary">My server</button><p class="caption">You can pick any server. DMs are just for you.</p></section>
         <p id="permissions" class="notice" hidden></p>
+        <nav class="console-tabs" aria-label="Server controls"><button type="button" data-tab="security" aria-pressed="true">Security</button><button type="button" data-tab="roles" aria-pressed="false">Roles & members</button><button type="button" data-tab="embeds" aria-pressed="false">Embeds</button><button type="button" data-tab="channels" aria-pressed="false">Channels & welcome</button><button type="button" data-tab="chat" aria-pressed="false">Messages</button><button type="button" data-tab="logs" aria-pressed="false">Logs</button><button id="dm-tab" type="button" data-tab="dms" aria-pressed="false" hidden>DMs</button></nav>
+        <div data-panel="security">
         <div class="overview">
           <section class="card shield"><div class="card-topline"><p class="eyebrow">JOIN SHIELD</p><span class="card-icon"><svg class="icon"><use href="#icon-shield"/></svg></span></div><h3 id="shield-title">Monitoring new joins</h3><p id="shield-copy" class="muted"></p><div class="actions"><button id="shield-on" class="primary">Activate shield <span aria-hidden="true">↗</span></button><button id="shield-off">End shield</button></div><p class="caption">A shield times out incoming non-staff members. Existing timeouts expire separately.</p></section>
-          <section class="card"><div class="card-topline"><p class="eyebrow">MEMBER RECOVERY</p><span class="card-icon"><svg class="icon"><use href="#icon-recovery"/></svg></span></div><h3>Release a timeout</h3><p class="muted">Review an incident, then remove a member’s timeout when it is safe.</p><form id="release-form"><label for="member-id">Discord member ID</label><div class="inline"><input id="member-id" inputmode="numeric" pattern="[0-9]{1,20}" maxlength="20" placeholder="Paste member ID" required><button type="submit">Release</button></div></form></section>
+          <section class="card"><div class="card-topline"><p class="eyebrow">TIMEOUTS</p><span class="card-icon"><svg class="icon"><use href="#icon-recovery"/></svg></span></div><h3>Release a timeout</h3><p class="muted">Review an incident, then remove a member’s timeout when it is safe.</p><form id="release-form"><label for="member-id">Discord member ID</label><div class="inline"><input id="member-id" inputmode="numeric" pattern="[0-9]{1,20}" maxlength="20" placeholder="Paste member ID" required><button type="submit">Release</button></div></form></section>
         </div>
-        <section class="card settings"><div class="section-heading"><div><p class="eyebrow">PROTECTION POLICY</p><h3>Automatic security</h3></div><span class="caption">Settings apply to this server</span></div>
+        <section class="card settings"><div class="section-heading"><div><p class="eyebrow">SETTINGS</p><h3>Security settings</h3></div><span class="caption">Settings apply to this server</span></div>
           <form id="settings-form">
             <div class="switches">
               <label><span><strong>Protection enabled</strong><small>Master switch for automatic responses</small></span><input type="checkbox" name="enabled"></label>
@@ -68,11 +71,32 @@
             <div class="form-footer"><p class="caption">The owner and server owner are trusted. Staff are exempt from spam and join timeouts. Destructive activity still checks staff.</p><button class="primary" type="submit">Save settings</button></div>
           </form>
         </section>
-        <section class="card incidents"><div class="section-heading"><div><p class="eyebrow">LIVE ACTIVITY</p><h3>Incident history</h3></div><span class="caption">Refreshes every 15 seconds · latest 300</span></div><div id="incidents"></div></section>
+
+        </div>
+        <div data-panel="roles" hidden>
+          <section class="card"><p class="eyebrow">ROLES</p><h3>Server roles</h3><p class="muted">Choose the roles TAGGY uses for verification and command access. Empty selections use existing defaults. Changing bindings does not move existing members or update channel permission overwrites. The Owner role grants bot commands in this server; the special owner console remains private to the TAGGY owner.</p><form id="roles-form"><div id="role-bindings" class="thresholds"></div><div class="form-footer"><p class="caption">Discord ownership stays with the server owner. Member and Unverified roles must have no dangerous permissions.</p><button class="primary">Save roles</button></div></form></section>
+          <section class="card"><p class="eyebrow">MEMBERS</p><h3>Member roles</h3><form id="lookup-form"><label>Discord member ID<input id="lookup-id" pattern="[0-9]{1,20}" maxlength="20" required placeholder="Paste member ID"></label><button>Find member</button></form><p id="member-result" class="muted">Look up a member to review their roles.</p><form id="member-role-form"><label>Role<select id="assign-role" required></select></label><div class="actions"><button name="operation" value="add">Add role</button><button name="operation" value="remove">Remove role</button></div></form></section>
+        </div>
+        <div data-panel="embeds" hidden>
+          <section class="card"><p class="eyebrow">EMBEDS</p><h3>Edit embeds</h3><p class="muted">Compose announcements or load an existing TAGGY message by ID. Editing replaces that message’s embeds with this single embed. Mentions are sent without notifications.</p>
+            <form id="embed-form"><div class="thresholds"><label>Channel<select id="embed-channel" required></select></label><label>Existing message ID (optional)<input id="embed-id" pattern="[0-9]{1,20}" maxlength="20"></label></div><button type="button" id="load-embed">Load existing message</button>
+              <label>Message above embed<textarea id="embed-content" maxlength="2000" rows="2"></textarea></label><div class="thresholds"><label>Title<input id="embed-title" maxlength="256"></label><label>Accent color<input id="embed-color" type="color" value="#be8bff"></label></div><label>Description<textarea id="embed-description" maxlength="4096" rows="6" placeholder="Your announcement…"></textarea></label>
+              <div class="thresholds"><label>Title link (HTTPS)<input id="embed-url" type="url"></label><label>Image URL (HTTPS)<input id="embed-image" type="url"></label><label>Thumbnail URL (HTTPS)<input id="embed-thumbnail" type="url"></label><label>Footer<input id="embed-footer" maxlength="2048"></label></div><label>Fields (JSON array, optional)<textarea id="embed-fields" rows="3" placeholder='[{"name":"Update","value":"New features","inline":true}]'></textarea></label>
+              <p class="caption">Text preview below. Discord renders markdown and images when posted.</p><article id="embed-preview" class="embed-preview"><strong id="preview-title"></strong><p id="preview-description"></p><div id="preview-fields"></div><small id="preview-footer"></small></article><div class="form-footer"><span id="embed-result" class="caption"></span><button class="primary">Publish embed</button></div>
+            </form>
+          </section>
+        </div>
+        <div data-panel="channels" hidden>
+          <section class="card"><p class="eyebrow">CHANNELS</p><h3>Channel controls</h3><form id="channel-form"><div class="thresholds"><label>Channel<select id="control-channel" required></select></label><label>Slowmode (seconds)<input id="slowmode" type="number" min="0" max="21600" value="0" required></label></div><div class="actions"><button name="operation" value="slowmode">Set slowmode</button><button name="operation" value="lock">Lock channel</button><button name="operation" value="unlock">Restore channel</button></div></form><p class="caption">Locks deny @everyone Send Messages. Staff and roles with explicit channel access may still send. Restore uses the permission saved by this dashboard.</p></section>
+          <section class="card"><p class="eyebrow">WELCOME</p><h3>Welcome & logging</h3><form id="welcome-form"><div class="thresholds"><label>Welcome channel<select id="welcome-channel"></select></label><label>Auto-role<select id="auto-role"></select></label><label>Bot audit log channel<select id="log-channel"></select></label></div><label>Welcome message<textarea id="welcome-message" maxlength="1500" rows="4" placeholder="Welcome {user} to {server}!"></textarea></label><div class="form-footer"><p class="caption">Use {user} and {server}. Empty channels disable the feature. Verified Member cannot be auto-granted in verification servers.</p><button class="primary">Save welcome settings</button></div></form></section>
+        </div>
+        <div data-panel="logs" hidden><section class="card"><div class="section-heading"><div><h3>Logs</h3><p class="muted">Server changes, bot actions and security events.</p></div><button id="refresh-logs" type="button">Refresh</button></div><label>Find in logs<input id="log-search" type="search" placeholder="Search messages, people or actions"></label><div id="incidents"></div><p class="caption">Latest 300 events. Refreshes every 15 seconds.</p></section></div>
+        <div data-panel="chat" hidden><section class="card chat-card"><div class="section-heading"><div><h3>Messages</h3><p class="muted">Read a channel and send messages as TAGGY.</p></div><button id="refresh-chat" type="button">Refresh</button></div><label>Channel<select id="chat-channel"></select></label><div id="channel-messages" class="message-feed" role="log" aria-label="Channel messages"></div><form id="chat-form"><label>Message<textarea id="chat-content" maxlength="2000" rows="3" placeholder="Write a message…" required></textarea></label><div class="form-footer"><span id="chat-access" class="caption"></span><button class="primary">Send as TAGGY</button></div></form></section></div>
+        <div data-panel="dms" hidden><section class="card chat-card"><div class="section-heading"><div><h3>DMs</h3><p class="muted">TAGGY’s inbox. Only you can open this.</p></div><button id="refresh-dms" type="button">Refresh</button></div><div class="dm-layout"><nav id="dm-threads" aria-label="DM conversations"></nav><div><form id="dm-open-form"><label>Discord user ID<input id="dm-user-id" pattern="[0-9]{1,20}" maxlength="20" placeholder="Open or start a conversation" required></label><button>Open</button></form><div id="dm-messages" class="message-feed" role="log" aria-label="Direct messages"></div><form id="dm-form"><label>Message<textarea id="dm-content" maxlength="2000" rows="3" placeholder="Write a DM…" required></textarea></label><button class="primary">Send DM as TAGGY</button></form></div></div></section></div>
       </div>
       <section id="empty" class="card" hidden><h2>No servers connected</h2><p>TAGGY must be connected to Discord and added to a server before it appears here.</p></section>
     </div>
   </main>
-  <footer><div class="studio-credit"><span>A bot by</span><img src="/taggy/assets/tags-logo.png" width="1448" height="1086" alt="TAGS"><span>Totally a Game Studios</span></div><span>Owner controls · Discord permissions apply</span><a href="/">lojjkli.site <span aria-hidden="true">↗</span></a></footer>
+  <footer><div class="studio-credit"><span>A bot by</span><img src="/taggy/assets/tags-logo.png" width="1448" height="1086" alt="TAGS"><span>Totally a Game Studios</span></div><span>TAGGY 2.0 · Discord permissions apply</span><a href="/">lojjkli.site <span aria-hidden="true">↗</span></a></footer>
 </body>
 </html>

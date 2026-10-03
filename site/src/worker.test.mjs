@@ -32,7 +32,7 @@ test('cross-origin writes and noncanonical hosts fail before forwarding', async 
 });
 test('oversized untrusted bodies and invalid backend configuration are denied', async () => {
   const response = await handleRequest(new Request('https://lojjkli.site/taggy/api/guilds/100/settings', {
-    method: 'POST', headers: { origin: 'https://lojjkli.site' }, body: 'x'.repeat(9000)
+    method: 'POST', headers: { origin: 'https://lojjkli.site' }, body: 'x'.repeat(70000)
   }), env, () => { throw new Error('Must not forward'); });
   assert.equal(response.status, 413);
   assert.equal((await handleRequest(new Request('https://lojjkli.site/taggy/api/session'), { ...env, TAGGY_BACKEND_URL: 'http://bot.example' })).status, 503);

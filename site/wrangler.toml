@@ -1,4 +1,4 @@
-# Public assets plus an owner-authenticated TAGGY API proxy.
+# Public assets plus an Discord-authenticated TAGGY API proxy.
 
 name = "lojjkli-site"
 main = "src/worker.js"
