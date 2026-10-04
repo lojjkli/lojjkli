@@ -78,6 +78,7 @@ function renderList() {
 }
 function renderDetail(data, settings) {
   $('detail').hidden = false;
+  applyTabState();
   $('server-name').textContent = data.name;
   $('server-meta').textContent = `${data.memberCount.toLocaleString()} members`;
   $('protection-status').textContent = data.config.enabled ? 'Protection active' : 'Protection paused';
@@ -207,11 +208,28 @@ async function loadResources() {
   resourceRequest = { guildId, promise };
   try { await promise; } finally { if (resourceRequest?.promise === promise) resourceRequest = null; }
 }
+const workspacePages = {
+  security:['Home','See how TAGGY is looking after your community.'],
+  verification:['Verification','Choose how members get in and make the panel yours.'],
+  tickets:['Tickets','Set up support, applications and your own conversations.'],
+  fishing:['Fishing','A collection to build. A rare catch to chase.'],
+  roles:['Roles','Give the right people the right tools.'],
+  embeds:['Announcements','Write it, preview it and share it with your server.'],
+  channels:['Welcome & channels','Set the welcome and keep conversations flowing.'],
+  chat:['Messages','Read a channel and send a message as TAGGY.'],
+  logs:['Logs','See what happened in your server.'],
+  dms:['Direct messages','Your private view of TAGGY’s conversations.']
+};
+function applyTabState(){
+  const page=workspacePages[currentTab]||workspacePages.security;
+  for(const button of document.querySelectorAll('[data-tab]'))button.setAttribute('aria-pressed',String(button.dataset.tab===currentTab));
+  for(const panel of document.querySelectorAll('[data-panel]'))panel.hidden=panel.dataset.panel!==currentTab;
+  $('workspace-title').textContent=page[0];$('workspace-description').textContent=page[1];
+  document.title=page[0]+' · TAGGY';
+}
 for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => {
   if (button.dataset.tab === 'dms' && !isSpecialOwner) return;
-  currentTab = button.dataset.tab;
-  for (const tab of document.querySelectorAll('[data-tab]')) tab.setAttribute('aria-pressed', String(tab === button));
-  for (const panel of document.querySelectorAll('[data-panel]')) panel.hidden = panel.dataset.panel !== button.dataset.tab;
+  currentTab = button.dataset.tab;applyTabState();
   void refreshCurrentTab().catch(error => showStatus(error.message, 'error'));
 });
 $('roles-form').addEventListener('submit', async event => {
@@ -377,23 +395,25 @@ $('verification-form').addEventListener('submit',async event=>{event.preventDefa
 
 // Server presets are suggestions: applying one fills a draft, saving applies the change.
 let presetGuild='',serverPresets={};
-const presetSection=textElement('section','','preset-bar');presetSection.id='preset-bar';
+const presetSection=textElement('details','','preset-bar');presetSection.id='preset-bar';
+const presetSummary=textElement('summary','Presets');presetSummary.append(textElement('small','Start with a preset or save your own.'));
+const presetControls=textElement('div','','preset-controls');
 const presetCopy=textElement('div','','preset-copy');presetCopy.append(textElement('strong','Make it yours'),textElement('small','Start with a preset, tweak it, then save.'));
 const presetSelect=document.createElement('select');presetSelect.id='preset-select';presetSelect.setAttribute('aria-label','Server presets');
 const presetUse=textElement('button','Use preset'),presetSave=textElement('button','Save as preset'),presetDelete=textElement('button','Delete preset');for(const button of [presetUse,presetSave,presetDelete])button.type='button';
-presetSection.append(presetCopy,presetSelect,presetUse,presetSave,presetDelete);document.querySelector('.console-tabs').after(presetSection);
+presetControls.append(presetCopy,presetSelect,presetUse,presetSave,presetDelete);presetSection.append(presetSummary,presetControls);$('workspace-heading').after(presetSection);
 const presetTab=()=>({security:'home',channels:'welcome'}[currentTab]||currentTab);
 const presetForms={home:'settings-form',verification:'verification-form',roles:'roles-form',embeds:'embed-form',welcome:'welcome-form',fishing:'fishing-form'};
 function renderPresetBar(){const tab=presetTab(),items=serverPresets[tab]||[];const previous=presetSection.dataset.tab===tab?presetSelect.value:'';presetSection.dataset.tab=tab;presetSection.hidden=!presetForms[tab];options(presetSelect,items.map(item=>({id:item.id,name:item.name})),'Choose a preset');if(items.length)presetSelect.value=items.some(item=>item.id===previous)?previous:items[0].id;const can=resources?.capabilities?.changeRoles!==false;presetSave.disabled=!can;presetDelete.disabled=!can||!items.length;presetUse.disabled=!items.length;}
 async function loadPresets(){if(!selected){presetSection.hidden=true;return;}const id=selected;if(presetGuild!==id){const data=await api('guilds/'+id+'/presets');if(id!==selected)return;serverPresets=data.presets;presetGuild=id;}renderPresetBar();}
 function presetControl(form,key){const element=$(key)||form.elements.namedItem(key);return element&&form.contains(element)?element:null;}
 presetUse.addEventListener('click',()=>{const tab=presetTab(),form=$(presetForms[tab]),preset=(serverPresets[tab]||[]).find(p=>p.id===presetSelect.value);if(!form||!preset)return;for(const [key,value]of Object.entries(preset.values)){const field=presetControl(form,key);if(!field)continue;if(field.type==='checkbox')field.checked=Boolean(value);else field.value=String(value);}dirtyForms.add(form.id);dirty=true;if(tab==='verification')verificationVisibility();if(tab==='embeds')previewEmbed();showStatus('Preset added to your draft. Adjust it, then save when ready.','success');});
-presetDelete.addEventListener('click',async()=>{const tab=presetTab(),items=(serverPresets[tab]||[]).filter(p=>p.id!==presetSelect.value);const result=await action('guilds/'+selected+'/presets',{tab,presets:items},'Preset removed. Your current settings are unchanged.');if(result){serverPresets=result.presets;renderPresetBar();}});
+presetDelete.addEventListener('click',async()=>{const tab=presetTab(),items=(serverPresets[tab]||[]).filter(p=>p.id!==presetSelect.value);const result=await action('guilds/'+selected+'/presets',{tab,presets:items},'Preset removed.');if(result){serverPresets=result.presets;renderPresetBar();}});
 presetSave.addEventListener('click',async()=>{const tab=presetTab(),form=$(presetForms[tab]);if(!form)return;const items=serverPresets[tab]||[];if(items.length>=6){showStatus('You can keep six presets per tab. Remove one first.','error');return;}const name=prompt('Name this preset');if(!name?.trim())return;const values={};for(const field of form.querySelectorAll('input,select,textarea')){if(field.type==='file'||field.multiple)continue;const key=field.id||field.name;if(key)values[key]=field.type==='checkbox'?field.checked:field.type==='number'?Number(field.value):field.value;}const result=await action('guilds/'+selected+'/presets',{tab,presets:[...items,{id:'custom-'+crypto.randomUUID().slice(0,8),name:name.trim(),values}]},'Preset saved for this server.');if(result){serverPresets=result.presets;renderPresetBar();}});
 
 let ticketDraft=[],ticketPresets=[];
 const markTicketDraft=()=>{dirtyForms.add('tickets-form');dirty=true;};
-function renderTicketTypes(){const list=$('ticket-types');list.replaceChildren();for(const type of ticketDraft){const card=textElement('details','','ticket-type');card.dataset.type=type.id;card.open=type.id==='staff-application'||type.id.startsWith('custom-');const summary=textElement('summary','');summary.append(textElement('strong',type.name||'New ticket type'),textElement('small',type.questions.length?type.questions.length+' questions':'A normal conversation'));card.append(summary);const heading=textElement('div','','section-heading');heading.append(textElement('strong',type.name||'New ticket type'));const remove=textElement('button','Remove');remove.type='button';remove.addEventListener('click',()=>{ticketDraft=ticketDraft.filter(item=>item!==type);markTicketDraft();renderTicketTypes();});heading.append(remove);card.append(heading);for(const [key,label,max,rows]of [['name','Button name',80,0],['description','Short description',200,0],['questions','Questions · one per line',4200,4]]){const wrapper=textElement('label',label);const input=document.createElement(rows?'textarea':'input');if(rows)input.rows=rows;input.maxLength=max;input.value=key==='questions'?type.questions.join('\n'):type[key];input.setAttribute('aria-label',label+' for '+type.name);input.addEventListener('input',()=>{type[key]=key==='questions'?input.value.split('\n').map(line=>line.trim()).filter(Boolean):input.value;markTicketDraft();});wrapper.append(input);card.append(wrapper);}card.append(textElement('p','No questions = a normal conversation. Up to 12 questions, 350 characters each.','caption'));list.append(card);}if(!ticketDraft.length)list.append(textElement('p','No ticket types. Add one or restore the presets to publish an Open Ticket button.','muted'));applyNewCapabilities();}
+function renderTicketTypes(){const list=$('ticket-types');list.replaceChildren();for(const type of ticketDraft){const card=textElement('details','','ticket-type');card.dataset.type=type.id;card.open=type.id==='staff-application'||type.id.startsWith('custom-');const summary=textElement('summary','');summary.append(textElement('strong',type.name||'New ticket type'),textElement('small',type.questions.length?type.questions.length+' questions':'A normal conversation'));card.append(summary);const heading=textElement('div','','section-heading');heading.append(textElement('strong',type.name||'New ticket type'));const remove=textElement('button','Remove');remove.type='button';remove.addEventListener('click',()=>{ticketDraft=ticketDraft.filter(item=>item!==type);markTicketDraft();renderTicketTypes();});heading.append(remove);card.append(heading);for(const [key,label,max,rows]of [['name','Button name',80,0],['description','Short description',200,0],['questions','Questions · one per line',4200,4]]){const wrapper=textElement('label',label);const input=document.createElement(rows?'textarea':'input');if(rows)input.rows=rows;input.maxLength=max;input.value=key==='questions'?type.questions.join('\n'):type[key];input.setAttribute('aria-label',label+' for '+type.name);input.addEventListener('input',()=>{type[key]=key==='questions'?input.value.split('\n').map(line=>line.trim()).filter(Boolean):input.value;markTicketDraft();});wrapper.append(input);card.append(wrapper);}card.append(textElement('p','Leave questions empty for a normal conversation. Up to 12 questions, 350 characters each.','caption'));list.append(card);}if(!ticketDraft.length)list.append(textElement('p','No ticket types. Add one or restore the presets to publish an Open Ticket button.','muted'));applyNewCapabilities();}
 function chosen(select){return [...select.selectedOptions].map(option=>option.value).filter(Boolean);}
 function fillMulti(element,roles,selected){options(element,roles,'');element.firstChild.remove();for(const option of element.options)option.selected=selected.includes(option.value);}
 async function loadTickets(){if(!selected||dirtyForms.has('tickets-form'))return;const id=selected,data=await api('guilds/'+id+'/tickets');if(id!==selected||dirtyForms.has('tickets-form'))return;const config=data.settings;ticketDraft=structuredClone(config.types);ticketPresets=data.presets;$('tickets-title').value=config.title;$('tickets-description').value=config.description;$('tickets-reminders').checked=config.remindersEnabled;$('tickets-days').value=config.reminderDays;const roles=(resources?.roles||[]).filter(role=>role.id!==selected);fillMulti($('tickets-staff'),roles,data.staffRoleIds);fillMulti($('tickets-ping'),roles,config.reminderRoleIds);renderTicketTypes();const closed=$('closed-tickets');closed.replaceChildren();for(const item of data.closed){const row=textElement('article','','closed-ticket-row');const copy=textElement('div','');copy.append(textElement('strong',item.name),textElement('small',item.type+(item.closedAt?' · '+new Date(item.closedAt).toLocaleDateString():'')));const open=textElement('a','View in Discord ↗');open.href='https://discord.com/channels/'+id+'/'+item.id;open.target='_blank';open.rel='noopener noreferrer';row.append(copy,open);if(resources?.capabilities?.changeRoles!==false){const button=textElement('button','Delete channel');button.type='button';button.className='danger';button.addEventListener('click',async()=>{if(!confirm('Permanently delete '+item.name+'? This cannot be undone. Saved transcripts keep their normal retention period.'))return;const result=await action('guilds/'+id+'/ticket-delete',{channelId:item.id,confirmed:true},'Closed ticket channel deleted.');if(result)await loadTickets();});row.append(button);}closed.append(row);}if(!data.closed.length)closed.append(textElement('p','No closed tickets you can view. Closed tickets will appear here.','muted'));applyNewCapabilities();}
