@@ -236,3 +236,24 @@ label{display:block;color:#d5c8df;font-size:14px;font-weight:500;line-height:1.5
 .activity-bar[data-height="99"]{height:99px}
 .activity-bar[data-height="100"]{height:100px}
 .conversation-embed{background:#2b2d31;border-left:4px solid #be8bff;border-radius:4px;padding:12px 16px;margin:8px 0;max-width:520px;overflow-wrap:anywhere}.conversation-embed p{white-space:pre-wrap;margin:8px 0}.conversation-embed small{color:#b5bac1}
+
+.tool-grid {display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:16px;align-items:end;margin-block:16px;}
+.tool-grid>* {min-width:0;}
+.tool-jumps {display:flex;gap:12px;flex-wrap:wrap;margin-bottom:20px;}
+.tool-jumps a {padding:10px 14px;border:1px solid var(--line,#383040);border-radius:10px;}
+.community-row {padding:16px;border:1px solid var(--line,#383040);border-radius:12px;margin:12px 0;}
+.community-row .tool-grid {grid-template-columns:minmax(0,1fr) minmax(0,1fr) minmax(80px,.5fr);}
+.community-row button {margin-top:8px;}
+.role-panel-preview {padding:18px;background:#242429;border-left:4px solid #be8bff;border-radius:6px;overflow-wrap:anywhere;white-space:pre-wrap;}
+.role-panel-preview h4 {font-size:18px;margin:0 0 8px;}
+.role-preview-choices {display:flex;gap:8px;flex-wrap:wrap;margin-top:16px;}
+.role-preview-choices span {background:#414149;border-radius:5px;padding:10px 14px;}
+.role-panel-preview[data-style=menu] .role-preview-choices {display:grid;}
+.tool-info {display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-block:16px;}
+.tool-info p {padding:14px;background:#ffffff05;border-radius:10px;overflow-wrap:anywhere;}
+.tool-info strong {display:block;font-size:22px;}
+.member-profile {display:flex;gap:16px;align-items:start;margin-block:20px;overflow-wrap:anywhere;}
+.member-profile>div {min-width:0;}
+.profile-activity {padding:14px;border:1px solid var(--line,#383040);border-radius:10px;font-weight:700;overflow-wrap:anywhere;}
+[data-panel=tools] .card {scroll-margin-top:24px;}
+@media(max-width:650px){.tool-grid,.community-row .tool-grid,.tool-info{grid-template-columns:minmax(0,1fr);}.community-row{padding:12px;}.tool-jumps a{min-height:44px;}[data-panel=tools] input,[data-panel=rolepanels] input,[data-panel=profile] input{font-size:16px;}}

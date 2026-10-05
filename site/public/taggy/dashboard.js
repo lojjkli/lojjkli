@@ -171,7 +171,7 @@ async function start() {
     const session = await api('session'); csrf = session.csrf; active = true; isSpecialOwner = session.isOwner === true; priorityGuild = session.priorityGuildId || '';
     $('owner-console').hidden = !isSpecialOwner; $('console-label').textContent = isSpecialOwner ? 'OWNER CONSOLE' : 'SERVER DASHBOARD';
     $('scope-note').textContent = isSpecialOwner ? 'Every connected server. Your main server first.' : 'Your servers. Your controls.';
-    $('header-login').hidden = true; document.body.classList.add('signed-in'); $('account-name').hidden = false; $('account-name').textContent = session.username || session.userId; $('dm-tab').hidden = !isSpecialOwner;
+    $('header-login').hidden = true; document.body.classList.add('signed-in'); $('account-name').hidden = false; $('account-name').textContent = session.username || session.userId; $('dm-tab').hidden = !isSpecialOwner; $('bot-profile-tab').hidden = !isSpecialOwner; profileSupported=session.features?.profile===true;
     $('login').hidden = true; $('dashboard').hidden = false; $('logout').hidden = false;syncMobileTools();
     await loadList(); showStatus(isSpecialOwner ? 'Your servers are ready.' : 'Pick a server to get started.', 'success');
   } catch (error) { if (error.message === 'Sign in with Discord to continue.') { showStatus(''); } else { showStatus(error.message, 'error'); $('login').hidden = false; } }
@@ -203,7 +203,7 @@ async function loadResources() {
   const promise = (async () => {
     const data = await api(`guilds/${guildId}/resources`);
     if (selected !== guildId) return;
-    resources = data; resourcesFor = guildId;
+    resources = data; resourcesFor = guildId; communityChannels();
     for (const key of roleKeys) { options($(`binding-${key}`), data.roles, 'Existing default'); $(`binding-${key}`).value = data.bindings[key] || ''; }
     options($('chat-channel'), data.channels.filter(channel => channel.canRead || channel.canSend), 'Choose channel');
     for (const name of ['embed-channel', 'control-channel', 'welcome-channel', 'log-channel']) options($(name), data.channels, name.includes('welcome') || name === 'log-channel' ? 'Disabled' : 'Choose channel');
@@ -222,6 +222,9 @@ const workspacePages = {
   tickets:['Tickets','Set up support, applications and your own conversations.'],
   fishing:['Fishing','A collection to build. A rare catch to chase.'],
   roles:['Roles','Give the right people the right tools.'],
+  rolepanels:['Role panels','Let members choose their own roles.'],
+  tools:['Tools','Polls, saved replies and a look at your members.'],
+  profile:['Bot profile','TAGGY’s name and status, across all servers.'],
   embeds:['Announcements','Write it, preview it and share it with your server.'],
   channels:['Welcome & channels','Set the welcome and keep conversations flowing.'],
   chat:['Messages','Read a channel and send a message as TAGGY.'],
@@ -239,7 +242,7 @@ function applyTabState(){
 }
 function syncMobileTools(){
   const picker=$('mobile-tool');
-  const allowed=[...document.querySelectorAll('.console-tabs [data-tab]')].filter(button=>button.dataset.tab!=='dms'||isSpecialOwner);
+  const allowed=[...document.querySelectorAll('.console-tabs [data-tab]')].filter(button=>!['dms','profile'].includes(button.dataset.tab)||isSpecialOwner);
   const signature=allowed.map(button=>button.dataset.tab).join(',');
   if(picker.dataset.tools!==signature){
     picker.replaceChildren();
@@ -249,7 +252,7 @@ function syncMobileTools(){
   picker.value=currentTab;
 }
 function chooseTool(tab){
-  if(busy||!Object.hasOwn(workspacePages,tab)||(tab==='dms'&&!isSpecialOwner)){syncMobileTools();return;}
+  if(busy||!Object.hasOwn(workspacePages,tab)||(['dms','profile'].includes(tab)&&!isSpecialOwner)){syncMobileTools();return;}
   currentTab=tab;applyTabState();
   void refreshCurrentTab().catch(error => showStatus(error.message, 'error'));
 }
@@ -395,7 +398,7 @@ async function loadDMHistory(older=false){
 }
 $('dm-search').addEventListener('input',renderDMThreads);
 $('dm-older').addEventListener('click',()=>void loadDMHistory(true).catch(error=>showStatus(error.message,'error')));
-async function refreshCurrentTab(){void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
+async function refreshCurrentTab(){if(['rolepanels','tools','profile'].includes(currentTab))return loadCommunityTab();void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
 $('log-search').addEventListener('input',renderLogs);
 $('refresh-logs').addEventListener('click',()=>void loadLogs().catch(error=>showStatus(error.message,'error')));
 $('refresh-chat').addEventListener('click',()=>void loadChat().catch(error=>showStatus(error.message,'error')));
@@ -413,7 +416,7 @@ $('refresh-dms').addEventListener('click',()=>void loadDMs().catch(error=>showSt
 $('dm-form').addEventListener('submit',async event=>{event.preventDefault();if(!isSpecialOwner||!dmUser){showStatus('Open a conversation first.','error');return;}let files;try{files=await encodeFiles('dm');}catch(error){showStatus(error.message,'error');return;}const result=await action('owner/dms',{userId:dmUser,content:$('dm-content').value,files},'DM sent.');if(result){$('dm-content').value='';clearUploads('dm');clearDraft('dm-form');if(result.warning)showStatus(result.warning,'error');await loadDMs().catch(error=>showStatus(`DM sent. Refresh failed: ${error.message}`,'error'));}});
 
 function selectDM(userId){if(dmUser!==userId&&($('dm-content').value.trim()||selectedFiles('dm').length)&&!confirm('Discard this draft and switch conversations?')){$('dm-user-id').value=dmUser;return;}if(dmUser!==userId){$('dm-content').value='';clearUploads('dm');clearDraft('dm-form');}if(dmUser!==userId){dmRows=[];dmBefore=null;$('dm-messages').replaceChildren();$('dm-older').hidden=true;$('dm-chat-header').textContent='Loading conversation…';$('dm-profile').replaceChildren();}dmUser=userId;$('dm-user-id').value=userId;if(mobileInbox.matches)$('dm-inbox').open=false;void loadDMHistory().catch(error=>showStatus(error.message,'error'));}
-function applyCapabilities(){if(!resources||busy)return;applyNewCapabilities();$('chat-files').disabled=true;$('dm-files').disabled=true;const cap=resources.capabilities||{};for(const [selector,key]of [['#roles-form button,#roles-form select','changeRoles'],['#member-role-form button,#assign-role','assignRoles'],['#channel-form button,#control-channel,#slowmode','channels'],['#release-form button,#member-id,#timeout-member','timeout'],['#auto-role','autoRole'],['#settings-form input,#settings-form button,#shield-on,#shield-off,#automatic-on,[data-security-level]','security']]){for(const control of document.querySelectorAll(selector))control.disabled=cap[key]===false;} }
+function applyCapabilities(){if(busy)return;applyCommunityCapabilities();if(!resources)return;applyNewCapabilities();$('chat-files').disabled=true;$('dm-files').disabled=true;const cap=resources.capabilities||{};for(const [selector,key]of [['#roles-form button,#roles-form select','changeRoles'],['#member-role-form button,#assign-role','assignRoles'],['#channel-form button,#control-channel,#slowmode','channels'],['#release-form button,#member-id,#timeout-member','timeout'],['#auto-role','autoRole'],['#settings-form input,#settings-form button,#shield-on,#shield-off,#automatic-on,[data-security-level]','security']]){for(const control of document.querySelectorAll(selector))control.disabled=cap[key]===false;} }
 
 async function loadVerification(){const id=selected;if(!id||dirtyForms.has('verification-form'))return;const data=await api('guilds/'+id+'/verification');if(id!==selected||dirtyForms.has('verification-form'))return;const config=data.settings;$('verification-mode').value=config.mode;$('verification-group-required').checked=config.groupRequired;$('verification-group').value=config.groupId;$('verification-channel').value=config.channelId||'';$('verification-title').value=config.title||'';$('verification-description').value=config.description||'';verificationVisibility();verificationLoaded=id;const can=resources?.capabilities?.changeRoles!==false;for(const input of $('verification-form').querySelectorAll('input,select,textarea,button'))input.disabled=!can;$('verification-note').textContent=can?'Settings apply to '+$('server-name').textContent+'.':'Only the server owner or a Discord administrator can change verification.';}
 $('verification-mode').addEventListener('change',verificationVisibility);$('verification-group-required').addEventListener('change',verificationVisibility);
@@ -617,3 +620,94 @@ function renderActivity(data){
  for(const event of events.slice(0,6)){const row=textElement('article','','activity-event');const body=textElement('div');body.append(textElement('strong',event.type),textElement('small',event.detail));row.append(body,textElement('time',new Date(event.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})));$('activity-events').append(row);}
  if(!events.length)$('activity-events').append(textElement('p','Quiet so far. New server events will appear here.','muted'));
 }
+
+
+let profileSupported=false, rolePanelData=null, toolData=null, rolePanelId='', panelDraft=[], replyDraft=[];
+const communityDirty=id=>{dirtyForms.add(id);dirty=true;};
+function communityChannels(){
+ for(const id of ['role-panel-channel','poll-channel','send-reply-channel']){
+  const picked=$(id).value;options($(id),(resources?.channels||[]).filter(c=>c.canSend),'Choose channel');$(id).value=picked;
+ }
+}
+function disableForm(id,disabled){for(const control of $(id).querySelectorAll('input,select,textarea,button'))control.disabled=disabled;}
+function applyCommunityCapabilities(){
+ const panels=resources?.features?.rolePanels===true,tools=resources?.features?.tools===true;
+ disableForm('role-panel-form',!panels||!rolePanelData?.canManage);$('new-role-panel').disabled=!panels||!rolePanelData?.canManage;
+ $('role-panel-picker').disabled=!panels;$('close-role-panel').disabled=!panels||!rolePanelData?.canManage||!rolePanelId;
+ for(const id of ['poll-form','replies-form'])disableForm(id,!tools||!toolData?.capabilities?.manage);
+ disableForm('send-reply-form',!tools||!toolData?.replies?.length);
+ disableForm('nickname-form',!tools||!toolData?.capabilities?.nickname);disableForm('member-profile-form',!tools);
+ disableForm('bot-profile-form',!isSpecialOwner||!profileSupported);
+}
+async function loadCommunityTab(){
+ if(currentTab==='profile'){
+  $('bot-profile-note').textContent=profileSupported?'Your name and status settings.':'Upload the bot update to enable profile controls.';applyCommunityCapabilities();
+  if(!isSpecialOwner||!profileSupported||dirtyForms.has('bot-profile-form'))return;
+  const data=await api('owner/profile');if(!isSpecialOwner||dirtyForms.has('bot-profile-form'))return;
+  const config=data.profile||data;$('bot-username').value=config.username;$('bot-status').value=config.status;$('bot-activity').value=config.activityType;return;
+ }
+ if(!selected)return;if(resourcesFor!==selected)await loadResources();const id=selected;
+ if(currentTab==='rolepanels'){
+  if(resources?.features?.rolePanels!==true){$('role-panel-note').textContent='Upload the bot update to enable role panels.';applyCommunityCapabilities();return;}
+  if(dirtyForms.has('role-panel-form'))return;
+  const data=await api('guilds/'+id+'/role-panels');if(id!==selected||dirtyForms.has('role-panel-form'))return;
+  rolePanelData=data;options($('role-panel-picker'),data.panels.map(p=>({id:p.id,name:p.title})),'New panel');
+  if(!data.panels.some(p=>p.id===rolePanelId))rolePanelId=data.panels[0]?.id||'';
+  $('role-panel-picker').value=rolePanelId;fillRolePanel(data.panels.find(p=>p.id===rolePanelId));
+  $('role-panel-note').textContent=data.canManage?'Publish up to 10 panels. Members choose their roles in Discord.':'You can view panels. Manage Server and Manage Roles are required to edit them.';
+ }else if(currentTab==='tools'){
+  if(resources?.features?.tools!==true){$('tools-note').textContent='Upload the bot update to enable these tools.';applyCommunityCapabilities();return;}
+  const data=await api('guilds/'+id+'/tools');if(id!==selected)return;toolData=data;
+  if(!dirtyForms.has('replies-form')){replyDraft=structuredClone(data.replies);renderReplies();}
+  if(!dirtyForms.has('nickname-form'))$('bot-nickname').value=data.nickname||'';
+  const picked=$('tools-member').value;options($('tools-member'),data.members,'Choose a member');$('tools-member').value=picked;
+  const reply=$('send-reply-name').value;options($('send-reply-name'),data.replies.map(r=>({id:r.name,name:r.name})),'Choose reply');$('send-reply-name').value=reply;
+  $('tools-server-info').replaceChildren();for(const [label,value]of [['Members',data.server.members],['Roles',data.server.roles],['Channels',data.server.channels]]){
+   const p=textElement('p','');p.append(textElement('strong',Number(value||0).toLocaleString()),textElement('span',label));$('tools-server-info').append(p);
+  }
+  $('tools-note').textContent=data.capabilities.manage?'Ready to post polls and customize replies.':'You can view information and send saved replies in channels you can access. Manage Server is required to edit replies and post polls.';
+ }
+ applyCommunityCapabilities();
+}
+function fillRolePanel(panel){
+ rolePanelId=panel?.id||'';$('role-panel-title').value=panel?.title||'Pick your roles';$('role-panel-description').value=panel?.description||'Choose what you want to see and talk about.';
+ $('role-panel-channel').value=panel?.channelId||'';$('role-panel-style').value=panel?.style||'buttons';$('role-panel-mode').value=panel?.mode||'normal';
+ panelDraft=structuredClone(panel?.options||[{roleId:'',label:'Gaming',emoji:'🎮'}]);renderPanelRows();
+ $('role-panel-link').hidden=!panel?.messageId;if(panel?.messageId)$('role-panel-link').href='https://discord.com/channels/'+selected+'/'+panel.channelId+'/'+panel.messageId;
+ applyCommunityCapabilities();
+}
+function renderPanelRows(){
+ $('role-panel-options').replaceChildren();panelDraft.forEach((choice,index)=>{
+  const row=textElement('div','','community-row'),grid=textElement('div','','tool-grid');
+  const label=textElement('label','Role'),select=document.createElement('select');select.required=true;options(select,rolePanelData?.roles||[],'Choose role');
+  if(choice.roleId&&![...select.options].some(o=>o.value===choice.roleId)){const old=textElement('option','Unavailable role: '+choice.roleId);old.value=choice.roleId;select.append(old);}
+  select.value=choice.roleId;select.setAttribute('aria-label','Role for choice '+(index+1));select.addEventListener('change',()=>{choice.roleId=select.value;communityDirty('role-panel-form');renderPanelPreview();});label.append(select);grid.append(label);
+  for(const [key,name,max]of [['label','Label',80],['emoji','Emoji',100]]){const wrapper=textElement('label',name),input=document.createElement('input');input.value=choice[key];input.maxLength=max;input.required=key==='label';input.setAttribute('aria-label',name+' for choice '+(index+1));if(key==='emoji')input.placeholder='🎮 or <:name:id>';input.addEventListener('input',()=>{choice[key]=input.value;communityDirty('role-panel-form');renderPanelPreview();});wrapper.append(input);grid.append(wrapper);}
+  const remove=textElement('button','Remove choice '+(index+1));remove.type='button';remove.addEventListener('click',()=>{panelDraft.splice(index,1);communityDirty('role-panel-form');renderPanelRows();applyCommunityCapabilities();});row.append(grid,remove);$('role-panel-options').append(row);
+ });renderPanelPreview();
+}
+function renderPanelPreview(){
+ const preview=$('role-panel-preview');preview.dataset.style=$('role-panel-style').value;preview.replaceChildren(textElement('h4',$('role-panel-title').value||'Pick your roles'),textElement('p',$('role-panel-description').value));
+ if($('role-panel-style').value==='menu')preview.append(textElement('p','Choose your roles ▾','caption'));
+ const choices=textElement('div','','role-preview-choices');for(const choice of panelDraft){const option=textElement('span','');const custom=choice.emoji?.match(/^<a?:[A-Za-z0-9_]+:(\d{1,20})>$/);if(custom){const img=document.createElement('img');img.src='https://cdn.discordapp.com/emojis/'+custom[1]+'.png';img.alt='';img.width=20;img.height=20;option.append(img);}else option.append(document.createTextNode((choice.emoji||'')+' '));option.append(document.createTextNode(choice.label||'New role'));choices.append(option);}preview.append(choices);
+}
+$('role-panel-picker').addEventListener('change',()=>{if(dirtyForms.has('role-panel-form')&&!confirm('Discard changes to this panel?')){$('role-panel-picker').value=rolePanelId;return;}clearDraft('role-panel-form');fillRolePanel(rolePanelData?.panels.find(p=>p.id===$('role-panel-picker').value));});
+$('new-role-panel').addEventListener('click',()=>{if(dirtyForms.has('role-panel-form')&&!confirm('Discard changes to this panel?'))return;clearDraft('role-panel-form');$('role-panel-picker').value='';fillRolePanel();communityDirty('role-panel-form');});
+$('add-panel-role').addEventListener('click',()=>{if(panelDraft.length>=20){showStatus('Use up to 20 roles per panel.','error');return;}panelDraft.push({roleId:'',label:'',emoji:''});communityDirty('role-panel-form');renderPanelRows();applyCommunityCapabilities();});
+$('role-panel-form').addEventListener('input',renderPanelPreview);
+$('role-panel-form').addEventListener('submit',async event=>{
+ event.preventDefault();const body={channelId:$('role-panel-channel').value,title:$('role-panel-title').value,description:$('role-panel-description').value,style:$('role-panel-style').value,mode:$('role-panel-mode').value,options:panelDraft};if(rolePanelId)body.id=rolePanelId;
+ const result=await action('guilds/'+selected+'/role-panels',body,'Role panel published.');if(result){rolePanelId=result.panel.id;clearDraft('role-panel-form');await loadCommunityTab();}
+});
+$('close-role-panel').addEventListener('click',async()=>{if(!rolePanelId||!confirm('Close this role panel? Members keep roles they already picked.'))return;const result=await action('guilds/'+selected+'/role-panel-close',{id:rolePanelId,confirmed:true},'Role panel closed.');if(result){rolePanelId='';clearDraft('role-panel-form');await loadCommunityTab();}});
+function renderReplies(){
+ $('reply-rows').replaceChildren();replyDraft.forEach((reply,index)=>{const row=textElement('div','','community-row');for(const [key,label,max]of [['name','Command name',32],['content','Reply',1800]]){const wrapper=textElement('label',label),input=document.createElement(key==='content'?'textarea':'input');input.value=reply[key];input.maxLength=max;input.required=true;input.setAttribute('aria-label',label+' '+(index+1));if(key==='name'){input.pattern='[a-z0-9][a-z0-9\\-]{0,31}';input.placeholder='rules';}else input.rows=3;input.addEventListener('input',()=>{reply[key]=input.value;communityDirty('replies-form');});wrapper.append(input);row.append(wrapper);}const remove=textElement('button','Remove reply '+(index+1));remove.type='button';remove.addEventListener('click',()=>{replyDraft.splice(index,1);communityDirty('replies-form');renderReplies();applyCommunityCapabilities();});row.append(remove);$('reply-rows').append(row);});
+}
+$('add-reply').addEventListener('click',()=>{if(replyDraft.length>=30){showStatus('Use up to 30 replies.','error');return;}replyDraft.push({name:'',content:''});communityDirty('replies-form');renderReplies();applyCommunityCapabilities();});
+$('replies-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/custom-replies',{replies:replyDraft},'Custom replies saved.');if(result){clearDraft('replies-form');await loadCommunityTab();}});
+$('send-reply-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/custom-reply',{name:$('send-reply-name').value,channelId:$('send-reply-channel').value},'Reply sent.');if(result)clearDraft('send-reply-form');});
+$('poll-form').addEventListener('submit',async event=>{event.preventDefault();const answers=$('poll-answers').value.split('\n').map(s=>s.trim()).filter(Boolean);if(answers.length<2||answers.length>10||answers.some(s=>s.length>55)){showStatus('Use 2 to 10 answers, up to 55 characters each.','error');return;}const result=await action('guilds/'+selected+'/poll',{channelId:$('poll-channel').value,question:$('poll-question').value,answers,hours:Number($('poll-hours').value),multiple:$('poll-multiple').checked},'Poll posted in Discord.');if(result){$('poll-form').reset();clearDraft('poll-form');}});
+$('nickname-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/bot-nickname',{nickname:$('bot-nickname').value},'Server nickname saved.');if(result){clearDraft('nickname-form');await loadCommunityTab();}});
+$('member-profile-form').addEventListener('submit',async event=>{event.preventDefault();const id=selected,memberId=$('tools-member').value||$('tools-member-id').value.trim();try{const info=await api('guilds/'+id+'/member-profile?memberId='+encodeURIComponent(memberId));if(id!==selected)return;const details=textElement('div','');details.append(textElement('h4',info.name||info.username),textElement('p',info.username+' · '+info.id),textElement('p','Joined: '+(info.joinedAt?new Date(info.joinedAt).toLocaleDateString():'Unavailable')),textElement('p','Roles: '+(info.roles.join(', ')||'Member')));$('tools-member-info').replaceChildren(avatar(info),details);clearDraft('member-profile-form');}catch(error){showStatus(error.message,'error');}});
+$('bot-profile-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('owner/profile',{username:$('bot-username').value,status:$('bot-status').value,activityType:$('bot-activity').value},'Bot profile saved.');if(result){clearDraft('bot-profile-form');await loadCommunityTab();}});
+applyCommunityCapabilities();
