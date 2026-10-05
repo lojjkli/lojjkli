@@ -17,7 +17,12 @@ const dirtyForms = new Set();
 function clearDraft(form) { dirtyForms.delete(form); dirty = dirtyForms.size > 0; }
 function discardDrafts() { dirtyForms.clear(); dirty = false; }
 let guilds = [];
-let currentTab = 'home';
+const initialRoute = new URL(location.href).searchParams;
+let currentTab = initialRoute.get('tab') || 'home';
+let currentSection = initialRoute.get('section') || '';
+if(currentTab==='rolepanels'){currentTab='roles';currentSection='panels';}
+const PROFILE_GUILD_ID='1553040593494609920';
+const profileAllowed=()=>isSpecialOwner&&selected===PROFILE_GUILD_ID;
 let logRows = [];
 let supportedSettings = new Set();
 let dmUser = '';
@@ -171,9 +176,9 @@ async function start() {
     const session = await api('session'); csrf = session.csrf; active = true; isSpecialOwner = session.isOwner === true; priorityGuild = session.priorityGuildId || '';
     $('owner-console').hidden = !isSpecialOwner; $('console-label').textContent = isSpecialOwner ? 'OWNER CONSOLE' : 'SERVER DASHBOARD';
     $('scope-note').textContent = isSpecialOwner ? 'Every connected server. Your main server first.' : 'Your servers. Your controls.';
-    $('header-login').hidden = true; document.body.classList.add('signed-in'); $('account-name').hidden = false; $('account-name').textContent = session.username || session.userId; $('dm-tab').hidden = !isSpecialOwner; $('bot-profile-tab').hidden = !isSpecialOwner; profileSupported=session.features?.profile===true;
+    $('header-login').hidden = true; document.body.classList.add('signed-in'); $('account-name').hidden = false; $('account-name').textContent = session.username || session.userId; $('dm-tab').hidden = !isSpecialOwner; $('bot-profile-tab').hidden = !profileAllowed(); profileSupported=session.features?.profile===true;
     $('login').hidden = true; $('dashboard').hidden = false; $('logout').hidden = false;syncMobileTools();
-    await loadList(); showStatus(isSpecialOwner ? 'Your servers are ready.' : 'Pick a server to get started.', 'success');
+    await loadList();readDashboardRoute(false);await refreshCurrentTab(); showStatus(isSpecialOwner ? 'Your servers are ready.' : 'Pick a server to get started.', 'success');
   } catch (error) { if (error.message === 'Sign in with Discord to continue.') { showStatus(''); } else { showStatus(error.message, 'error'); $('login').hidden = false; } }
 }
 setInterval(() => {
@@ -204,13 +209,14 @@ async function loadResources() {
     const data = await api(`guilds/${guildId}/resources`);
     if (selected !== guildId) return;
     resources = data; resourcesFor = guildId; communityChannels();
-    for (const key of roleKeys) { options($(`binding-${key}`), data.roles, 'Existing default'); $(`binding-${key}`).value = data.bindings[key] || ''; }
+    if(!dirtyForms.has('roles-form'))for (const key of roleKeys) { options($(`binding-${key}`), data.roles, ['member','unverified'].includes(key)?'Choose a role':'Not set'); $(`binding-${key}`).value = data.bindings[key] || ''; }
+    updateMemberRoleNotices();
     options($('chat-channel'), data.channels.filter(channel => channel.canRead || channel.canSend), 'Choose channel');
     for (const name of ['embed-channel', 'control-channel', 'welcome-channel', 'log-channel']) options($(name), data.channels, name.includes('welcome') || name === 'log-channel' ? 'Disabled' : 'Choose channel');
     options($('verification-channel'), data.channels, 'Create or reuse verification channel');
     options($('assign-role'), data.roles, 'Choose role'); options($('auto-role'), data.roles.filter(role => role.editable), 'Disabled');
-    $('welcome-channel').value = data.welcome.channelId || ''; $('log-channel').value = data.welcome.logChannelId || '';
-    $('auto-role').value = data.welcome.autoRoleId || ''; $('welcome-message').value = data.welcome.message || ''; applyCapabilities();void loadPresets().catch(error=>showStatus(error.message,'error'));
+    if(!dirtyForms.has('welcome-form')){ $('welcome-channel').value = data.welcome.channelId || ''; $('log-channel').value = data.welcome.logChannelId || '';
+    $('auto-role').value = data.welcome.autoRoleId || ''; $('welcome-message').value = data.welcome.message || ''; } applyCapabilities();void loadPresets().catch(error=>showStatus(error.message,'error'));
   })();
   resourceRequest = { guildId, promise };
   try { await promise; } finally { if (resourceRequest?.promise === promise) resourceRequest = null; }
@@ -222,8 +228,7 @@ const workspacePages = {
   tickets:['Tickets','Set up support, applications and your own conversations.'],
   fishing:['Fishing','A collection to build. A rare catch to chase.'],
   roles:['Roles','Give the right people the right tools.'],
-  rolepanels:['Role panels','Let members choose their own roles.'],
-  tools:['Tools','Polls, saved replies and a look at your members.'],
+  tools:['Tools','Polls, trigger words and useful server controls.'],
   profile:['Bot profile','TAGGY’s name and status, across all servers.'],
   embeds:['Announcements','Write it, preview it and share it with your server.'],
   channels:['Welcome & channels','Set the welcome and keep conversations flowing.'],
@@ -231,38 +236,101 @@ const workspacePages = {
   logs:['Logs','See what happened in your server.'],
   dms:['Direct messages','Your private view of TAGGY’s conversations.']
 };
+const workspaceSections={
+ roles:[['permissions','Server roles'],['members','Member roles'],['panels','Role panels']],
+ tools:[['polls','Polls'],['triggers','Trigger words'],['server','Server info'],['members','Member profiles'],['nickname','Nickname']],
+ tickets:[['panel','Ticket panel'],['topics','Topics & questions'],['reminders','Reminders'],['closed','Closed tickets']],
+ security:[['protection','Protection'],['limits','Limits'],['shield','Shield & timeouts']],
+ channels:[['welcome','Welcome'],['controls','Channels']],
+ fishing:[['settings','Settings'],['guide','How to play']]
+};
+const rememberedSections={};
+function dashboardURL(tab=currentTab,section=currentSection){const url=new URL(location.href);url.hash='';if(selected)url.searchParams.set('server',selected);else url.searchParams.delete('server');url.searchParams.set('tab',tab);if(section)url.searchParams.set('section',section);else url.searchParams.delete('section');return url;}
+function allowedTool(tab){return Object.hasOwn(workspacePages,tab)&&(tab!=='dms'||isSpecialOwner)&&(tab!=='profile'||profileAllowed());}
+function normalizeWorkspace(){if(!allowedTool(currentTab)){currentTab='home';currentSection='';}const sections=workspaceSections[currentTab];if(sections&&!sections.some(([id])=>id===currentSection))currentSection=rememberedSections[currentTab]||sections[0][0];if(!sections)currentSection='';if(currentSection)rememberedSections[currentTab]=currentSection;}
+function renderSections(){
+ const nav=$('workspace-sections'),sections=workspaceSections[currentTab]||[],focusedSection=nav.contains(document.activeElement)?document.activeElement.dataset.sectionLink:'';nav.hidden=!sections.length;nav.replaceChildren();
+ for(const [id,label]of sections){const link=textElement('a',label);link.dataset.sectionLink=id;link.href=dashboardURL(currentTab,id).href;if(id===currentSection)link.setAttribute('aria-current','page');link.addEventListener('click',event=>{if(event.button||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();chooseTool(currentTab,id);});nav.append(link);if(id===focusedSection)link.focus({preventScroll:true});}
+ for(const panel of document.querySelectorAll('[data-panel]'))for(const part of panel.querySelectorAll('[data-section]'))if(part.closest('[data-panel]')===panel)part.hidden=panel.dataset.panel!==currentTab||!part.dataset.section.split(' ').includes(currentSection);
+ // A shared form keeps drafts from all its sections and saves them together.
+ const securitySettings=$('settings-form').closest('.card');securitySettings.hidden=currentTab!=='security'||!['protection','limits'].includes(currentSection);
+ const ticketsCard=$('tickets-form').closest('.tickets-card');ticketsCard.hidden=currentTab!=='tickets'||currentSection==='closed';
+ document.body.dataset.section=currentSection;
+ const sectionsLabel=sections.find(([id])=>id===currentSection)?.[1];document.title=(sectionsLabel?sectionsLabel+' · ':'')+workspacePages[currentTab][0]+' · TAGGY';
+ $('copy-dashboard-link').dataset.url=dashboardURL().href;
+ if(typeof presetSection!=='undefined')presetSection.hidden=currentTab==='home'||!presetForms[presetTab()]||(currentTab==='roles'&&currentSection!=='permissions')||(currentTab==='channels'&&currentSection!=='welcome');
+}
 function applyTabState(){
-  document.body.dataset.tool=currentTab;
-  const page=workspacePages[currentTab]||workspacePages.home;
-  for(const button of document.querySelectorAll('[data-tab]'))button.setAttribute('aria-pressed',String(button.dataset.tab===currentTab));
-  for(const panel of document.querySelectorAll('[data-panel]'))panel.hidden=panel.dataset.panel!==currentTab;
-  $('workspace-title').textContent=page[0];$('workspace-description').textContent=page[1];
-  document.title=page[0]+' · TAGGY';
-  syncMobileTools();
+ normalizeWorkspace();document.body.dataset.tool=currentTab;
+ const page=workspacePages[currentTab]||workspacePages.home;
+ $('bot-profile-tab').hidden=!profileAllowed();
+ for(const button of document.querySelectorAll('[data-tab]'))button.setAttribute('aria-pressed',String(button.dataset.tab===currentTab));
+ for(const panel of document.querySelectorAll('[data-panel]'))panel.hidden=panel.dataset.panel!==currentTab;
+ $('workspace-title').textContent=page[0];$('workspace-description').textContent=page[1];
+ syncMobileTools();renderSections();
 }
 function syncMobileTools(){
-  const picker=$('mobile-tool');
-  const allowed=[...document.querySelectorAll('.console-tabs [data-tab]')].filter(button=>!['dms','profile'].includes(button.dataset.tab)||isSpecialOwner);
-  const signature=allowed.map(button=>button.dataset.tab).join(',');
-  if(picker.dataset.tools!==signature){
-    picker.replaceChildren();
-    for(const button of allowed){const option=textElement('option',button.querySelector('span').textContent);option.value=button.dataset.tab;picker.append(option);}
-    picker.dataset.tools=signature;
-  }
-  picker.value=currentTab;
+ const picker=$('mobile-tool');
+ const allowed=[...document.querySelectorAll('.console-tabs [data-tab]')].filter(button=>allowedTool(button.dataset.tab));
+ const signature=allowed.map(button=>button.dataset.tab).join(',');
+ if(picker.dataset.tools!==signature){picker.replaceChildren();for(const button of allowed){const option=textElement('option',button.querySelector('span').textContent);option.value=button.dataset.tab;picker.append(option);}picker.dataset.tools=signature;}
+ picker.value=currentTab;
 }
-function chooseTool(tab){
-  if(busy||!Object.hasOwn(workspacePages,tab)||(['dms','profile'].includes(tab)&&!isSpecialOwner)){syncMobileTools();return;}
-  currentTab=tab;applyTabState();
-  void refreshCurrentTab().catch(error => showStatus(error.message, 'error'));
+function chooseTool(tab,section='',historyMode='push'){
+ if(tab==='rolepanels'){tab='roles';section='panels';}
+ if(busy||!allowedTool(tab)){syncMobileTools();return;}
+ const previous=currentTab;currentTab=tab;currentSection=section||(previous===tab?currentSection:rememberedSections[tab]||'');applyTabState();
+ const url=dashboardURL();if(url.href!==location.href)history[historyMode==='replace'?'replaceState':'pushState']({},'',url.href);
+ void refreshCurrentTab().catch(error=>showStatus(error.message,'error'));
 }
-for (const button of document.querySelectorAll('.console-tabs [data-tab]')) button.addEventListener('click',()=>chooseTool(button.dataset.tab));
+function readDashboardRoute(refresh=true){
+ const url=new URL(location.href),server=url.searchParams.get('server');
+ if(server&&server!==selected&&guilds.some(guild=>guild.id===server)){location.assign(url.href);return;}
+ let tab=url.searchParams.get('tab')||'home',section=url.searchParams.get('section')||'';
+ let hash='';try{hash=decodeURIComponent(url.hash.slice(1));}catch(_){}if(hash.includes('/'))[tab,section]=hash.split('/');
+ const oldAnchors={'security-messages':['security','protection'],'security-joins':['security','protection'],'security-changes':['security','protection'],'poll-card':['tools','polls'],'reply-card':['tools','triggers'],'info-card':['tools','server'],'nickname-card':['tools','nickname']};
+ if(oldAnchors[hash])[tab,section]=oldAnchors[hash];
+ if(tab==='rolepanels'){tab='roles';section='panels';}currentTab=tab;currentSection=section;applyTabState();
+ history.replaceState({},'',dashboardURL().href);if(refresh)void refreshCurrentTab().catch(error=>showStatus(error.message,'error'));
+}
+for(const button of document.querySelectorAll('.console-tabs [data-tab]'))button.addEventListener('click',()=>chooseTool(button.dataset.tab));
 $('mobile-tool').addEventListener('change',event=>chooseTool(event.target.value));
+window.addEventListener('popstate',()=>{if(active)readDashboardRoute();});window.addEventListener('hashchange',()=>{if(active)readDashboardRoute();});
+$('copy-dashboard-link').addEventListener('click',async()=>{const url=dashboardURL().href;try{await navigator.clipboard.writeText(url);showStatus('Link copied to this section.','success');}catch(_){showStatus('Your section link: '+url);}});
+function updateMemberRoleNotices(){
+ for(const panel of document.querySelectorAll('[data-panel="tickets"],[data-panel="verification"]')){
+  let notice=panel.querySelector('.member-role-notice');if(!notice){notice=textElement('p','','notice member-role-notice');const link=textElement('a','Choose a Member role ↗');link.href=dashboardURL('roles','permissions').href;link.addEventListener('click',event=>{event.preventDefault();chooseTool('roles','permissions');});notice.append(document.createTextNode('Set a Member role before setting up this feature. '),link);panel.prepend(notice);}notice.hidden=Boolean(resources?.bindings?.member);notice.querySelector('a').href=dashboardURL('roles','permissions').href;
+ }
+}
+function initializeDashboardSections(){
+ const roles=document.querySelector('[data-panel="roles"]'),roleCards=roles.querySelectorAll(':scope > .card');roleCards[0].dataset.section='permissions';roleCards[1].dataset.section='members';
+ const panels=document.querySelector('[data-panel="rolepanels"]');panels.removeAttribute('data-panel');panels.dataset.section='panels';panels.hidden=false;roles.append(panels);
+ for(const [id,section]of [['poll-card','polls'],['reply-card','triggers'],['nickname-card','nickname']])$(id).dataset.section=section;
+ const info=$('info-card');info.dataset.section='server';info.querySelector('h3').textContent='Server info';
+ const memberCard=textElement('section','','card');memberCard.dataset.section='members';memberCard.append(textElement('p','YOUR COMMUNITY','eyebrow'),textElement('h3','Member profiles'),$('member-profile-form'),$('tools-member-info'),info.querySelector('.caption'));info.after(memberCard);
+ const security=document.querySelector('[data-panel="security"]');security.querySelector('.automatic-card').dataset.section='protection';security.querySelector('.overview').dataset.section='shield';security.querySelector('.security-levels').dataset.section='protection';security.querySelector('.section-heading h3').textContent='Protection settings';
+ const settings=$('settings-form');for(const part of [...settings.children]){if(part.classList.contains('switches')||part.classList.contains('security-group'))part.dataset.section='protection';if(part.matches('details')){part.dataset.section='limits';part.open=true;part.querySelector('summary').textContent='Protection limits';}if(part.matches('nav'))part.remove();}
+ const ticketForm=$('tickets-form'),topics=textElement('div','','ticket-topic-settings'),topicHeading=$('ticket-types').previousElementSibling;topics.dataset.section='topics';topicHeading.before(topics);topics.append(topicHeading,$('ticket-types'));
+ for(const part of [...ticketForm.children]){if(part===topics||part.classList.contains('form-footer'))continue;if(part.matches('details')){part.dataset.section='reminders';part.open=true;}else part.dataset.section='panel';}
+ document.querySelector('.ticket-panel-preview').dataset.section='panel topics';$('closed-tickets').closest('.card').dataset.section='closed';
+ for(const part of document.querySelectorAll('[data-panel="channels"] > .card'))part.dataset.section=part.contains($('channel-form'))?'controls':'welcome';
+ for(const part of document.querySelectorAll('[data-panel="fishing"] > *')){part.dataset.section=part.classList.contains('fishing-guide')?'guide':'settings';if(part.matches('details'))part.open=true;}
+ // Reveal the section containing a missing required value before browser validation focuses it.
+ let validationPending=false;
+ $('detail').addEventListener('invalid',event=>{
+  if(validationPending){event.preventDefault();return;}validationPending=true;setTimeout(()=>{validationPending=false;},0);
+  const part=event.target.closest('[data-section]'),panel=event.target.closest('[data-panel]');
+  if(part&&panel&&panel.dataset.panel===currentTab&&part.hidden){currentSection=part.dataset.section.split(' ')[0];applyTabState();history.replaceState({},'',dashboardURL().href);}
+  for(let ancestor=event.target.parentElement;ancestor&&ancestor!==panel;ancestor=ancestor.parentElement)if(ancestor.matches('details'))ancestor.open=true;
+ },{capture:true});
+ applyTabState();updateMemberRoleNotices();
+}
+
 $('roles-form').addEventListener('submit', async event => {
   event.preventDefault(); const body = Object.fromEntries(roleKeys.map(key => [key, $(`binding-${key}`).value]));
   if (body.owner !== (resources?.bindings.owner || '') && !confirm('Change the Owner role? Members with this role will gain owner bot commands in this server.')) return;
   const result = await action(`guilds/${selected}/roles`, body, 'Server roles saved.');
-  if (result) { resources.bindings = body; clearDraft('roles-form'); }
+  if (result) { resources.bindings = body; clearDraft('roles-form');updateMemberRoleNotices(); }
 });
 $('lookup-form').addEventListener('submit', async event => {
   event.preventDefault(); lookedUpMember = ''; const guildId = selected;
@@ -398,7 +466,7 @@ async function loadDMHistory(older=false){
 }
 $('dm-search').addEventListener('input',renderDMThreads);
 $('dm-older').addEventListener('click',()=>void loadDMHistory(true).catch(error=>showStatus(error.message,'error')));
-async function refreshCurrentTab(){if(['rolepanels','tools','profile'].includes(currentTab))return loadCommunityTab();void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
+async function refreshCurrentTab(){if(['tools','profile'].includes(currentTab)||(currentTab==='roles'&&currentSection==='panels'))return loadCommunityTab();void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
 $('log-search').addEventListener('input',renderLogs);
 $('refresh-logs').addEventListener('click',()=>void loadLogs().catch(error=>showStatus(error.message,'error')));
 $('refresh-chat').addEventListener('click',()=>void loadChat().catch(error=>showStatus(error.message,'error')));
@@ -424,7 +492,7 @@ $('verification-form').addEventListener('submit',async event=>{event.preventDefa
 
 // Server presets are suggestions: applying one fills a draft, saving applies the change.
 let presetGuild='',serverPresets={};
-const presetSection=textElement('details','','preset-bar');presetSection.id='preset-bar';
+const presetSection=textElement('details','','preset-bar');presetSection.id='preset-bar';presetSection.hidden=true;
 const presetSummary=textElement('summary','Presets');presetSummary.append(textElement('small','Start with a preset or save your own.'));
 const presetControls=textElement('div','','preset-controls');
 const presetCopy=textElement('div','','preset-copy');presetCopy.append(textElement('strong','Make it yours'),textElement('small','Start with a preset, tweak it, then save.'));
@@ -433,7 +501,7 @@ const presetUse=textElement('button','Use preset'),presetSave=textElement('butto
 presetControls.append(presetCopy,presetSelect,presetUse,presetSave,presetDelete);presetSection.append(presetSummary,presetControls);$('workspace-heading').after(presetSection);
 const presetTab=()=>({security:'home',channels:'welcome'}[currentTab]||currentTab);
 const presetForms={home:'settings-form',verification:'verification-form',roles:'roles-form',embeds:'embed-form',welcome:'welcome-form',fishing:'fishing-form'};
-function renderPresetBar(){const tab=presetTab(),items=serverPresets[tab]||[];const previous=presetSection.dataset.tab===tab?presetSelect.value:'';presetSection.dataset.tab=tab;presetSection.hidden=currentTab==='home'||!presetForms[tab];options(presetSelect,items.map(item=>({id:item.id,name:item.name})),'Choose a preset');if(items.length)presetSelect.value=items.some(item=>item.id===previous)?previous:items[0].id;const can=resources?.capabilities?.changeRoles!==false;presetSave.disabled=!can;presetDelete.disabled=!can||!items.length;presetUse.disabled=!items.length;}
+function renderPresetBar(){const tab=presetTab(),items=serverPresets[tab]||[];const previous=presetSection.dataset.tab===tab?presetSelect.value:'';presetSection.dataset.tab=tab;presetSection.hidden=currentTab==='home'||!presetForms[tab]||(currentTab==='roles'&&currentSection!=='permissions')||(currentTab==='channels'&&currentSection!=='welcome');options(presetSelect,items.map(item=>({id:item.id,name:item.name})),'Choose a preset');if(items.length)presetSelect.value=items.some(item=>item.id===previous)?previous:items[0].id;const can=resources?.capabilities?.changeRoles!==false;presetSave.disabled=!can;presetDelete.disabled=!can||!items.length;presetUse.disabled=!items.length;}
 async function loadPresets(){if(!selected){presetSection.hidden=true;return;}const id=selected;if(presetGuild!==id){const data=await api('guilds/'+id+'/presets');if(id!==selected)return;serverPresets=data.presets;presetGuild=id;}renderPresetBar();}
 function presetControl(form,key){const element=$(key)||form.elements.namedItem(key);return element&&form.contains(element)?element:null;}
 presetUse.addEventListener('click',()=>{const tab=presetTab(),form=$(presetForms[tab]),preset=(serverPresets[tab]||[]).find(p=>p.id===presetSelect.value);if(!form||!preset)return;for(const [key,value]of Object.entries(preset.values)){const field=presetControl(form,key);if(!field)continue;if(field.type==='checkbox')field.checked=Boolean(value);else field.value=String(value);}dirtyForms.add(form.id);dirty=true;if(tab==='verification')verificationVisibility();if(tab==='embeds')previewEmbed();syncRanges();showStatus('Preset added to your draft. Adjust it, then save when ready.','success');});
@@ -491,14 +559,14 @@ function renderTicketTypes(){
   const summary=textElement('summary',''),name=textElement('strong',type.name||'New topic'),count=textElement('small',type.questions.length?type.questions.length+' questions':'A conversation');
   summary.append(name,count);card.append(summary);
   const heading=textElement('div','','section-heading'),remove=textElement('button','Remove');remove.type='button';remove.addEventListener('click',()=>{ticketDraft=ticketDraft.filter(item=>item!==type);markTicketDraft();renderTicketTypes();});heading.append(remove);card.append(heading);
-  for(const [key,label,max,rows]of [['name','Topic name',80,0],['emoji','Emoji',100,0],['description','Topic description',200,0],['questions','Questions · one per line',4200,4]]){
+  for(const [key,label,max,rows]of [['name','Topic name',80,0],['emoji','Emoji',100,0],['description','Topic description',200,0]]){
    const wrapper=textElement('label',label),input=document.createElement(rows?'textarea':'input');if(rows)input.rows=rows;input.maxLength=max;input.value=key==='questions'?type.questions.join('\n'):type[key]||'';input.setAttribute('aria-label',label+' for '+type.name);input.dataset.ticketField=key;
    if(key==='name')input.required=true;
    if(key==='emoji'){input.placeholder='💬 or <:name:id>';wrapper.append(textElement('small','Paste an emoji or a Discord custom emoji. Leave empty to remove it.','caption'));}
    if(key==='description')wrapper.append(textElement('small','The menu shows up to 100 characters when descriptions are enabled.','caption'));
    input.addEventListener('input',()=>{type[key]=key==='questions'?input.value.split('\n').map(line=>line.trim()).filter(Boolean):key==='emoji'?input.value.trim():input.value;name.textContent=type.name||'New topic';count.textContent=type.questions.length?type.questions.length+' questions':'A conversation';markTicketDraft();renderTicketPreview();});wrapper.append(input);card.append(wrapper);
   }
-  card.append(textElement('p','Leave questions empty for a conversation. Up to 12 questions, 350 characters each.','caption'));list.append(card);
+  const questions=textElement('div','','ticket-question-editor');const drawQuestions=()=>{questions.replaceChildren();type.questions.forEach((question,index)=>{const row=textElement('div','','question-editor-row'),label=textElement('label','Question '+(index+1)),input=document.createElement('textarea');input.value=question;input.rows=3;input.maxLength=350;input.required=true;input.dataset.ticketQuestion='';input.setAttribute('aria-label','Question '+(index+1)+' for '+type.name);input.addEventListener('input',()=>{type.questions[index]=input.value;markTicketDraft();renderTicketPreview();});label.append(input);const remove=textElement('button','Remove question '+(index+1));remove.type='button';remove.addEventListener('click',()=>{type.questions.splice(index,1);markTicketDraft();count.textContent=type.questions.length?type.questions.length+' questions':'A conversation';drawQuestions();renderTicketPreview();});row.append(label,remove);questions.append(row);});};drawQuestions();card.append(questions);const addQuestion=textElement('button','Add a question');addQuestion.type='button';addQuestion.addEventListener('click',()=>{if(type.questions.length>=12){showStatus('Use up to 12 questions per topic.','error');return;}type.questions.push('');markTicketDraft();count.textContent=type.questions.length+' questions';drawQuestions();renderTicketPreview();});card.append(addQuestion,textElement('p','Leave questions empty for a conversation. Up to 12 questions, 350 characters each.','caption'));list.append(card);
  }
  if(!ticketDraft.length)list.append(textElement('p','Add a topic or restore the presets to show the menu.','muted'));
  renderTicketPreview();applyNewCapabilities();
@@ -635,19 +703,20 @@ function applyCommunityCapabilities(){
  disableForm('role-panel-form',!panels||!rolePanelData?.canManage);$('new-role-panel').disabled=!panels||!rolePanelData?.canManage;
  $('role-panel-picker').disabled=!panels;$('close-role-panel').disabled=!panels||!rolePanelData?.canManage||!rolePanelId;
  for(const id of ['poll-form','replies-form'])disableForm(id,!tools||!toolData?.capabilities?.manage);
+ if(tools&&Array.isArray(toolData?.pollChannels)&&!toolData.pollChannels.some(channel=>channel.canPoll))disableForm('poll-form',true);
  disableForm('send-reply-form',!tools||!toolData?.replies?.length);
  disableForm('nickname-form',!tools||!toolData?.capabilities?.nickname);disableForm('member-profile-form',!tools);
- disableForm('bot-profile-form',!isSpecialOwner||!profileSupported);
+ disableForm('bot-profile-form',!profileAllowed()||!profileSupported);
 }
 async function loadCommunityTab(){
  if(currentTab==='profile'){
   $('bot-profile-note').textContent=profileSupported?'Your name and status settings.':'Upload the bot update to enable profile controls.';applyCommunityCapabilities();
-  if(!isSpecialOwner||!profileSupported||dirtyForms.has('bot-profile-form'))return;
-  const data=await api('owner/profile');if(!isSpecialOwner||dirtyForms.has('bot-profile-form'))return;
+  if(!profileAllowed()||!profileSupported||dirtyForms.has('bot-profile-form'))return;
+  const profileGuild=selected;const data=await api('owner/profile?guildId='+encodeURIComponent(profileGuild));if(!profileAllowed()||selected!==profileGuild||dirtyForms.has('bot-profile-form'))return;
   const config=data.profile||data;$('bot-username').value=config.username;$('bot-status').value=config.status;$('bot-activity').value=config.activityType;return;
  }
  if(!selected)return;if(resourcesFor!==selected)await loadResources();const id=selected;
- if(currentTab==='rolepanels'){
+ if(currentTab==='roles'&&currentSection==='panels'){
   if(resources?.features?.rolePanels!==true){$('role-panel-note').textContent='Upload the bot update to enable role panels.';applyCommunityCapabilities();return;}
   if(dirtyForms.has('role-panel-form'))return;
   const data=await api('guilds/'+id+'/role-panels');if(id!==selected||dirtyForms.has('role-panel-form'))return;
@@ -658,14 +727,15 @@ async function loadCommunityTab(){
  }else if(currentTab==='tools'){
   if(resources?.features?.tools!==true){$('tools-note').textContent='Upload the bot update to enable these tools.';applyCommunityCapabilities();return;}
   const data=await api('guilds/'+id+'/tools');if(id!==selected)return;toolData=data;
-  if(!dirtyForms.has('replies-form')){replyDraft=structuredClone(data.replies);renderReplies();}
+  if(Array.isArray(data.pollChannels)){const picked=$('poll-channel').value;options($('poll-channel'),data.pollChannels.filter(channel=>channel.canPoll),'Choose a poll channel');$('poll-channel').value=picked;let note=$('poll-permission-note');if(!note){note=textElement('p','','caption');note.id='poll-permission-note';$('poll-channel').closest('label').after(note);}note.textContent=data.pollChannels.some(channel=>channel.canPoll)?'TAGGY needs Send Polls permission in the channel you choose.':data.pollChannels[0]?.reason||'Give TAGGY View Channel, Send Messages and Send Polls in a text channel to post polls.';}
+  if(!dirtyForms.has('replies-form')){replyDraft=data.replies.map(reply=>({name:reply.name,trigger:reply.trigger??reply.name,match:reply.match??'contains',content:reply.content,enabled:reply.enabled??true,cooldownSeconds:reply.cooldownSeconds??15}));renderReplies();}
   if(!dirtyForms.has('nickname-form'))$('bot-nickname').value=data.nickname||'';
   const picked=$('tools-member').value;options($('tools-member'),data.members,'Choose a member');$('tools-member').value=picked;
   const reply=$('send-reply-name').value;options($('send-reply-name'),data.replies.map(r=>({id:r.name,name:r.name})),'Choose reply');$('send-reply-name').value=reply;
   $('tools-server-info').replaceChildren();for(const [label,value]of [['Members',data.server.members],['Roles',data.server.roles],['Channels',data.server.channels]]){
    const p=textElement('p','');p.append(textElement('strong',Number(value||0).toLocaleString()),textElement('span',label));$('tools-server-info').append(p);
   }
-  $('tools-note').textContent=data.capabilities.manage?'Ready to post polls and customize replies.':'You can view information and send saved replies in channels you can access. Manage Server is required to edit replies and post polls.';
+  $('tools-note').textContent=data.capabilities.manage?'Make a poll, add a trigger or choose another tool.':'You can view information and send saved replies in channels you can access. Manage Server is required to edit triggers and post polls.';
  }
  applyCommunityCapabilities();
 }
@@ -701,13 +771,29 @@ $('role-panel-form').addEventListener('submit',async event=>{
 });
 $('close-role-panel').addEventListener('click',async()=>{if(!rolePanelId||!confirm('Close this role panel? Members keep roles they already picked.'))return;const result=await action('guilds/'+selected+'/role-panel-close',{id:rolePanelId,confirmed:true},'Role panel closed.');if(result){rolePanelId='';clearDraft('role-panel-form');await loadCommunityTab();}});
 function renderReplies(){
- $('reply-rows').replaceChildren();replyDraft.forEach((reply,index)=>{const row=textElement('div','','community-row');for(const [key,label,max]of [['name','Command name',32],['content','Reply',1800]]){const wrapper=textElement('label',label),input=document.createElement(key==='content'?'textarea':'input');input.value=reply[key];input.maxLength=max;input.required=true;input.setAttribute('aria-label',label+' '+(index+1));if(key==='name'){input.pattern='[a-z0-9][a-z0-9\\-]{0,31}';input.placeholder='rules';}else input.rows=3;input.addEventListener('input',()=>{reply[key]=input.value;communityDirty('replies-form');});wrapper.append(input);row.append(wrapper);}const remove=textElement('button','Remove reply '+(index+1));remove.type='button';remove.addEventListener('click',()=>{replyDraft.splice(index,1);communityDirty('replies-form');renderReplies();applyCommunityCapabilities();});row.append(remove);$('reply-rows').append(row);});
+ $('reply-rows').replaceChildren();replyDraft.forEach((reply,index)=>{
+  const row=textElement('div','','community-row trigger-row'),heading=textElement('div','','section-heading');heading.append(textElement('h4','Trigger '+(index+1)));
+  const enabledLabel=textElement('label','Enabled','verification-toggle'),enabled=document.createElement('input');enabled.type='checkbox';enabled.checked=reply.enabled;enabled.setAttribute('aria-label','Enable trigger '+(index+1));enabled.addEventListener('change',()=>{reply.enabled=enabled.checked;communityDirty('replies-form');});enabledLabel.prepend(enabled);heading.append(enabledLabel);row.append(heading);
+  const grid=textElement('div','','tool-grid');
+  for(const [key,label,max]of [['name','Saved name',32],['trigger','When someone types',120]]){
+   const wrapper=textElement('label',label),input=document.createElement('input');input.value=reply[key];input.maxLength=max;input.required=true;input.setAttribute('aria-label',label+' '+(index+1));
+   if(key==='name'){input.pattern='[a-z0-9](?:[a-z0-9]|-){0,31}';input.placeholder='rules';}else input.placeholder='where are the rules';
+   input.addEventListener('input',()=>{reply[key]=input.value;communityDirty('replies-form');});wrapper.append(input);grid.append(wrapper);
+  }
+  const matchLabel=textElement('label','Match'),match=document.createElement('select');match.setAttribute('aria-label','Match for trigger '+(index+1));for(const [value,label]of [['contains','Words appear in a message'],['exact','The whole message matches']]){const option=textElement('option',label);option.value=value;match.append(option);}match.value=reply.match;match.addEventListener('change',()=>{reply.match=match.value;communityDirty('replies-form');});matchLabel.append(match);grid.append(matchLabel);
+  const cooldownLabel=textElement('label','Wait between replies · seconds'),cooldown=document.createElement('input');cooldown.type='number';cooldown.min=0;cooldown.max=3600;cooldown.required=true;cooldown.value=reply.cooldownSeconds;cooldown.setAttribute('aria-label','Cooldown for trigger '+(index+1));cooldown.addEventListener('input',()=>{reply.cooldownSeconds=Number(cooldown.value);communityDirty('replies-form');});cooldownLabel.append(cooldown);grid.append(cooldownLabel);row.append(grid);
+  const contentLabel=textElement('label','TAGGY replies'),content=document.createElement('textarea');content.rows=3;content.maxLength=1800;content.required=true;content.value=reply.content;content.setAttribute('aria-label','Reply '+(index+1));content.addEventListener('input',()=>{reply.content=content.value;communityDirty('replies-form');});contentLabel.append(content);row.append(contentLabel);
+  const remove=textElement('button','Remove trigger '+(index+1));remove.type='button';remove.addEventListener('click',()=>{replyDraft.splice(index,1);communityDirty('replies-form');renderReplies();applyCommunityCapabilities();});row.append(remove);$('reply-rows').append(row);
+ });
 }
-$('add-reply').addEventListener('click',()=>{if(replyDraft.length>=30){showStatus('Use up to 30 replies.','error');return;}replyDraft.push({name:'',content:''});communityDirty('replies-form');renderReplies();applyCommunityCapabilities();});
-$('replies-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/custom-replies',{replies:replyDraft},'Custom replies saved.');if(result){clearDraft('replies-form');await loadCommunityTab();}});
+$('add-reply').addEventListener('click',()=>{if(replyDraft.length>=30){showStatus('Use up to 30 triggers.','error');return;}replyDraft.push({name:'',trigger:'',match:'contains',content:'',enabled:true,cooldownSeconds:15});communityDirty('replies-form');renderReplies();applyCommunityCapabilities();});
+$('replies-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/custom-replies',{replies:replyDraft},'Trigger words saved.');if(result){clearDraft('replies-form');await loadCommunityTab();}});
+
 $('send-reply-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/custom-reply',{name:$('send-reply-name').value,channelId:$('send-reply-channel').value},'Reply sent.');if(result)clearDraft('send-reply-form');});
 $('poll-form').addEventListener('submit',async event=>{event.preventDefault();const answers=$('poll-answers').value.split('\n').map(s=>s.trim()).filter(Boolean);if(answers.length<2||answers.length>10||answers.some(s=>s.length>55)){showStatus('Use 2 to 10 answers, up to 55 characters each.','error');return;}const result=await action('guilds/'+selected+'/poll',{channelId:$('poll-channel').value,question:$('poll-question').value,answers,hours:Number($('poll-hours').value),multiple:$('poll-multiple').checked},'Poll posted in Discord.');if(result){$('poll-form').reset();clearDraft('poll-form');}});
 $('nickname-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/bot-nickname',{nickname:$('bot-nickname').value},'Server nickname saved.');if(result){clearDraft('nickname-form');await loadCommunityTab();}});
 $('member-profile-form').addEventListener('submit',async event=>{event.preventDefault();const id=selected,memberId=$('tools-member').value||$('tools-member-id').value.trim();try{const info=await api('guilds/'+id+'/member-profile?memberId='+encodeURIComponent(memberId));if(id!==selected)return;const details=textElement('div','');details.append(textElement('h4',info.name||info.username),textElement('p',info.username+' · '+info.id),textElement('p','Joined: '+(info.joinedAt?new Date(info.joinedAt).toLocaleDateString():'Unavailable')),textElement('p','Roles: '+(info.roles.join(', ')||'Member')));$('tools-member-info').replaceChildren(avatar(info),details);clearDraft('member-profile-form');}catch(error){showStatus(error.message,'error');}});
-$('bot-profile-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('owner/profile',{username:$('bot-username').value,status:$('bot-status').value,activityType:$('bot-activity').value},'Bot profile saved.');if(result){clearDraft('bot-profile-form');await loadCommunityTab();}});
+$('bot-profile-form').addEventListener('submit',async event=>{event.preventDefault();if(!profileAllowed()){showStatus('Profile controls are only available in the TAGGY owner server.','error');return;}const result=await action('owner/profile',{guildId:selected,username:$('bot-username').value,status:$('bot-status').value,activityType:$('bot-activity').value},'Bot profile saved.');if(result){clearDraft('bot-profile-form');await loadCommunityTab();}});
 applyCommunityCapabilities();
+
+initializeDashboardSections();
