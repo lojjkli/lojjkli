@@ -18,6 +18,18 @@ Tools contains trigger-word replies instead of `.tag` commands. Replies are conf
 
 Native Discord polls require TAGGY to have View Channel, Send Messages and Send Polls. The acting server manager needs Manage Server plus access and Send Messages in the channel; their own Send Polls permission is not required because TAGGY posts the poll. The dashboard shows channel eligibility, and API rejections explain which permissions or inputs to fix.
 
+## Scheduled posts, welcome DMs and command help
+
+Announcements > Scheduled posts stores up to 20 posts per server. Choose a channel, write a message, set a local date/time and select one time, hourly, daily or weekly. New posts start paused; turn on the switch and save to enable delivery. Manage Server and channel access are required, and TAGGY must be able to send there. The saved timestamp is absolute; repeats follow the interval from that timestamp rather than local calendar rules during daylight saving changes.
+
+Announcements > History shows the latest result for each saved post. TAGGY rechecks the original creator's membership and permissions before posting. Failed or uncertain sends pause instead of retrying automatically; review the channel and reschedule deliberately. Posts more than 20 minutes late are skipped, so a restart does not flood channels with overdue messages. A persistent send claim and Discord nonce reduce duplicate delivery. The bot must be online to send; the dashboard can be closed. Messages suppress mention notifications.
+
+Welcome & channels > Welcome DMs is separate from the public welcome message. It is off by default and supports `{user}`, `{server}` and Discord formatting. Greetings check current membership, skip bots and active join shields, suppress repeated join events and limit sends to 10 per server per minute. Closed DMs produce a log without retries. No existing members receive a bulk welcome. Changing this setting requires Manage Server, server ownership or the special owner dashboard.
+
+Tools > Commands supports search, categories, copying usage and links to the relevant settings. `.commands [search]` gives the same guide in Discord, and `.dashboard` links to the selected server's dashboard. Both work in DMs too, where help lists only DM-compatible commands. Only fishing uses slash/App commands. Command help states required permissions; it never grants them.
+
+Scheduled post text, creator IDs and last results persist in `scheduled-announcements.json`. Welcome DM templates/settings stay in `management-state.json`. Keep both files private and preserve them during upgrades. Do not include them in upload packages or public GitHub commits.
+
 ## Logs and messaging
 
 - **Logs tab:** latest 300 Discord audit changes, dashboard actions and security events for the selected server, with search and 15-second refresh. Ordinary audit events are recorded without sending owner alerts; security protections still alert you. Requires TAGGY to have View Audit Log for incoming Discord changes. New events are captured after the updated bot starts; existing stored incidents remain visible.
@@ -80,7 +92,7 @@ Login uses Discord's authorization-code flow and `identify` scope, a browser-bou
 
 ## Update the bot on bot-hosting.net
 
-1. Upload all files from the current update package's `bot/` folder into `/home/container/`, replacing the source files. The package contains 19 production JavaScript modules, required assets, `package.json` and `package-lock.json`. Keep the host's existing `.env` and saved JSON files. The package needs no new bot dependency.
+1. Upload all files from the current update package's `bot/` folder into `/home/container/`, replacing the source files. The package contains 21 production JavaScript modules, required assets, `package.json` and `package-lock.json`. Keep the host's existing `.env` and saved JSON files. The package needs no new bot dependency.
 2. Ensure the bot uses Node.js 20 or newer and starts `index.js` using the host's startup settings. The updated package starts `index.js`; ensure the hosting panel does too.
 3. The dashboard shares TAGGY's existing HTTP listener. The host must supply a valid `SERVER_PORT` matching its allocated port. If the host does not supply it, set the assigned port in the private environment. Do not choose an arbitrary port.
 4. TAGGY's canonical HTTPS address is `https://1u061e9dv7.apps.bot-hosting.cloud`. Its existing `/health` endpoint returned HTTP 200 with `{"ok":true}` during preparation. This is already set as `TAGGY_BACKEND_URL` in `site/wrangler.toml`. No custom domain is required. This check confirms the existing listener, not the new dashboard; verify login after the updated bot is running. `https://bot-hosting.net` is the provider's website, not the bot API.
@@ -113,7 +125,7 @@ Website site/ folder: node --test src/worker.test.mjs
 Website site/ folder: npx wrangler deploy --dry-run
 ```
 
-52 bot/login/access/management/messaging/branding tests and 7 website proxy tests pass. A browser fixture verified server icons, compact post-login layout, Logs/search, channel read/send, owner-only DMs/replies, account-disabled controls, regular and special owner views, server selection, role settings, member role assignment, embed publishing/loading, welcome settings, channel locking, shield activation, 320px mobile layout, safe text rendering and the unauthenticated login view. Screenshots are previews with synthetic server data, not a live connection. An earlier baseline run found 11 failures in the pre-existing ticket/Roblox verification tests; that full legacy suite was not rerun for this update. Focused tests verify custom verification-role behavior.
+The release package includes current test counts in `VALIDATION.txt`. Bot checks cover login/access, role hierarchy and setup, messaging, tickets, verification, fishing, security, polls, triggers, scheduled delivery and welcome DMs. Website proxy tests verify login forwarding, request bounds and credential isolation. Browser checks cover desktop/mobile navigation, forms, drafts, owner/server permissions and old backend compatibility using example server data. Screenshots are previews with synthetic server data, not live Discord delivery.
 
 Before treating the system as live, verify login with the real owner and server-scoped access with another Discord account and rejection when it requests another server or the owner API, all connected servers appearing for the owner, a per-server setting saved across a bot restart, delivery of an owner DM and a controlled spam/join test in a dedicated test server. Confirm actual Discord permissions/role hierarchy there. Do not simulate destructive raids in a real community server.
 
