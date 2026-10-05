@@ -476,6 +476,16 @@
   :focus-visible{outline:2px solid var(--violet-bright);outline-offset:3px;border-radius:4px}
   nav.links a.active{color:var(--text)}
   nav.links a.active::after{width:100%}
+  nav.links .taggy-nav-link{color:#e8aaff;font-weight:600}
+  nav.links{gap:clamp(14px,2.1vw,28px)}
+  @media(max-width:680px){nav.links{gap:0}.nav-toggle{min-width:44px;min-height:44px}}
+  @media(min-width:681px) and (max-width:860px){
+    .nav-toggle{display:block;min-width:44px;min-height:44px}
+    nav.links{display:none;position:absolute;top:68px;left:0;right:0;flex-direction:column;gap:0;background:rgba(2,1,3,.97);border-bottom:1px solid var(--line);max-height:calc(100dvh - 68px);overflow-y:auto}
+    nav.links.open{display:flex}
+    nav.links a{padding:15px 22px;border-bottom:1px solid var(--line);font-size:1rem}
+    nav.links a::after{display:none}
+  }
 </style>
 </head>
 <body>
@@ -496,6 +506,7 @@
       <a href="#tools">Tools</a>
       <a href="#games">Games</a>
       <a href="#skills">Skills</a>
+      <a href="/taggy/" class="taggy-nav-link">TAGGY</a>
       <a href="#contact">Contact</a>
     </nav>
   </div>
@@ -887,6 +898,7 @@
         <a href="#tools">Tools</a>
         <a href="#games">Games</a>
         <a href="#skills">Skills</a>
+        <a href="/taggy/">TAGGY</a>
         <a href="#contact">Contact</a>
       </div>
       <div class="foot-col">
@@ -1055,7 +1067,7 @@
       if(e.key==="Escape") setNav(false);
     });
     window.addEventListener("resize",function(){
-      if(window.innerWidth>680) setNav(false);
+      if(window.innerWidth>860) setNav(false);
     });
   }
   // Scroll spy

@@ -46,7 +46,7 @@ async function api(path, body) {
   let data;
   try { data = await response.json(); } catch (_) { throw new Error('The dashboard could not reach TAGGY.'); }
   if (response.status === 401) {
-    active = false; csrf = ''; selected = ''; isSpecialOwner = false; resources = null; dmUser = '';
+    active = false; csrf = ''; selected = ''; isSpecialOwner = false; resources = null; dmUser = ''; currentTab='security';syncMobileTools();
     dmRows=[];dmThreads=[];dmBefore=null;$('dm-profile').replaceChildren();$('dm-chat-header').replaceChildren();$('dm-messages').replaceChildren(); $('dm-threads').replaceChildren(); $('channel-messages').replaceChildren(); $('incidents').replaceChildren();
     $('header-login').hidden = false; document.body.classList.remove('signed-in'); $('account-name').hidden = true;
     $('dashboard').hidden = true; $('logout').hidden = true; $('login').hidden = false;
@@ -165,7 +165,7 @@ async function start() {
     $('owner-console').hidden = !isSpecialOwner; $('console-label').textContent = isSpecialOwner ? 'OWNER CONSOLE' : 'SERVER DASHBOARD';
     $('scope-note').textContent = isSpecialOwner ? 'Every connected server. Your main server first.' : 'Your servers. Your controls.';
     $('header-login').hidden = true; document.body.classList.add('signed-in'); $('account-name').hidden = false; $('account-name').textContent = session.username || session.userId; $('dm-tab').hidden = !isSpecialOwner;
-    $('login').hidden = true; $('dashboard').hidden = false; $('logout').hidden = false;
+    $('login').hidden = true; $('dashboard').hidden = false; $('logout').hidden = false;syncMobileTools();
     await loadList(); showStatus(isSpecialOwner ? 'Your servers are ready.' : 'Pick a server to get started.', 'success');
   } catch (error) { if (error.message === 'Sign in with Discord to continue.') { showStatus(''); } else { showStatus(error.message, 'error'); $('login').hidden = false; } }
 }
@@ -221,17 +221,32 @@ const workspacePages = {
   dms:['Direct messages','Your private view of TAGGY’s conversations.']
 };
 function applyTabState(){
+  document.body.dataset.tool=currentTab;
   const page=workspacePages[currentTab]||workspacePages.security;
   for(const button of document.querySelectorAll('[data-tab]'))button.setAttribute('aria-pressed',String(button.dataset.tab===currentTab));
   for(const panel of document.querySelectorAll('[data-panel]'))panel.hidden=panel.dataset.panel!==currentTab;
   $('workspace-title').textContent=page[0];$('workspace-description').textContent=page[1];
   document.title=page[0]+' · TAGGY';
+  syncMobileTools();
 }
-for (const button of document.querySelectorAll('[data-tab]')) button.addEventListener('click', () => {
-  if (button.dataset.tab === 'dms' && !isSpecialOwner) return;
-  currentTab = button.dataset.tab;applyTabState();
+function syncMobileTools(){
+  const picker=$('mobile-tool');
+  const allowed=[...document.querySelectorAll('.console-tabs [data-tab]')].filter(button=>button.dataset.tab!=='dms'||isSpecialOwner);
+  const signature=allowed.map(button=>button.dataset.tab).join(',');
+  if(picker.dataset.tools!==signature){
+    picker.replaceChildren();
+    for(const button of allowed){const option=textElement('option',button.querySelector('span').textContent);option.value=button.dataset.tab;picker.append(option);}
+    picker.dataset.tools=signature;
+  }
+  picker.value=currentTab;
+}
+function chooseTool(tab){
+  if(busy||!Object.hasOwn(workspacePages,tab)||(tab==='dms'&&!isSpecialOwner)){syncMobileTools();return;}
+  currentTab=tab;applyTabState();
   void refreshCurrentTab().catch(error => showStatus(error.message, 'error'));
-});
+}
+for (const button of document.querySelectorAll('.console-tabs [data-tab]')) button.addEventListener('click',()=>chooseTool(button.dataset.tab));
+$('mobile-tool').addEventListener('change',event=>chooseTool(event.target.value));
 $('roles-form').addEventListener('submit', async event => {
   event.preventDefault(); const body = Object.fromEntries(roleKeys.map(key => [key, $(`binding-${key}`).value]));
   if (body.owner !== (resources?.bindings.owner || '') && !confirm('Change the Owner role? Members with this role will gain owner bot commands in this server.')) return;
@@ -343,12 +358,15 @@ function renderDMThreads(){
  if(!$('dm-threads').children.length)$('dm-threads').append(textElement('p','No conversations here yet. Open one with a user ID.','muted'));
 }
 function renderDMProfile(user){
+ $('dm-current-name').textContent=user.name;
  $('dm-discord').href='https://discord.com/users/'+encodeURIComponent(user.id);
  $('dm-chat-header').replaceChildren(avatar(user),textElement('strong',user.name));
  const panel=$('dm-profile');panel.replaceChildren(avatar(user,'dm-profile-avatar'),textElement('h3',user.name),textElement('p','@'+(user.username||user.name),'muted'));
  panel.append(textElement('small','DISCORD USER ID'),textElement('p',user.id,'dm-profile-id'));
  const link=textElement('a','Open Discord profile ↗');link.href='https://discord.com/users/'+encodeURIComponent(user.id);link.target='_blank';link.rel='noopener noreferrer';panel.append(link,textElement('p','Messages are sent from TAGGY.','caption'));
 }
+const mobileInbox=matchMedia('(max-width:850px)');
+mobileInbox.addEventListener('change',()=>{if(!mobileInbox.matches)$('dm-inbox').open=true;});
 async function loadDMs() {
  if(!isSpecialOwner||dmLoading)return;dmLoading=true;
  try{const data=await api('owner/dms');dmThreads=data.threads;renderDMThreads();if(data.storageError)showStatus('The inbox could not be saved. Check bot storage.','error');if(dmUser)await loadDMHistory();}
@@ -386,7 +404,7 @@ $('dm-open-form').addEventListener('submit',event=>{event.preventDefault();selec
 $('refresh-dms').addEventListener('click',()=>void loadDMs().catch(error=>showStatus(error.message,'error')));
 $('dm-form').addEventListener('submit',async event=>{event.preventDefault();if(!isSpecialOwner||!dmUser){showStatus('Open a conversation first.','error');return;}let files;try{files=await encodeFiles('dm');}catch(error){showStatus(error.message,'error');return;}const result=await action('owner/dms',{userId:dmUser,content:$('dm-content').value,files},'DM sent.');if(result){$('dm-content').value='';clearUploads('dm');clearDraft('dm-form');if(result.warning)showStatus(result.warning,'error');await loadDMs().catch(error=>showStatus(`DM sent. Refresh failed: ${error.message}`,'error'));}});
 
-function selectDM(userId){if(dmUser!==userId&&($('dm-content').value.trim()||selectedFiles('dm').length)&&!confirm('Discard this draft and switch conversations?')){$('dm-user-id').value=dmUser;return;}if(dmUser!==userId){$('dm-content').value='';clearUploads('dm');clearDraft('dm-form');}if(dmUser!==userId){dmRows=[];dmBefore=null;$('dm-messages').replaceChildren();$('dm-older').hidden=true;$('dm-chat-header').textContent='Loading conversation…';$('dm-profile').replaceChildren();}dmUser=userId;$('dm-user-id').value=userId;void loadDMHistory().catch(error=>showStatus(error.message,'error'));}
+function selectDM(userId){if(dmUser!==userId&&($('dm-content').value.trim()||selectedFiles('dm').length)&&!confirm('Discard this draft and switch conversations?')){$('dm-user-id').value=dmUser;return;}if(dmUser!==userId){$('dm-content').value='';clearUploads('dm');clearDraft('dm-form');}if(dmUser!==userId){dmRows=[];dmBefore=null;$('dm-messages').replaceChildren();$('dm-older').hidden=true;$('dm-chat-header').textContent='Loading conversation…';$('dm-profile').replaceChildren();}dmUser=userId;$('dm-user-id').value=userId;if(mobileInbox.matches)$('dm-inbox').open=false;void loadDMHistory().catch(error=>showStatus(error.message,'error'));}
 function applyCapabilities(){if(!resources||busy)return;applyNewCapabilities();$('chat-files').disabled=true;$('dm-files').disabled=true;const cap=resources.capabilities||{};for(const [selector,key]of [['#roles-form button,#roles-form select','changeRoles'],['#member-role-form button,#assign-role','assignRoles'],['#channel-form button,#control-channel,#slowmode','channels'],['#release-form button,#member-id','timeout'],['#auto-role','autoRole']]){for(const control of document.querySelectorAll(selector))control.disabled=cap[key]===false;} }
 
 async function loadVerification(){const id=selected;if(!id||dirtyForms.has('verification-form'))return;const data=await api('guilds/'+id+'/verification');if(id!==selected||dirtyForms.has('verification-form'))return;const config=data.settings;$('verification-mode').value=config.mode;$('verification-group-required').checked=config.groupRequired;$('verification-group').value=config.groupId;$('verification-channel').value=config.channelId||'';$('verification-title').value=config.title||'';$('verification-description').value=config.description||'';verificationVisibility();verificationLoaded=id;const can=resources?.capabilities?.changeRoles!==false;for(const input of $('verification-form').querySelectorAll('input,select,textarea,button'))input.disabled=!can;$('verification-note').textContent=can?'Settings apply to '+$('server-name').textContent+'.':'Only the server owner or a Discord administrator can change verification.';}
@@ -411,22 +429,135 @@ presetUse.addEventListener('click',()=>{const tab=presetTab(),form=$(presetForms
 presetDelete.addEventListener('click',async()=>{const tab=presetTab(),items=(serverPresets[tab]||[]).filter(p=>p.id!==presetSelect.value);const result=await action('guilds/'+selected+'/presets',{tab,presets:items},'Preset removed.');if(result){serverPresets=result.presets;renderPresetBar();}});
 presetSave.addEventListener('click',async()=>{const tab=presetTab(),form=$(presetForms[tab]);if(!form)return;const items=serverPresets[tab]||[];if(items.length>=6){showStatus('You can keep six presets per tab. Remove one first.','error');return;}const name=prompt('Name this preset');if(!name?.trim())return;const values={};for(const field of form.querySelectorAll('input,select,textarea')){if(field.type==='file'||field.multiple)continue;const key=field.id||field.name;if(key)values[key]=field.type==='checkbox'?field.checked:field.type==='number'?Number(field.value):field.value;}const result=await action('guilds/'+selected+'/presets',{tab,presets:[...items,{id:'custom-'+crypto.randomUUID().slice(0,8),name:name.trim(),values}]},'Preset saved for this server.');if(result){serverPresets=result.presets;renderPresetBar();}});
 
-let ticketDraft=[],ticketPresets=[];
-const markTicketDraft=()=>{dirtyForms.add('tickets-form');dirty=true;};
-function renderTicketTypes(){const list=$('ticket-types');list.replaceChildren();for(const type of ticketDraft){const card=textElement('details','','ticket-type');card.dataset.type=type.id;card.open=type.id==='staff-application'||type.id.startsWith('custom-');const summary=textElement('summary','');summary.append(textElement('strong',type.name||'New ticket type'),textElement('small',type.questions.length?type.questions.length+' questions':'A normal conversation'));card.append(summary);const heading=textElement('div','','section-heading');heading.append(textElement('strong',type.name||'New ticket type'));const remove=textElement('button','Remove');remove.type='button';remove.addEventListener('click',()=>{ticketDraft=ticketDraft.filter(item=>item!==type);markTicketDraft();renderTicketTypes();});heading.append(remove);card.append(heading);for(const [key,label,max,rows]of [['name','Button name',80,0],['description','Short description',200,0],['questions','Questions · one per line',4200,4]]){const wrapper=textElement('label',label);const input=document.createElement(rows?'textarea':'input');if(rows)input.rows=rows;input.maxLength=max;input.value=key==='questions'?type.questions.join('\n'):type[key];input.setAttribute('aria-label',label+' for '+type.name);input.addEventListener('input',()=>{type[key]=key==='questions'?input.value.split('\n').map(line=>line.trim()).filter(Boolean):input.value;markTicketDraft();});wrapper.append(input);card.append(wrapper);}card.append(textElement('p','Leave questions empty for a normal conversation. Up to 12 questions, 350 characters each.','caption'));list.append(card);}if(!ticketDraft.length)list.append(textElement('p','No ticket types. Add one or restore the presets to publish an Open Ticket button.','muted'));applyNewCapabilities();}
+let ticketDraft=[],ticketPresets=[],ticketPreviewSelection='';
 function chosen(select){return [...select.selectedOptions].map(option=>option.value).filter(Boolean);}
 function fillMulti(element,roles,selected){options(element,roles,'');element.firstChild.remove();for(const option of element.options)option.selected=selected.includes(option.value);}
-async function loadTickets(){if(!selected||dirtyForms.has('tickets-form'))return;const id=selected,data=await api('guilds/'+id+'/tickets');if(id!==selected||dirtyForms.has('tickets-form'))return;const config=data.settings;ticketDraft=structuredClone(config.types);ticketPresets=data.presets;$('tickets-title').value=config.title;$('tickets-description').value=config.description;$('tickets-reminders').checked=config.remindersEnabled;$('tickets-days').value=config.reminderDays;const roles=(resources?.roles||[]).filter(role=>role.id!==selected);fillMulti($('tickets-staff'),roles,data.staffRoleIds);fillMulti($('tickets-ping'),roles,config.reminderRoleIds);renderTicketTypes();const closed=$('closed-tickets');closed.replaceChildren();for(const item of data.closed){const row=textElement('article','','closed-ticket-row');const copy=textElement('div','');copy.append(textElement('strong',item.name),textElement('small',item.type+(item.closedAt?' · '+new Date(item.closedAt).toLocaleDateString():'')));const open=textElement('a','View in Discord ↗');open.href='https://discord.com/channels/'+id+'/'+item.id;open.target='_blank';open.rel='noopener noreferrer';row.append(copy,open);if(resources?.capabilities?.changeRoles!==false){const button=textElement('button','Delete channel');button.type='button';button.className='danger';button.addEventListener('click',async()=>{if(!confirm('Permanently delete '+item.name+'? This cannot be undone. Saved transcripts keep their normal retention period.'))return;const result=await action('guilds/'+id+'/ticket-delete',{channelId:item.id,confirmed:true},'Closed ticket channel deleted.');if(result)await loadTickets();});row.append(button);}closed.append(row);}if(!data.closed.length)closed.append(textElement('p','No closed tickets you can view. Closed tickets will appear here.','muted'));applyNewCapabilities();}
-$('ticket-add').addEventListener('click',()=>{if(ticketDraft.length>=10){showStatus('Up to ten ticket types are supported.','error');return;}ticketDraft.push({id:'custom-'+crypto.randomUUID().slice(0,8),name:'New ticket',description:'',questions:[]});markTicketDraft();renderTicketTypes();});
+const markTicketDraft=()=>{dirtyForms.add('tickets-form');dirty=true;};
+function ticketEmoji(value){
+ const custom=/^<(a?):([A-Za-z0-9_]{2,32}):(\d{17,20})>$/.exec(value||'');
+ const id=custom?.[3]||(/^\d{17,20}$/.test(value||'')?value:null);
+ if(id){const img=document.createElement('img');img.src='https://cdn.discordapp.com/emojis/'+id+(custom?.[1]==='a'?'.gif':'.png')+'?size=48';img.alt=custom?.[2]||'Custom emoji';img.className='ticket-topic-emoji';img.loading='lazy';return img;}
+ return textElement('span',value||'','ticket-topic-emoji');
+}
+function ticketPreviewOpen(open,focusIndex){
+ const list=$('ticket-preview-options');list.hidden=!open;
+ $('ticket-preview-trigger').setAttribute('aria-expanded',String(open));
+ if(open&&Number.isInteger(focusIndex)){const options=[...list.querySelectorAll('[role=option]')];if(options.length){const active=(focusIndex+options.length)%options.length;options.forEach((option,index)=>option.tabIndex=index===active?0:-1);options[active].focus();}}
+}
+function renderTicketPreview(){
+ $('ticket-preview-title').textContent=$('tickets-title').value||'Talk to the team';
+ $('ticket-preview-description').textContent=$('tickets-description').value;
+ const list=$('ticket-preview-options');list.replaceChildren();
+ if(!ticketDraft.some(type=>type.id===ticketPreviewSelection))ticketPreviewSelection='';
+ $('ticket-preview-selection').replaceChildren();
+ const selectedType=ticketDraft.find(type=>type.id===ticketPreviewSelection);
+ if(selectedType){if(selectedType.emoji)$('ticket-preview-selection').append(ticketEmoji(selectedType.emoji));$('ticket-preview-selection').append(textElement('span',selectedType.name||'Untitled topic'));}
+ else $('ticket-preview-selection').textContent=$('tickets-placeholder').value||'Select a topic';
+ const showDescriptions=$('tickets-show-descriptions').checked;
+ for(const [index,type]of ticketDraft.entries()){
+  const option=textElement('button','','ticket-topic-option');option.type='button';option.id='ticket-preview-option-'+index;option.setAttribute('role','option');option.setAttribute('aria-selected',String(type.id===ticketPreviewSelection));option.dataset.topic=type.id;
+  option.tabIndex=type.id===ticketPreviewSelection||(!ticketPreviewSelection&&index===0)?0:-1;
+  if(type.emoji)option.append(ticketEmoji(type.emoji));
+  const copy=textElement('span','','ticket-topic-copy');copy.append(textElement('strong',type.name||'Untitled topic'));
+  if(showDescriptions&&type.description?.trim())copy.append(textElement('small',type.description.slice(0,100)));
+  option.append(copy);
+  option.addEventListener('click',()=>{ticketPreviewSelection=type.id;renderTicketPreview();ticketPreviewOpen(false);$('ticket-preview-trigger').focus();$('ticket-preview-note').textContent='Preview: choosing '+(type.name||'this topic')+' would open a ticket and start '+(type.questions.length?type.questions.length+' questions':'a conversation')+' in TAGGY DMs.';});
+  option.addEventListener('keydown',event=>{if(['ArrowDown','ArrowUp','Home','End','Escape'].includes(event.key)){event.preventDefault();if(event.key==='Escape'){ticketPreviewOpen(false);$('ticket-preview-trigger').focus();return;}ticketPreviewOpen(true,event.key==='Home'?0:event.key==='End'?ticketDraft.length-1:index+(event.key==='ArrowDown'?1:-1));}});
+  list.append(option);
+ }
+ $('ticket-preview-trigger').disabled=!ticketDraft.length;
+ $('ticket-preview-note').textContent=ticketDraft.length?'Try the menu here. Your preview does not open a ticket.':'Add a topic to show the menu on your panel.';
+ if(!ticketDraft.length)ticketPreviewOpen(false);
+}
+function renderTicketTypes(){
+ const list=$('ticket-types');list.replaceChildren();
+ for(const type of ticketDraft){
+  type.emoji??='';
+  const card=textElement('details','','ticket-type');card.dataset.type=type.id;card.open=type.id==='staff-application'||type.id.startsWith('custom-');
+  const summary=textElement('summary',''),name=textElement('strong',type.name||'New topic'),count=textElement('small',type.questions.length?type.questions.length+' questions':'A conversation');
+  summary.append(name,count);card.append(summary);
+  const heading=textElement('div','','section-heading'),remove=textElement('button','Remove');remove.type='button';remove.addEventListener('click',()=>{ticketDraft=ticketDraft.filter(item=>item!==type);markTicketDraft();renderTicketTypes();});heading.append(remove);card.append(heading);
+  for(const [key,label,max,rows]of [['name','Topic name',80,0],['emoji','Emoji',100,0],['description','Topic description',200,0],['questions','Questions · one per line',4200,4]]){
+   const wrapper=textElement('label',label),input=document.createElement(rows?'textarea':'input');if(rows)input.rows=rows;input.maxLength=max;input.value=key==='questions'?type.questions.join('\n'):type[key]||'';input.setAttribute('aria-label',label+' for '+type.name);input.dataset.ticketField=key;
+   if(key==='name')input.required=true;
+   if(key==='emoji'){input.placeholder='💬 or <:name:id>';wrapper.append(textElement('small','Paste an emoji or a Discord custom emoji. Leave empty to remove it.','caption'));}
+   if(key==='description')wrapper.append(textElement('small','The menu shows up to 100 characters when descriptions are enabled.','caption'));
+   input.addEventListener('input',()=>{type[key]=key==='questions'?input.value.split('\n').map(line=>line.trim()).filter(Boolean):key==='emoji'?input.value.trim():input.value;name.textContent=type.name||'New topic';count.textContent=type.questions.length?type.questions.length+' questions':'A conversation';markTicketDraft();renderTicketPreview();});wrapper.append(input);card.append(wrapper);
+  }
+  card.append(textElement('p','Leave questions empty for a conversation. Up to 12 questions, 350 characters each.','caption'));list.append(card);
+ }
+ if(!ticketDraft.length)list.append(textElement('p','Add a topic or restore the presets to show the menu.','muted'));
+ renderTicketPreview();applyNewCapabilities();
+}
+$('ticket-preview-trigger').addEventListener('click',()=>ticketPreviewOpen($('ticket-preview-options').hidden));
+$('ticket-preview-trigger').addEventListener('keydown',event=>{if(event.key==='ArrowDown'||event.key==='ArrowUp'){event.preventDefault();ticketPreviewOpen(true,event.key==='ArrowDown'?0:ticketDraft.length-1);}if(event.key==='Escape'){event.preventDefault();ticketPreviewOpen(false);}});
+$('ticket-preview-reset').addEventListener('click',()=>{ticketPreviewSelection='';renderTicketPreview();ticketPreviewOpen(true);});
+for(const id of ['tickets-title','tickets-description','tickets-placeholder','tickets-show-descriptions'])$(id).addEventListener('input',renderTicketPreview);
+$('tickets-form').addEventListener('input',markTicketDraft);
+async function loadTickets(){
+ if(!selected||dirtyForms.has('tickets-form'))return;
+ const id=selected,data=await api('guilds/'+id+'/tickets');if(id!==selected||dirtyForms.has('tickets-form'))return;
+ const config=data.settings;ticketDraft=structuredClone(config.types);ticketPresets=data.presets;ticketPreviewSelection='';
+ $('tickets-title').value=config.title;$('tickets-description').value=config.description;
+ $('tickets-placeholder').value=config.placeholder||'Select a topic';$('tickets-show-descriptions').checked=Boolean(config.showDescriptions);
+ $('tickets-reminders').checked=config.remindersEnabled;$('tickets-days').value=config.reminderDays;
+ const roles=(resources?.roles||[]).filter(role=>role.id!==selected);fillMulti($('tickets-staff'),roles,data.staffRoleIds);fillMulti($('tickets-ping'),roles,config.reminderRoleIds);
+ renderTicketTypes();ticketPreviewOpen(true);
+ const closed=$('closed-tickets');closed.replaceChildren();
+ for(const item of data.closed){
+  const row=textElement('article','','closed-ticket-row'),copy=textElement('div','');copy.append(textElement('strong',item.name),textElement('small',item.type+(item.closedAt?' · '+new Date(item.closedAt).toLocaleDateString():'')));
+  const open=textElement('a','View in Discord ↗');open.href='https://discord.com/channels/'+id+'/'+item.id;open.target='_blank';open.rel='noopener noreferrer';row.append(copy,open);
+  if(resources?.capabilities?.changeRoles!==false){const button=textElement('button','Delete channel');button.type='button';button.className='danger';button.addEventListener('click',async()=>{if(!confirm('Permanently delete '+item.name+'? This cannot be undone. Saved transcripts keep their normal retention period.'))return;const result=await action('guilds/'+id+'/ticket-delete',{channelId:item.id,confirmed:true},'Closed ticket channel deleted.');if(result)await loadTickets();});row.append(button);}
+  closed.append(row);
+ }
+ if(!data.closed.length)closed.append(textElement('p','No closed tickets you can view. Closed tickets will appear here.','muted'));applyNewCapabilities();
+}
+$('ticket-add').addEventListener('click',()=>{if(ticketDraft.length>=10){showStatus('Up to ten topics are supported.','error');return;}ticketDraft.push({id:'custom-'+crypto.randomUUID().slice(0,8),name:'New topic',emoji:'💬',description:'',questions:[]});markTicketDraft();renderTicketTypes();});
 $('ticket-defaults').addEventListener('click',()=>{ticketDraft=structuredClone(ticketPresets);markTicketDraft();renderTicketTypes();});
 $('tickets-refresh').addEventListener('click',()=>void loadTickets().catch(error=>showStatus(error.message,'error')));
-$('tickets-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/tickets',{settings:{title:$('tickets-title').value,description:$('tickets-description').value,types:ticketDraft,remindersEnabled:$('tickets-reminders').checked,reminderDays:Number($('tickets-days').value),reminderRoleIds:chosen($('tickets-ping'))},staffRoleIds:chosen($('tickets-staff'))},'Ticket settings saved.');if(result){clearDraft('tickets-form');await loadTickets();if(result.warning)showStatus(result.warning,'error');}});
+$('tickets-form').addEventListener('submit',async event=>{
+ event.preventDefault();
+ const result=await action('guilds/'+selected+'/tickets',{settings:{
+  title:$('tickets-title').value,description:$('tickets-description').value,placeholder:$('tickets-placeholder').value,
+  showDescriptions:$('tickets-show-descriptions').checked,types:ticketDraft,remindersEnabled:$('tickets-reminders').checked,
+  reminderDays:Number($('tickets-days').value),reminderRoleIds:chosen($('tickets-ping'))
+ },staffRoleIds:chosen($('tickets-staff'))},'Ticket settings saved.');
+ if(result){clearDraft('tickets-form');await loadTickets();if(result.warning)showStatus(result.warning,'error');}
+});
 async function loadFishing(){if(!selected||dirtyForms.has('fishing-form'))return;const id=selected,data=await api('guilds/'+id+'/fishing');if(id!==selected||dirtyForms.has('fishing-form'))return;$('fishing-enabled').checked=data.settings.enabled;$('fishing-cooldown').value=data.settings.cooldownSeconds;applyNewCapabilities();}
 $('fishing-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/fishing',{enabled:$('fishing-enabled').checked,cooldownSeconds:Number($('fishing-cooldown').value)},'Fishing settings saved.');if(result){clearDraft('fishing-form');await loadFishing();}});
 function applyNewCapabilities(){const can=resources?.capabilities?.changeRoles!==false&&!busy;for(const element of document.querySelectorAll('#tickets-form input,#tickets-form textarea,#tickets-form select,#tickets-form button,#fishing-form input,#fishing-form button'))element.disabled=!can;$('tickets-note').textContent=can?'Save to publish the panel. Open tickets keep their original questions.':'Only the server owner or a Discord administrator can change tickets.';}
 
 // Pause media out of view. Reduced-motion users get manual controls and static examples.
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
+const ambientVideo=$('ambient-video'),ambientToggle=$('ambient-toggle'),ambientMobile=matchMedia('(max-width:700px)');
+const dataConnection=navigator.connection;
+let ambientVisible=false,ambientPaused=false;
+try{ambientPaused=sessionStorage.getItem('taggy-background-paused')==='true';}catch(_){}
+function syncAmbient(){
+ const allowed=!reducedMotion.matches&&!dataConnection?.saveData;
+ ambientToggle.hidden=!allowed;
+ ambientToggle.textContent=ambientPaused?'Play motion':'Pause motion';
+ ambientToggle.setAttribute('aria-pressed',String(ambientPaused));
+ const shouldPlay=allowed&&ambientVisible&&!ambientPaused&&!document.hidden&&!document.body.classList.contains('signed-in');
+ if(shouldPlay){
+  const source='/taggy/assets/taggy-ambient'+(ambientMobile.matches?'-mobile':'')+'.mp4';
+  if(ambientVideo.getAttribute('src')!==source)ambientVideo.src=source;
+  void ambientVideo.play().catch(()=>ambientVideo.classList.remove('is-playing'));
+ }else{ambientVideo.pause();ambientVideo.classList.remove('is-playing');}
+}
+ambientVideo.addEventListener('playing',()=>{
+ if(!ambientVisible||ambientPaused||document.hidden||reducedMotion.matches||dataConnection?.saveData||document.body.classList.contains('signed-in')){ambientVideo.pause();ambientVideo.classList.remove('is-playing');}
+ else ambientVideo.classList.add('is-playing');
+});
+ambientVideo.addEventListener('error',()=>{ambientVideo.classList.remove('is-playing');ambientToggle.hidden=true;});
+ambientToggle.addEventListener('click',()=>{ambientPaused=!ambientPaused;try{sessionStorage.setItem('taggy-background-paused',String(ambientPaused));}catch(_){}syncAmbient();});
+ambientMobile.addEventListener('change',syncAmbient);
+dataConnection?.addEventListener('change',syncAmbient);
+new IntersectionObserver(entries=>{ambientVisible=entries[0].isIntersecting;syncAmbient();},{threshold:0.05}).observe(document.querySelector('.centered-intro'));
+document.addEventListener('visibilitychange',syncAmbient);
+reducedMotion.addEventListener('change',syncAmbient);
+syncAmbient();
 const introVideo=$('intro-video');
 const introSound=$('intro-sound');
 function syncSoundControl(){const audible=!introVideo.muted&&introVideo.volume>0;introSound.textContent=audible?'Mute video':'Turn sound on';introSound.setAttribute('aria-pressed',String(audible));$('intro-sound-note').textContent=audible?'Original video sound is on.':'Starts muted. Turn sound on to hear the video.';}

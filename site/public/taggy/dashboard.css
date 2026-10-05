@@ -41,3 +41,94 @@ label{display:block;color:#d5c8df;font-size:14px;font-weight:500;line-height:1.5
 @media(max-width:380px){main{padding-inline:16px}.landing-jump{gap:9px;font-size:11px}.hero-actions .button{flex:1;padding-inline:14px;font-size:13px}.signed-in main{padding-inline:12px}.card{padding:16px}.pill{white-space:normal;max-width:100px}.preset-bar>summary small{max-width:145px;text-align:end}.fishing-command-list{grid-template-columns:minmax(0,1fr)}}
 .signed-in .fishing-dock>img{height:200px}.signed-in .dock-copy{padding:24px}.signed-in .dock-copy h3{font-size:34px;margin-bottom:10px}.signed-in .dock-copy p{font-size:14px;margin-bottom:12px}.signed-in .dock-copy .eyebrow{margin-bottom:7px}.signed-in .dock-copy code{padding:5px 14px}.fishing-guide .card{padding:16px 0;border:0;background:transparent}.fishing-guide .card:last-child{margin-bottom:0}.fishing-guide .card+.card{border-top:1px solid var(--line);border-radius:0;padding-top:26px}
 @media(prefers-reduced-motion:reduce){*,*::before,*::after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+/* Ticket panel preview follows Discord's select-menu layout. */
+.mobile-tool-picker{display:none}
+.centered-intro{position:relative;isolation:isolate;overflow:hidden;border-radius:20px}
+.hero-motion{position:absolute;inset:0;z-index:-1;pointer-events:none}
+.hero-motion picture,.hero-motion img,.hero-motion video{display:block;position:absolute;inset:0;width:100%;height:100%;object-fit:cover}
+.hero-motion video{opacity:0;transition:opacity .4s}
+.hero-motion video.is-playing{opacity:1}
+.hero-motion::after{content:"";position:absolute;inset:0;background:linear-gradient(180deg,#09080e33,#09080e99 55%,#09080e),radial-gradient(ellipse at center,#09080e66 15%,transparent 75%)}
+.centered-intro .hero-copy{position:relative;padding-inline:20px}
+.ambient-toggle{position:absolute;bottom:18px;inset-inline-end:20px;min-height:44px;font-size:12px;background:#100c18cc}
+.dm-inbox>summary{display:none}
+.dm-inbox:not([open])>summary{display:flex}
+.dm-inbox>summary{min-height:48px;align-items:center;justify-content:space-between;gap:12px;cursor:pointer;font-size:14px;font-weight:600}
+.dm-inbox>summary span{font-weight:400;color:var(--muted);font-size:12px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+@media(max-width:850px){.dm-inbox>summary{display:flex}.dm-inbox[open]>summary{margin-bottom:18px}#dm-open-form input,#dm-search{font-size:16px}.dm-inbox>summary::after{content:"⌄";font-size:20px;color:var(--accent)}.dm-inbox[open]>summary::after{content:"⌃"}}
+@media(max-width:700px){
+  html{scroll-padding-top:90px}
+  header,.signed-in header{padding-inline:max(16px,env(safe-area-inset-left)) max(16px,env(safe-area-inset-right))}
+  .signed-in header{position:sticky;top:0;z-index:5;height:calc(68px + env(safe-area-inset-top));padding-top:env(safe-area-inset-top)}
+  main,.signed-in main{padding-inline:max(12px,env(safe-area-inset-left)) max(12px,env(safe-area-inset-right));padding-bottom:calc(48px + env(safe-area-inset-bottom))}
+  .centered-intro{min-height:620px;padding-top:42px;border-radius:14px}
+  .centered-intro .hero-copy{padding-inline:12px}
+  .ambient-toggle{bottom:12px;inset-inline-end:12px}
+  .signed-in .console-tabs{display:none}
+  .mobile-tool-picker{display:grid;grid-column:1;grid-row:4;grid-template-columns:auto minmax(0,1fr);align-items:center;gap:16px;padding:14px 0 20px}
+  .mobile-tool-picker label{font-size:13px;color:var(--muted);white-space:nowrap}
+  .mobile-tool-picker select{min-height:48px;font-size:16px;background:#21172c;border-color:#694680}
+  .workspace-heading h2{font-size:30px}
+  .owner-console{gap:10px;margin-bottom:8px!important}
+  .owner-console h3{width:auto;font-size:14px;order:0}
+  .owner-console #owner-summary{flex-basis:100%;order:2}
+  .owner-console #priority-server{margin-inline-start:auto;order:1;min-height:44px}
+  .signed-in[data-tool=dms] .layout>aside,.signed-in[data-tool=dms] .server-heading,.signed-in[data-tool=dms] #owner-console,.signed-in[data-tool=dms] #permissions{display:none}
+  .signed-in .brand span{display:none}
+  .signed-in .account-chip{max-width:86px}
+  .signed-in .header-right{gap:10px}
+  .card{padding:18px}
+  .ticket-preview-heading button,.preset-controls button,.closed-ticket-row button,.discord-upload .button{min-height:44px}
+  .inline{flex-wrap:wrap}
+  .inline input{flex-basis:100%}
+  .inline button{width:100%}
+  .advanced>summary{min-height:44px}
+  .closed-ticket-row{align-items:start;gap:12px}
+  .closed-ticket-row>div{width:100%}
+  .closed-ticket-row>a{min-height:44px;display:inline-flex;align-items:center;overflow-wrap:anywhere}
+  .dm-top{padding:16px}
+  .dm-sidebar{padding:14px 16px}
+  .dm-layout{min-height:0}
+  .dm-chat-header{min-height:64px;padding:12px 16px}
+  #dm-messages,.message-feed{height:clamp(240px,44dvh,420px);overscroll-behavior:contain;overflow-wrap:anywhere}
+  #dm-messages .chat-message time{display:block;margin-inline-start:0;margin-top:2px}
+  .dm-compose-tools .discord-upload{flex-basis:100%}
+  .discord-upload .button{width:100%;justify-content:center}
+  #dm-form{padding:14px}
+  .message-media{max-height:40dvh}
+  audio.message-media{width:100%}
+  #dm-content,#chat-content{min-height:96px;font-size:16px}
+  .landing-jump{flex-wrap:wrap;gap:4px 12px;margin-top:24px}
+  .landing-jump a{min-height:44px;display:inline-flex;align-items:center}
+}
+@media(prefers-reduced-motion:reduce){.hero-motion video{display:none}}
+.ticket-editor-layout{display:grid;grid-template-columns:minmax(0,1.15fr) minmax(280px,1fr);gap:28px;align-items:start}
+.ticket-editor-layout>form,.ticket-panel-preview{min-width:0}
+.ticket-panel-preview{position:sticky;top:24px}
+.ticket-preview-heading{display:flex;justify-content:space-between;align-items:center;gap:12px;margin-bottom:14px}
+.ticket-preview-heading strong{font-size:13px}
+.ticket-preview-heading button{min-height:32px;padding:5px 9px;font-size:11px}
+.ticket-discord-surface{padding:16px;background:#313338;border:1px solid #42444a;border-radius:9px;color:#dbdee1;font-family:"gg sans","Segoe UI",Arial,sans-serif}
+.ticket-discord-embed{border-left:4px solid #5865f2;padding:12px;background:#2b2d31;border-radius:4px;margin-bottom:14px;overflow-wrap:anywhere}
+.ticket-discord-embed h4{color:#f2f3f5;font-size:16px;font-weight:700;margin:0 0 7px;line-height:1.4}
+.ticket-discord-embed p{font-size:14px;line-height:1.45;color:#b5bac1;margin:0;white-space:pre-wrap}
+.ticket-topic-menu{width:400px;max-width:100%}
+.ticket-topic-options{background:#1e1f22;border:1px solid #35363c;border-radius:8px;margin-bottom:6px;padding:0;max-height:304px;overflow-y:auto;box-shadow:0 8px 16px #0003}
+.ticket-topic-options[hidden]{display:none}
+.ticket-topic-options .ticket-topic-option{display:flex;align-items:center;justify-content:flex-start;gap:8px;min-height:38px;width:100%;padding:7px 8px;border:0;border-radius:0;background:transparent;color:#f2f3f5;text-align:left;font-size:14px;line-height:1.2;font-family:inherit;font-weight:600;box-shadow:none}
+.ticket-topic-options .ticket-topic-option:hover,.ticket-topic-options .ticket-topic-option:focus-visible{background:#2b2d31}
+.ticket-topic-options .ticket-topic-option[aria-selected=true]{background:#35373c}
+.ticket-topic-options .ticket-topic-option:focus-visible{outline:2px solid #00a8fc;outline-offset:-2px}
+.ticket-topic-emoji{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;min-width:24px;font-size:22px;line-height:1;object-fit:contain;vertical-align:middle;flex:0 0 24px}
+.ticket-topic-copy{min-width:0}
+.ticket-topic-copy strong{display:block;font-size:14px;color:#f2f3f5;line-height:1.25;overflow-wrap:anywhere}
+.ticket-topic-copy small{display:block;color:#b5bac1;font-size:12px;font-weight:400;line-height:1.35;margin-top:3px;overflow-wrap:anywhere}
+.ticket-topic-trigger{width:100%;min-height:38px;display:flex;justify-content:space-between;align-items:center;gap:12px;background:#2b2d31;border:1px solid #45474e;border-radius:6px;padding:8px 12px;color:#b5bac1;text-align:left;font-size:16px;line-height:1.2;font-weight:400;font-family:inherit}
+.ticket-topic-trigger:hover{background:#2e3035;border-color:#5c5e66}
+.ticket-topic-trigger>span{display:flex;align-items:center;gap:8px;min-width:0;overflow-wrap:anywhere}
+.ticket-topic-trigger svg{flex:0 0 16px}
+.ticket-topic-trigger[aria-expanded=false] svg{transform:rotate(180deg)}
+.ticket-topic-trigger:disabled{opacity:.5}
+#ticket-preview-note{font-size:12px;margin-top:12px;line-height:1.5}
+@media(max-width:1150px){.ticket-editor-layout{grid-template-columns:minmax(0,1fr)}.ticket-panel-preview{position:static;max-width:440px;grid-row:1}}
+@media(max-width:720px){.ticket-editor-layout{gap:22px}.ticket-discord-surface{padding:12px}.ticket-topic-trigger{font-size:16px;min-height:44px}.ticket-preview-heading button{min-height:44px}.ticket-topic-options .ticket-topic-option{min-height:44px}}
