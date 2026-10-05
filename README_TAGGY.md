@@ -12,6 +12,16 @@ Dashboard links can select a server, tab and subpage, for example `https://lojjk
 
 Outgoing text editors include Discord formatting buttons and a safe preview. Select text and choose Bold to insert `**text**`, or use italics, underline, strikethrough, spoilers, code, quotes and heading buttons. Headings are supported in regular Discord messages; embed descriptions keep Discord's embed formatting behavior. Ticket questions use separate multiline editors so formatting and line breaks stay in one question.
 
+## Setup checks and quick controls
+
+Home > Overview keeps the server activity view. Home > Setup checks the selected server's roles, verification and ticket panels, protection, welcomes, scheduled posts and logging without changing settings. Each check shows Ready, Needs setup, Needs attention, Off or Could not check, with a direct settings link when the account can make the change. Optional disabled features do not count as setup errors. The permission list shows current server-level permissions; channel overrides and role hierarchy are checked separately. Missing or inaccessible data is never treated as ready.
+
+The setup check uses fresh Discord role, channel and bot permission data. It does not retrieve ticket conversations, message text or private templates. Normal accounts cannot see details of hidden channels or counts of hidden scheduled posts. Checking setup never creates roles, sends messages or enables protection.
+
+Announcements > Scheduled posts adds Pause and Resume beside each saved post. Pause leaves its message, date and delivery history intact. Resume rechecks permissions and moves overdue recurring posts to their next future interval. Failed or uncertain deliveries and finished one-time posts require editing a future time before they can run again. These controls preserve the original creator, whose access is checked at delivery. Posts currently being sent cannot be changed.
+
+Setup checks and the quick controls appear after the matching bot update is uploaded and restarted. Older bot versions show an update note instead of calling unsupported APIs.
+
 ## Trigger replies and polls
 
 Tools contains trigger-word replies instead of `.tag` commands. Replies are configured per server, with a trigger phrase, whole-phrase or exact-message matching, an enable switch and a cooldown. Matching ignores case. Saved legacy reply names become their trigger words. Bots, webhooks, DMs and prefix commands do not activate replies. Responses suppress mention notifications and have minimum channel/user gaps to avoid reply floods.
@@ -92,7 +102,7 @@ Login uses Discord's authorization-code flow and `identify` scope, a browser-bou
 
 ## Update the bot on bot-hosting.net
 
-1. Upload all files from the current update package's `bot/` folder into `/home/container/`, replacing the source files. The package contains 21 production JavaScript modules, required assets, `package.json` and `package-lock.json`. Keep the host's existing `.env` and saved JSON files. The package needs no new bot dependency.
+1. Upload all files from the current update package's `bot/` folder into `/home/container/`, replacing the source files. The package contains 22 production JavaScript modules, required assets, `package.json` and `package-lock.json`. Keep the host's existing `.env` and saved JSON files. The package needs no new bot dependency.
 2. Ensure the bot uses Node.js 20 or newer and starts `index.js` using the host's startup settings. The updated package starts `index.js`; ensure the hosting panel does too.
 3. The dashboard shares TAGGY's existing HTTP listener. The host must supply a valid `SERVER_PORT` matching its allocated port. If the host does not supply it, set the assigned port in the private environment. Do not choose an arbitrary port.
 4. TAGGY's canonical HTTPS address is `https://1u061e9dv7.apps.bot-hosting.cloud`. Its existing `/health` endpoint returned HTTP 200 with `{"ok":true}` during preparation. This is already set as `TAGGY_BACKEND_URL` in `site/wrangler.toml`. No custom domain is required. This check confirms the existing listener, not the new dashboard; verify login after the updated bot is running. `https://bot-hosting.net` is the provider's website, not the bot API.
@@ -143,7 +153,7 @@ Back up `security-state.json` before editing it. An unreadable/corrupt state fil
 
 ## Deployment state
 
-The website is published through its existing GitHub deployment workflow. Updated bot code is tested and provided in the current upload package; it still needs uploading and restarting on the bot host. The browser/computer plugin could not initialize because its runtime kernel files are missing. Existing host secrets and Cloudflare configuration remain in place. Browser screenshots and interaction checks use example server data.
+The website is published through its existing GitHub deployment workflow. On 5 October 2026, all 29 production package files were uploaded to TAGGY's existing hosting deployment through the browser extension. The bot was stopped cleanly before replacement and started again; the panel confirms Running, Discord login and fishing App command registration. Existing host credentials and saved server/user data were preserved. Local interaction screenshots use example server data; hosting screenshots document the actual restart.
 
 ## Older DM history and profiles
 

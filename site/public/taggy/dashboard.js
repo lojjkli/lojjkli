@@ -131,6 +131,7 @@ async function loadList() {
   $('empty').hidden = guilds.length > 0;
   if (!guilds.some(guild => guild.id === selected)) { selected = guilds[0]?.id || ''; discardDrafts(); }
   renderList(); await loadDetail(!dirty);
+  if(selected&&$('status').textContent==='Pick a server to get started.'&&$('status').classList.contains('success'))showStatus('Your server is ready.','success');
   if (isSpecialOwner) { $('owner-summary').textContent = `${guilds.length} connected servers · ${guilds.filter(guild => guild.enabled).length} protected · ${guilds.filter(guild => guild.shieldUntil > Date.now()).length} active shields`; $('priority-server').disabled = !guilds.some(guild => guild.id === priorityGuild); }
 }
 async function action(path, body, message) {
@@ -178,7 +179,7 @@ async function start() {
     $('scope-note').textContent = isSpecialOwner ? 'Every connected server. Your main server first.' : 'Your servers. Your controls.';
     $('header-login').hidden = true; document.body.classList.add('signed-in'); $('account-name').hidden = false; $('account-name').textContent = session.username || session.userId; $('dm-tab').hidden = !isSpecialOwner; $('bot-profile-tab').hidden = !profileAllowed(); profileSupported=session.features?.profile===true;
     $('login').hidden = true; $('dashboard').hidden = false; $('logout').hidden = false;syncMobileTools();
-    await loadList();readDashboardRoute(false);await refreshCurrentTab(); showStatus(isSpecialOwner ? 'Your servers are ready.' : 'Pick a server to get started.', 'success');
+    await loadList();readDashboardRoute(false);await refreshCurrentTab(); showStatus(isSpecialOwner ? 'Your servers are ready.' : selected ? 'Your server is ready.' : 'Pick a server to get started.', 'success');
   } catch (error) { if (error.message === 'Sign in with Discord to continue.') { showStatus(''); } else { showStatus(error.message, 'error'); $('login').hidden = false; } }
 }
 setInterval(() => {
@@ -237,6 +238,7 @@ const workspacePages = {
   dms:['Direct messages','Your private view of TAGGY’s conversations.']
 };
 const workspaceSections={
+ home:[['overview','Overview'],['setup','Setup']],
  roles:[['permissions','Server roles'],['members','Member roles'],['panels','Role panels']],
  tools:[['polls','Polls'],['triggers','Trigger words'],['commands','Commands'],['server','Server info'],['members','Member profiles'],['nickname','Nickname']],
  tickets:[['panel','Ticket panel'],['topics','Topics & questions'],['reminders','Reminders'],['closed','Closed tickets']],
@@ -468,7 +470,7 @@ async function loadDMHistory(older=false){
 }
 $('dm-search').addEventListener('input',renderDMThreads);
 $('dm-older').addEventListener('click',()=>void loadDMHistory(true).catch(error=>showStatus(error.message,'error')));
-async function refreshCurrentTab(){if(currentTab==='tools'&&currentSection==='commands')return loadCommands();if(currentTab==='embeds'&&['scheduled','history'].includes(currentSection))return loadSchedules();if(currentTab==='channels'&&currentSection==='dms')return loadWelcomeDM();if(['tools','profile'].includes(currentTab)||(currentTab==='roles'&&currentSection==='panels'))return loadCommunityTab();void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
+async function refreshCurrentTab(){if(currentTab==='home'&&currentSection==='setup')return loadSetup();if(currentTab==='tools'&&currentSection==='commands')return loadCommands();if(currentTab==='embeds'&&['scheduled','history'].includes(currentSection))return loadSchedules();if(currentTab==='channels'&&currentSection==='dms')return loadWelcomeDM();if(['tools','profile'].includes(currentTab)||(currentTab==='roles'&&currentSection==='panels'))return loadCommunityTab();void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
 $('log-search').addEventListener('input',renderLogs);
 $('refresh-logs').addEventListener('click',()=>void loadLogs().catch(error=>showStatus(error.message,'error')));
 $('refresh-chat').addEventListener('click',()=>void loadChat().catch(error=>showStatus(error.message,'error')));
@@ -693,7 +695,46 @@ function renderActivity(data){
 
 
 let scheduleData=null,scheduleId='',scheduleLoading='',scheduleDateOriginal=null,welcomeDMData=null,welcomeDMLoading='',commandData=null,commandsLoading='';
+let setupData=null,setupFor='',setupLoading='';
 const featureReady=key=>resources?.features?.[key]===true;
+const setupStatus={ready:'Ready',needs_setup:'Needs setup',blocked:'Check permissions',off:'Off',unknown:'Check again'};
+function renderSetup(data){
+ const items=Array.isArray(data.items)?data.items:[];
+ $('setup-items').replaceChildren();
+ for(const item of items){
+  const status=Object.hasOwn(setupStatus,item.status)?item.status:'unknown',row=textElement('article','','card setup-item');row.dataset.setupItem=String(item.id||'');row.dataset.setupStatus=status;
+  const heading=textElement('div','','section-heading');heading.append(textElement('h4',item.name||'Setup check'),textElement('span',setupStatus[status],'setup-state '+status));
+  row.append(heading,textElement('p',item.description||'Check this feature’s settings.','muted'));
+  const action=item.action,sections=workspaceSections[action?.tab];
+  if(item.canFix===true&&action&&allowedTool(action.tab)&&(!sections||sections.some(([id])=>id===action.section))){
+   const link=textElement('a',(action.label||'Open settings')+' ↗','button quiet setup-link');link.href=dashboardURL(action.tab,action.section||'').href;link.setAttribute('aria-label',(action.label||'Open settings')+' for '+(item.name||'this check'));
+   link.addEventListener('click',event=>{if(event.button||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();chooseTool(action.tab,action.section||'');});row.append(link);
+  }
+  $('setup-items').append(row);
+ }
+ if(!items.length)$('setup-items').append(textElement('p','No setup checks are available yet. Try Check again.','muted'));
+ const ready=items.filter(item=>item.status==='ready').length,off=items.filter(item=>item.status==='off').length,toCheck=items.length-ready-off;
+ $('setup-progress').hidden=!items.length;$('setup-progress-label').textContent=ready+' ready · '+toCheck+' to check'+(off?' · '+off+' off':'');
+ $('setup-progress-bar').max=Math.max(1,items.length-off);$('setup-progress-bar').value=ready;
+ const checkedAt=new Date(data.checkedAt);$('setup-checked').textContent=Number.isFinite(checkedAt.getTime())?'Last checked '+checkedAt.toLocaleString():'';
+ for(const [key,id]of [['bot','setup-bot-permissions'],['account','setup-account-permissions']]){
+  const list=$(id);list.replaceChildren();
+  for(const permission of Array.isArray(data.permissions?.[key])?data.permissions[key]:[]){const row=textElement('li'),granted=permission.granted===true?'Allowed':permission.granted===false?'Missing':'Unknown';row.append(textElement('span',permission.name||'Permission'),textElement('strong',granted,'setup-permission-'+granted.toLowerCase()));list.append(row);}
+  if(!list.children.length)list.append(textElement('li','Permissions could not be checked.','muted'));
+ }
+ $('setup-permissions').hidden=!data.permissions;
+ $('setup-note').textContent=!items.length?'Try Check again to refresh this server.':toCheck?toCheck+' '+(toCheck===1?'item needs':'items need')+' a look. Choose one below.':'You’re all caught up.';$('setup-note').className='notice';
+}
+async function loadSetup(){
+ const id=selected;if(!id)return;if(resourcesFor!==id)await loadResources();if(selected!==id)return;
+ if(!featureReady('setup')){setupData=null;setupFor='';$('setup-items').replaceChildren();$('setup-progress').hidden=true;$('setup-permissions').hidden=true;$('setup-note').textContent='Upload the bot update to enable setup checks.';$('setup-note').className='notice';applyExtraCapabilities();return;}
+ if(setupLoading===id)return;setupLoading=id;$('setup-items').setAttribute('aria-busy','true');applyExtraCapabilities();
+ if(setupFor!==id){setupData=null;$('setup-items').replaceChildren();$('setup-progress').hidden=true;$('setup-permissions').hidden=true;$('setup-note').textContent='Checking your server…';$('setup-note').className='notice';}
+ try{const data=await api('guilds/'+id+'/setup');if(selected!==id)return;setupData=data;setupFor=id;renderSetup(data);}
+ catch(error){if(selected!==id)return;$('setup-note').textContent='Could not refresh setup. '+error.message;$('setup-note').className='notice error';throw error;}
+ finally{if(setupLoading===id)setupLoading='';if(selected===id)$('setup-items').setAttribute('aria-busy','false');applyExtraCapabilities();}
+}
+$('refresh-setup').addEventListener('click',()=>{if(!busy)void loadSetup().catch(error=>showStatus(error.message,'error'));});
 function applyExtraCapabilities(){
  const schedules=featureReady('schedules'),canSchedule=schedules&&scheduleData?.canManage===true;
  disableForm('schedule-form',!canSchedule);$('new-schedule').disabled=!canSchedule||((scheduleData?.schedules||[]).length>=20);$('schedule-picker').disabled=!schedules||!scheduleData;
@@ -701,6 +742,8 @@ function applyExtraCapabilities(){
  disableForm('welcome-dm-form',!featureReady('welcomeDM')||welcomeDMData?.canManage!==true);
  for(const control of [$('command-search'),$('command-category')])control.disabled=!featureReady('commands');
  for(const button of document.querySelectorAll('[data-edit-schedule]'))button.disabled=!canSchedule;
+ for(const button of document.querySelectorAll('[data-toggle-schedule]'))button.disabled=!canSchedule||!featureReady('scheduleToggle')||button.dataset.sending==='true';
+ $('refresh-setup').disabled=!featureReady('setup')||Boolean(setupLoading);
 }
 function localDateInput(timestamp){const date=new Date(timestamp);if(!Number.isFinite(date.getTime()))return '';const pad=value=>String(value).padStart(2,'0');return date.getFullYear()+'-'+pad(date.getMonth()+1)+'-'+pad(date.getDate())+'T'+pad(date.getHours())+':'+pad(date.getMinutes());}
 function scheduleChannels(){
@@ -730,7 +773,10 @@ function renderSchedules(){
   const row=textElement('article','','schedule-row'),body=textElement('div'),channel=scheduleData.channels.find(item=>item.id===schedule.channelId)?.name||'Unavailable channel';
   const repeat=schedule.repeatMinutes?({60:'Hourly',1440:'Daily',10080:'Weekly'}[schedule.repeatMinutes]||'Every '+schedule.repeatMinutes+' minutes'):'One time';
   body.append(textElement('h4',schedule.name),textElement('p','#'+channel+' · '+repeat,'caption'),textElement('p',(schedule.enabled?'Next: ':'Paused · ')+new Date(schedule.nextRunAt).toLocaleString(),'caption'));
-  const edit=textElement('button','Edit');edit.type='button';edit.dataset.editSchedule=schedule.id;edit.setAttribute('aria-label','Edit '+schedule.name);edit.addEventListener('click',()=>selectSchedule(schedule.id));row.append(body,edit);$('schedule-list').append(row);
+  if(schedule.lastStatus==='sending')body.append(textElement('p','Posting now. Pause becomes available when it finishes.','caption'));
+  const actions=textElement('div','','schedule-actions'),edit=textElement('button','Edit');edit.type='button';edit.dataset.editSchedule=schedule.id;edit.setAttribute('aria-label','Edit '+schedule.name);edit.addEventListener('click',()=>selectSchedule(schedule.id));actions.append(edit);
+  if(featureReady('scheduleToggle')){const toggle=textElement('button',schedule.enabled?'Pause':'Resume');toggle.type='button';toggle.dataset.toggleSchedule=schedule.id;toggle.dataset.sending=String(schedule.lastStatus==='sending');toggle.setAttribute('aria-label',(schedule.enabled?'Pause ':'Resume ')+schedule.name);toggle.addEventListener('click',()=>{void toggleSchedule(schedule.id,!schedule.enabled);});actions.append(toggle);}
+  row.append(body,actions);$('schedule-list').append(row);
  }
  if(!schedules.length)$('schedule-list').append(textElement('p','Your first scheduled post goes here. Start with New post.','muted'));
  for(const schedule of [...schedules].filter(item=>item.lastRunAt>0).sort((a,b)=>(b.lastRunAt||0)-(a.lastRunAt||0))){
@@ -739,6 +785,18 @@ function renderSchedules(){
   if(schedule.lastError)row.append(textElement('p',schedule.lastError,'notice error'));const link=scheduleMessageLink(schedule);if(link)row.append(link);$('schedule-history').append(row);
  }
  if(!$('schedule-history').children.length)$('schedule-history').append(textElement('p','Results appear here after TAGGY tries a scheduled post.','muted'));applyExtraCapabilities();
+}
+async function toggleSchedule(id,enabled){
+ if(busy||!featureReady('scheduleToggle')||scheduleData?.canManage!==true)return;
+ const guildId=selected,schedule=scheduleData.schedules.find(item=>item.id===id);if(!schedule||schedule.lastStatus==='sending')return;
+ const result=await action('guilds/'+guildId+'/schedules',{action:'toggle',id,enabled},enabled?'Scheduled post resumed.':'Scheduled post paused.');
+ if(!result||selected!==guildId)return;
+ // Apply the server response before refreshing. A failed read must never invite a second mutation.
+ if(Array.isArray(result.schedules))scheduleData.schedules=result.schedules;
+ else if(result.schedule)scheduleData.schedules=scheduleData.schedules.map(item=>item.id===id?result.schedule:item);
+ renderSchedules();
+ if(!dirtyForms.has('schedule-form')&&scheduleId===id)fillSchedule(scheduleData.schedules.find(item=>item.id===id));
+ try{await loadSchedules();}catch(error){showStatus((enabled?'Post resumed. ':'Post paused. ')+'Refresh failed: '+error.message,'error');}
 }
 async function loadSchedules(){
  if(!selected)return;if(resourcesFor!==selected)await loadResources();
