@@ -17,8 +17,9 @@ const dirtyForms = new Set();
 function clearDraft(form) { dirtyForms.delete(form); dirty = dirtyForms.size > 0; }
 function discardDrafts() { dirtyForms.clear(); dirty = false; }
 let guilds = [];
-let currentTab = 'security';
+let currentTab = 'home';
 let logRows = [];
+let supportedSettings = new Set();
 let dmUser = '';
 let channelLoading = '';
 let displayedChannel = '';
@@ -46,7 +47,7 @@ async function api(path, body) {
   let data;
   try { data = await response.json(); } catch (_) { throw new Error('The dashboard could not reach TAGGY.'); }
   if (response.status === 401) {
-    active = false; csrf = ''; selected = ''; isSpecialOwner = false; resources = null; dmUser = ''; currentTab='security';syncMobileTools();
+    active = false; csrf = ''; selected = ''; isSpecialOwner = false; resources = null; dmUser = ''; currentTab='home';syncMobileTools();
     dmRows=[];dmThreads=[];dmBefore=null;$('dm-profile').replaceChildren();$('dm-chat-header').replaceChildren();$('dm-messages').replaceChildren(); $('dm-threads').replaceChildren(); $('channel-messages').replaceChildren(); $('incidents').replaceChildren();
     $('header-login').hidden = false; document.body.classList.remove('signed-in'); $('account-name').hidden = true;
     $('dashboard').hidden = true; $('logout').hidden = true; $('login').hidden = false;
@@ -77,7 +78,12 @@ function renderList() {
   }
 }
 function renderDetail(data, settings) {
+  supportedSettings = new Set(Object.keys(data.config));
   $('detail').hidden = false;
+  renderActivity(data);
+  for(const field of document.querySelectorAll('[data-new-setting]'))field.hidden=!supportedSettings.has(field.dataset.newSetting);
+  $('security-update-note').hidden=supportedSettings.has('antiLinks');
+  const picked=$('timeout-member').value;options($('timeout-member'),data.timeouts||[],'Choose a member');$('timeout-member').value=picked;
   applyTabState();
   $('server-name').textContent = data.name;
   $('server-meta').textContent = `${data.memberCount.toLocaleString()} members`;
@@ -92,7 +98,7 @@ function renderDetail(data, settings) {
   $('permissions').hidden = !warnings.length; $('permissions').textContent = warnings.join(' '); $('permissions').className = 'notice error';
   const fullyAutomatic = data.config.enabled && data.config.antiRaid && data.config.antiSpam && data.config.antiNuke;
   $('automatic-title').textContent = fullyAutomatic ? 'Automatic protection is on' : 'Some protection is paused';
-  $('automatic-copy').textContent = fullyAutomatic ? 'TAGGY checks new joins, spam and destructive changes automatically. It restricts suspicious activity and alerts the bot owner, even when this page is closed.' : 'Turn on automatic protection to let TAGGY handle join raids, spam and destructive changes. You can tune individual checks under Advanced.';
+  $('automatic-copy').textContent = fullyAutomatic ? 'TAGGY checks new joins, spam and destructive changes automatically. It restricts suspicious activity and alerts the bot owner, even when this page is closed.' : 'Turn on automatic protection to let TAGGY handle join raids, spam and destructive changes. Choose the checks below and save your settings.';
   $('automatic-on').hidden = fullyAutomatic;
   const shield = data.shieldUntil > Date.now();
   $('shield-title').textContent = shield ? 'Join shield is active' : 'Monitoring new joins';
@@ -107,7 +113,7 @@ function renderDetail(data, settings) {
       if (input.type === 'checkbox') input.checked = value; else input.value = value;
     }
   }
-  logRows = data.incidents; renderLogs();
+  syncRanges(); logRows = data.incidents; renderLogs();
 }
 async function loadDetail(settings = false) {
   const id = selected;
@@ -139,7 +145,7 @@ $('detail').addEventListener('input', event => { const form = event.target.close
 $('settings-form').addEventListener('submit', async event => {
   event.preventDefault();
   const body = {};
-  for (const input of $('settings-form').elements) if (input.name) body[input.name] = input.type === 'checkbox' ? input.checked : Number(input.value);
+  for (const input of $('settings-form').elements) if (input.name && supportedSettings.has(input.name)) body[input.name] = input.type === 'checkbox' ? input.checked : Number(input.value);
   await action(`guilds/${selected}/settings`, body, 'Protection settings saved.');
   if ($('status').classList.contains('success')) { clearDraft('settings-form'); await loadDetail(true); }
 });
@@ -149,7 +155,8 @@ $('shield-on').addEventListener('click', () => {
 });
 $('shield-off').addEventListener('click', () => { void action(`guilds/${selected}/shield`, { active: false }, 'Join shield ended. Existing timeouts are unchanged.'); });
 $('release-form').addEventListener('submit', event => {
-  event.preventDefault(); const memberId = $('member-id').value.trim();
+  event.preventDefault(); const memberId = $('timeout-member').value || $('member-id').value.trim();
+  if(!memberId){showStatus('Choose a member first.','error');return;}
   if (!confirm(`Release the timeout for member ${memberId} in ${$('server-name').textContent}?`)) return;
   void action(`guilds/${selected}/release-timeout`, { memberId }, 'Member timeout released.');
 });
@@ -209,7 +216,8 @@ async function loadResources() {
   try { await promise; } finally { if (resourceRequest?.promise === promise) resourceRequest = null; }
 }
 const workspacePages = {
-  security:['Home','See how TAGGY is looking after your community.'],
+  home:['Home','A quick look at your server today.'],
+  security:['Security','Choose what TAGGY watches and how it responds.'],
   verification:['Verification','Choose how members get in and make the panel yours.'],
   tickets:['Tickets','Set up support, applications and your own conversations.'],
   fishing:['Fishing','A collection to build. A rare catch to chase.'],
@@ -222,7 +230,7 @@ const workspacePages = {
 };
 function applyTabState(){
   document.body.dataset.tool=currentTab;
-  const page=workspacePages[currentTab]||workspacePages.security;
+  const page=workspacePages[currentTab]||workspacePages.home;
   for(const button of document.querySelectorAll('[data-tab]'))button.setAttribute('aria-pressed',String(button.dataset.tab===currentTab));
   for(const panel of document.querySelectorAll('[data-panel]'))panel.hidden=panel.dataset.panel!==currentTab;
   $('workspace-title').textContent=page[0];$('workspace-description').textContent=page[1];
@@ -340,7 +348,7 @@ async function loadLogs() { const id = selected; if(!id)return; const data=await
 function renderMessages(element,messages) {
   const nearBottom = element.scrollHeight-element.scrollTop-element.clientHeight<60; element.replaceChildren();
   if(!messages.length) element.append(textElement('p','No messages yet.','muted'));
-  for(const message of messages){const row=textElement('article','',`chat-message ${message.direction==='outgoing'?'outgoing':''}`);if(element.id==='dm-messages')row.append(avatar(message));row.append(textElement('strong',`${message.author}${message.bot?' · bot':''}`),textElement('time',new Date(message.at).toLocaleString()),textElement('p',message.content||'(attachment)')); for(const attachment of message.attachments||[]){try{const url=new URL(attachment.url);if(url.protocol!=='https:'||!['cdn.discordapp.com','media.discordapp.net'].includes(url.hostname))continue;const link=textElement('a',attachment.name||'Attachment');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';row.append(link);const name=(attachment.name||'').toLowerCase();let media;if(/\.(?:png|jpe?g|gif|webp|avif)$/.test(name)){media=document.createElement('img');media.alt=attachment.name||'Picture';media.loading='lazy';}else if(/\.(?:mp4|webm|mov)$/.test(name)){media=document.createElement('video');media.controls=true;media.preload='metadata';}else if(/\.(?:mp3|wav|ogg|m4a)$/.test(name)){media=document.createElement('audio');media.controls=true;media.preload='none';}if(media){media.className='message-media';media.src=url.href;row.append(media);}}catch(_){}} element.append(row);}
+  for(const message of messages){const row=textElement('article','',`chat-message ${message.direction==='outgoing'?'outgoing':''}`);if(element.id==='dm-messages')row.append(avatar(message));row.append(textElement('strong',`${message.author}${message.bot?' · bot':''}`),textElement('time',new Date(message.at).toLocaleString()),textElement('p',message.content||(message.embeds?.length?'': '(attachment)'))); for(const embed of message.embeds||[]){const card=textElement('article','','conversation-embed');if(embed.title)card.append(textElement('strong',embed.title));if(embed.description)card.append(textElement('p',embed.description));if(embed.footer)card.append(textElement('small',embed.footer));row.append(card);} for(const attachment of message.attachments||[]){try{const url=new URL(attachment.url);if(url.protocol!=='https:'||!['cdn.discordapp.com','media.discordapp.net'].includes(url.hostname))continue;const link=textElement('a',attachment.name||'Attachment');link.href=url.href;link.target='_blank';link.rel='noopener noreferrer';row.append(link);const name=(attachment.name||'').toLowerCase();let media;if(/\.(?:png|jpe?g|gif|webp|avif)$/.test(name)){media=document.createElement('img');media.alt=attachment.name||'Picture';media.loading='lazy';}else if(/\.(?:mp4|webm|mov)$/.test(name)){media=document.createElement('video');media.controls=true;media.preload='metadata';}else if(/\.(?:mp3|wav|ogg|m4a)$/.test(name)){media=document.createElement('audio');media.controls=true;media.preload='none';}if(media){media.className='message-media';media.src=url.href;row.append(media);}}catch(_){}} element.append(row);}
   if(nearBottom) element.scrollTop=element.scrollHeight;
 }
 async function loadChat() {
@@ -387,7 +395,7 @@ async function loadDMHistory(older=false){
 }
 $('dm-search').addEventListener('input',renderDMThreads);
 $('dm-older').addEventListener('click',()=>void loadDMHistory(true).catch(error=>showStatus(error.message,'error')));
-async function refreshCurrentTab(){void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(false);}
+async function refreshCurrentTab(){void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
 $('log-search').addEventListener('input',renderLogs);
 $('refresh-logs').addEventListener('click',()=>void loadLogs().catch(error=>showStatus(error.message,'error')));
 $('refresh-chat').addEventListener('click',()=>void loadChat().catch(error=>showStatus(error.message,'error')));
@@ -405,7 +413,7 @@ $('refresh-dms').addEventListener('click',()=>void loadDMs().catch(error=>showSt
 $('dm-form').addEventListener('submit',async event=>{event.preventDefault();if(!isSpecialOwner||!dmUser){showStatus('Open a conversation first.','error');return;}let files;try{files=await encodeFiles('dm');}catch(error){showStatus(error.message,'error');return;}const result=await action('owner/dms',{userId:dmUser,content:$('dm-content').value,files},'DM sent.');if(result){$('dm-content').value='';clearUploads('dm');clearDraft('dm-form');if(result.warning)showStatus(result.warning,'error');await loadDMs().catch(error=>showStatus(`DM sent. Refresh failed: ${error.message}`,'error'));}});
 
 function selectDM(userId){if(dmUser!==userId&&($('dm-content').value.trim()||selectedFiles('dm').length)&&!confirm('Discard this draft and switch conversations?')){$('dm-user-id').value=dmUser;return;}if(dmUser!==userId){$('dm-content').value='';clearUploads('dm');clearDraft('dm-form');}if(dmUser!==userId){dmRows=[];dmBefore=null;$('dm-messages').replaceChildren();$('dm-older').hidden=true;$('dm-chat-header').textContent='Loading conversation…';$('dm-profile').replaceChildren();}dmUser=userId;$('dm-user-id').value=userId;if(mobileInbox.matches)$('dm-inbox').open=false;void loadDMHistory().catch(error=>showStatus(error.message,'error'));}
-function applyCapabilities(){if(!resources||busy)return;applyNewCapabilities();$('chat-files').disabled=true;$('dm-files').disabled=true;const cap=resources.capabilities||{};for(const [selector,key]of [['#roles-form button,#roles-form select','changeRoles'],['#member-role-form button,#assign-role','assignRoles'],['#channel-form button,#control-channel,#slowmode','channels'],['#release-form button,#member-id','timeout'],['#auto-role','autoRole']]){for(const control of document.querySelectorAll(selector))control.disabled=cap[key]===false;} }
+function applyCapabilities(){if(!resources||busy)return;applyNewCapabilities();$('chat-files').disabled=true;$('dm-files').disabled=true;const cap=resources.capabilities||{};for(const [selector,key]of [['#roles-form button,#roles-form select','changeRoles'],['#member-role-form button,#assign-role','assignRoles'],['#channel-form button,#control-channel,#slowmode','channels'],['#release-form button,#member-id,#timeout-member','timeout'],['#auto-role','autoRole'],['#settings-form input,#settings-form button,#shield-on,#shield-off,#automatic-on,[data-security-level]','security']]){for(const control of document.querySelectorAll(selector))control.disabled=cap[key]===false;} }
 
 async function loadVerification(){const id=selected;if(!id||dirtyForms.has('verification-form'))return;const data=await api('guilds/'+id+'/verification');if(id!==selected||dirtyForms.has('verification-form'))return;const config=data.settings;$('verification-mode').value=config.mode;$('verification-group-required').checked=config.groupRequired;$('verification-group').value=config.groupId;$('verification-channel').value=config.channelId||'';$('verification-title').value=config.title||'';$('verification-description').value=config.description||'';verificationVisibility();verificationLoaded=id;const can=resources?.capabilities?.changeRoles!==false;for(const input of $('verification-form').querySelectorAll('input,select,textarea,button'))input.disabled=!can;$('verification-note').textContent=can?'Settings apply to '+$('server-name').textContent+'.':'Only the server owner or a Discord administrator can change verification.';}
 $('verification-mode').addEventListener('change',verificationVisibility);$('verification-group-required').addEventListener('change',verificationVisibility);
@@ -422,12 +430,12 @@ const presetUse=textElement('button','Use preset'),presetSave=textElement('butto
 presetControls.append(presetCopy,presetSelect,presetUse,presetSave,presetDelete);presetSection.append(presetSummary,presetControls);$('workspace-heading').after(presetSection);
 const presetTab=()=>({security:'home',channels:'welcome'}[currentTab]||currentTab);
 const presetForms={home:'settings-form',verification:'verification-form',roles:'roles-form',embeds:'embed-form',welcome:'welcome-form',fishing:'fishing-form'};
-function renderPresetBar(){const tab=presetTab(),items=serverPresets[tab]||[];const previous=presetSection.dataset.tab===tab?presetSelect.value:'';presetSection.dataset.tab=tab;presetSection.hidden=!presetForms[tab];options(presetSelect,items.map(item=>({id:item.id,name:item.name})),'Choose a preset');if(items.length)presetSelect.value=items.some(item=>item.id===previous)?previous:items[0].id;const can=resources?.capabilities?.changeRoles!==false;presetSave.disabled=!can;presetDelete.disabled=!can||!items.length;presetUse.disabled=!items.length;}
+function renderPresetBar(){const tab=presetTab(),items=serverPresets[tab]||[];const previous=presetSection.dataset.tab===tab?presetSelect.value:'';presetSection.dataset.tab=tab;presetSection.hidden=currentTab==='home'||!presetForms[tab];options(presetSelect,items.map(item=>({id:item.id,name:item.name})),'Choose a preset');if(items.length)presetSelect.value=items.some(item=>item.id===previous)?previous:items[0].id;const can=resources?.capabilities?.changeRoles!==false;presetSave.disabled=!can;presetDelete.disabled=!can||!items.length;presetUse.disabled=!items.length;}
 async function loadPresets(){if(!selected){presetSection.hidden=true;return;}const id=selected;if(presetGuild!==id){const data=await api('guilds/'+id+'/presets');if(id!==selected)return;serverPresets=data.presets;presetGuild=id;}renderPresetBar();}
 function presetControl(form,key){const element=$(key)||form.elements.namedItem(key);return element&&form.contains(element)?element:null;}
-presetUse.addEventListener('click',()=>{const tab=presetTab(),form=$(presetForms[tab]),preset=(serverPresets[tab]||[]).find(p=>p.id===presetSelect.value);if(!form||!preset)return;for(const [key,value]of Object.entries(preset.values)){const field=presetControl(form,key);if(!field)continue;if(field.type==='checkbox')field.checked=Boolean(value);else field.value=String(value);}dirtyForms.add(form.id);dirty=true;if(tab==='verification')verificationVisibility();if(tab==='embeds')previewEmbed();showStatus('Preset added to your draft. Adjust it, then save when ready.','success');});
+presetUse.addEventListener('click',()=>{const tab=presetTab(),form=$(presetForms[tab]),preset=(serverPresets[tab]||[]).find(p=>p.id===presetSelect.value);if(!form||!preset)return;for(const [key,value]of Object.entries(preset.values)){const field=presetControl(form,key);if(!field)continue;if(field.type==='checkbox')field.checked=Boolean(value);else field.value=String(value);}dirtyForms.add(form.id);dirty=true;if(tab==='verification')verificationVisibility();if(tab==='embeds')previewEmbed();syncRanges();showStatus('Preset added to your draft. Adjust it, then save when ready.','success');});
 presetDelete.addEventListener('click',async()=>{const tab=presetTab(),items=(serverPresets[tab]||[]).filter(p=>p.id!==presetSelect.value);const result=await action('guilds/'+selected+'/presets',{tab,presets:items},'Preset removed.');if(result){serverPresets=result.presets;renderPresetBar();}});
-presetSave.addEventListener('click',async()=>{const tab=presetTab(),form=$(presetForms[tab]);if(!form)return;const items=serverPresets[tab]||[];if(items.length>=6){showStatus('You can keep six presets per tab. Remove one first.','error');return;}const name=prompt('Name this preset');if(!name?.trim())return;const values={};for(const field of form.querySelectorAll('input,select,textarea')){if(field.type==='file'||field.multiple)continue;const key=field.id||field.name;if(key)values[key]=field.type==='checkbox'?field.checked:field.type==='number'?Number(field.value):field.value;}const result=await action('guilds/'+selected+'/presets',{tab,presets:[...items,{id:'custom-'+crypto.randomUUID().slice(0,8),name:name.trim(),values}]},'Preset saved for this server.');if(result){serverPresets=result.presets;renderPresetBar();}});
+presetSave.addEventListener('click',async()=>{const tab=presetTab(),form=$(presetForms[tab]);if(!form)return;const items=serverPresets[tab]||[];if(items.length>=6){showStatus('You can keep six presets per tab. Remove one first.','error');return;}const name=prompt('Name this preset');if(!name?.trim())return;const values={};for(const field of form.querySelectorAll('input,select,textarea')){if(field.type==='file'||field.multiple)continue;const key=field.id||field.name;if(key)values[key]=field.type==='checkbox'?field.checked:['number','range'].includes(field.type)?Number(field.value):field.value;}const result=await action('guilds/'+selected+'/presets',{tab,presets:[...items,{id:'custom-'+crypto.randomUUID().slice(0,8),name:name.trim(),values}]},'Preset saved for this server.');if(result){serverPresets=result.presets;renderPresetBar();}});
 
 let ticketDraft=[],ticketPresets=[],ticketPreviewSelection='';
 function chosen(select){return [...select.selectedOptions].map(option=>option.value).filter(Boolean);}
@@ -467,6 +475,9 @@ function renderTicketPreview(){
  }
  $('ticket-preview-trigger').disabled=!ticketDraft.length;
  $('ticket-preview-note').textContent=ticketDraft.length?'Try the menu here. Your preview does not open a ticket.':'Add a topic to show the menu on your panel.';
+ const topic=ticketDraft.find(item=>item.id===ticketPreviewSelection)||ticketDraft.find(item=>item.questions.length);
+ $('ticket-question-preview').hidden=!topic?.questions.length;
+ if(topic?.questions.length){$('ticket-question-title').textContent='Question 1/'+topic.questions.length+' · '+topic.name;$('ticket-question-copy').textContent=topic.questions[0]+'\n\nSend your answer here in this DM. You can include pictures and files.\n\n0 of '+topic.questions.length+' answered · .question repeats this question · .close ends the ticket';}
  if(!ticketDraft.length)ticketPreviewOpen(false);
 }
 function renderTicketTypes(){
@@ -574,3 +585,35 @@ function pauseHiddenVideo(){if(!videoIsOnScreen()||document.hidden||document.bod
 window.addEventListener('scroll',pauseHiddenVideo,{passive:true});
 introVideo.addEventListener('playing',pauseHiddenVideo);
 reducedMotion.addEventListener('change',()=>{syncVideoPlayback();if(reducedMotion.matches)for(const demo of document.querySelectorAll('[data-demo]'))demo.classList.remove('playing');});
+
+function syncRanges(){for(const field of document.querySelectorAll('#settings-form input[type=range]'))field.previousElementSibling.querySelector('output').textContent=field.value;}
+$('settings-form').addEventListener('input',syncRanges);
+for(const button of document.querySelectorAll('[data-open-tool]'))button.addEventListener('click',()=>chooseTool(button.dataset.openTool));
+const securityLevels={
+ relaxed:{joinLimit:15,messageLimit:12,duplicateLimit:8,mentionLimit:10,timeoutMinutes:5,destructiveLimit:5,linkLimit:10,fileLimit:15,emojiLimit:50,creationLimit:15},
+ standard:{joinLimit:8,messageLimit:7,duplicateLimit:5,mentionLimit:6,timeoutMinutes:10,destructiveLimit:3,linkLimit:5,fileLimit:8,emojiLimit:30,creationLimit:8},
+ strict:{joinLimit:5,messageLimit:5,duplicateLimit:3,mentionLimit:4,timeoutMinutes:15,destructiveLimit:2,linkLimit:3,fileLimit:5,emojiLimit:20,creationLimit:5}
+};
+for(const button of document.querySelectorAll('[data-security-level]'))button.addEventListener('click',()=>{
+ const values={...securityLevels[button.dataset.securityLevel],joinWindowSeconds:10,messageWindowSeconds:5,shieldMinutes:10,destructiveWindowSeconds:10};
+ for(const [key,value]of Object.entries(values)){const field=$('settings-form').elements.namedItem(key);if(field&&supportedSettings.has(key))field.value=value;}
+ dirtyForms.add('settings-form');dirty=true;syncRanges();showStatus(button.textContent+' limits added to your draft. Save protection to apply them.','success');
+});
+function renderActivity(data){
+ const activity=data.activity,events=(data.incidents||[]).filter(item=>item.at>Date.now()-86400000);
+ const protection=events.filter(item=>['Spam','Webhook flood','New account','Join raid','Join restriction','Destructive activity','Mass creation'].includes(item.type)).length;
+ $('activity-stats').replaceChildren();
+ for(const [label,value,note]of [['Members',data.memberCount,'In your server now'],['Messages',activity?.messages,'Last 24 hours'],['Joined',activity?.joins,'Last 24 hours'],['Left',activity?.leaves,'Last 24 hours'],['Protection events',protection,'Last 24 hours']]){
+  const card=textElement('article','','activity-stat');card.append(textElement('span',label),textElement('strong',value===undefined?'Pending':value.toLocaleString()),textElement('small',note));$('activity-stats').append(card);
+ }
+ $('activity-total').textContent=activity?activity.messages.toLocaleString()+' messages':'Bot update needed';
+ $('activity-chart').replaceChildren();const max=Math.max(1,...(activity?.hourly||[]).map(item=>item.messages));
+ for(const item of activity?.hourly||[]){const bar=textElement('div','','activity-hour');bar.setAttribute('role','listitem');const time=new Date(item.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'});bar.setAttribute('aria-label',time+': '+item.messages+' messages');bar.title=time+': '+item.messages+' messages';const fill=textElement('span','','activity-bar');const h=Math.max(2,Math.round(item.messages/max*100));fill.setAttribute('data-height',String(h));bar.append(fill,textElement('small',time.slice(0,2)));$('activity-chart').append(bar);}
+ $('activity-note').textContent=activity?'Human messages, joins and leaves. Counts start when this bot update is installed. Updates every 15 seconds.':'Install the bot update to start recording activity.';
+ $('activity-tickets').replaceChildren();
+ if(data.tickets){for(const [key,label]of [['open','Open'],['waitingAnswers','Answering questions'],['claimed','Picked up by staff'],['closedToday','Closed in 24 hours']]){const row=textElement('div');row.append(textElement('span',label),textElement('strong',String(data.tickets[key])));$('activity-tickets').append(row);}}
+ else $('activity-tickets').append(textElement('p','Ticket counts appear after the bot update.','muted'));
+ $('activity-events').replaceChildren();
+ for(const event of events.slice(0,6)){const row=textElement('article','','activity-event');const body=textElement('div');body.append(textElement('strong',event.type),textElement('small',event.detail));row.append(body,textElement('time',new Date(event.at).toLocaleTimeString([],{hour:'2-digit',minute:'2-digit'})));$('activity-events').append(row);}
+ if(!events.length)$('activity-events').append(textElement('p','Quiet so far. New server events will appear here.','muted'));
+}
