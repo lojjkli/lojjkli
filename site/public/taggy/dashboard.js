@@ -250,7 +250,7 @@ const workspaceSections={
  security:[['protection','Protection'],['limits','Limits'],['shield','Shield & timeouts']],
  embeds:[['editor','Editor'],['scheduled','Scheduled posts'],['history','History']],
  channels:[['welcome','Welcome'],['dms','Welcome DMs'],['controls','Channels']],
- fishing:[['settings','Settings'],['collection','Collection'],['boosts','Boosts'],['players','Players'],['guide','How to play']]
+ fishing:[['settings','Settings'],['collection','Collection'],['worlds','Worlds'],['boosts','Boosts'],['players','Players'],['guide','How to play']]
 };
 const rememberedSections={};
 function dashboardURL(tab=currentTab,section=currentSection){const url=new URL(location.href);url.hash='';if(selected)url.searchParams.set('server',selected);else url.searchParams.delete('server');url.searchParams.set('tab',tab);if(section)url.searchParams.set('section',section);else url.searchParams.delete('section');return url;}
@@ -621,6 +621,9 @@ function availableSections(tab){return (workspaceSections[tab]||[]).filter(([id]
 function fishingArt(item){const img=document.createElement('img');try{const url=new URL(item.image);if(url.hostname!=='cdn.discordapp.com'||url.protocol!=='https:'||!/^\/emojis\/\d+\.png$/.test(url.pathname))return null;img.src=url.href;}catch{return null;}img.width=64;img.height=64;img.alt='';img.loading='lazy';return img;}
 function renderFishingCatalog(){
  const catalog=fishingData?.catalog;if(!catalog)return;
+ $('fishing-catalog-heading').textContent=(catalog.fish?.length||0)+' fish. '+(catalog.rods?.length||0)+' rods. Your kind of kit.';
+ const worlds=$('fishing-world-catalog');worlds.replaceChildren();
+ for(const world of catalog.worlds||[]){const card=textElement('article','','fishing-world'),heading=textElement('h4',world.emoji+' '+world.name);card.append(heading,textElement('p',world.description),textElement('span','Opens at level '+world.level,'caption'));const maps=textElement('div','','fishing-map-list');for(const map of (catalog.locations||[]).filter(m=>m.world===world.id)){const item=textElement('figure','','fishing-map');try{const url=new URL(map.image);if(url.origin==='https://lojjkli.site'&&/^\/taggy\/assets\/fishing\/maps\/[a-z]+\.png$/.test(url.pathname)){const img=document.createElement('img');img.src=url.pathname;img.alt=map.name+' pixel map';img.width=960;img.height=540;img.loading='lazy';item.append(img);}}catch{}item.append(textElement('figcaption',map.name+' · Level '+map.level));maps.append(item);}card.append(maps);worlds.append(card);}
  for(const [key,id]of [['fish','fishing-fish-catalog'],['rods','fishing-rod-catalog']]){const list=$(id);list.replaceChildren();for(const item of catalog[key]||[]){const card=textElement('article','','fishing-item'),art=fishingArt(item);if(art)card.append(art);card.append(textElement('strong',item.name),textElement('span',key==='fish'?item.rarity:item.price?item.price.toLocaleString()+' coins':'Your first rod','caption'));if(key==='fish')card.append(textElement('small',item.value.toLocaleString()+' sale coins'));list.append(card);}}
  $('fishing-upgrade-catalog').replaceChildren();for(const upgrade of catalog.upgrades||[]){const card=textElement('article','','fishing-upgrade');card.append(textElement('h4',upgrade.emoji+' '+upgrade.name),textElement('p',upgrade.description),textElement('small','Five levels · /fishupgrades','caption'));$('fishing-upgrade-catalog').append(card);}
 }
