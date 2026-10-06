@@ -53,12 +53,13 @@ async function api(path, body) {
   try { data = await response.json(); } catch (_) { throw new Error('The dashboard could not reach TAGGY.'); }
   if (response.status === 401) {
     active = false; csrf = ''; selected = ''; isSpecialOwner = false; resources = null; dmUser = ''; currentTab='home';syncMobileTools();
+    giveawayData=null;giveawayFor='';$('giveaway-active').replaceChildren();$('giveaway-results').replaceChildren();$('tool-search-results').replaceChildren();if($('tool-search-dialog').open)$('tool-search-dialog').close();
     dmRows=[];dmThreads=[];dmBefore=null;$('dm-profile').replaceChildren();$('dm-chat-header').replaceChildren();$('dm-messages').replaceChildren(); $('dm-threads').replaceChildren(); $('channel-messages').replaceChildren(); $('incidents').replaceChildren();
     $('header-login').hidden = false; document.body.classList.remove('signed-in'); $('account-name').hidden = true;
     $('dashboard').hidden = true; $('logout').hidden = true; $('login').hidden = false;
     throw new Error('Sign in with Discord to continue.');
   }
-  if (!response.ok) throw new Error(data.error || `Request failed (${response.status})`);
+  if (!response.ok) { const error = new Error(data.error || `Request failed (${response.status})`); error.status = response.status; throw error; }
   return data;
 }
 function textElement(tag, text, className) {
@@ -222,12 +223,15 @@ async function loadResources() {
   resourceRequest = { guildId, promise };
   try { await promise; } finally { if (resourceRequest?.promise === promise) resourceRequest = null; }
 }
+const giveawayTab=textElement('button','');giveawayTab.type='button';giveawayTab.dataset.tab='giveaways';giveawayTab.setAttribute('aria-pressed','false');giveawayTab.append(textElement('i','🎉','giveaway-nav-icon'),textElement('span','Giveaways'));giveawayTab.firstElementChild.setAttribute('aria-hidden','true');document.querySelector('.console-tabs [data-tab="fishing"]').before(giveawayTab);
+const toolSearchButton=textElement('button','');toolSearchButton.type='button';toolSearchButton.className='tool-search-open desktop-tool-search';toolSearchButton.append(textElement('span','⌕','giveaway-nav-icon'),textElement('span','Find a tool'),textElement('kbd','/'));toolSearchButton.setAttribute('aria-label','Search dashboard tools');document.querySelector('.console-tabs').prepend(toolSearchButton);
 const workspacePages = {
   home:['Home','A quick look at your server today.'],
   security:['Security','Choose what TAGGY watches and how it responds.'],
   verification:['Verification','Choose how members get in and make the panel yours.'],
   tickets:['Tickets','Set up support, applications and your own conversations.'],
   fishing:['Fishing','A collection to build. A rare catch to chase.'],
+  giveaways:['Giveaways','Put something up for grabs. Let TAGGY pick the lucky ones.'],
   roles:['Roles','Give the right people the right tools.'],
   tools:['Tools','Polls, trigger words and a command when you need one.'],
   profile:['Bot profile','TAGGY’s name and status, across all servers.'],
@@ -239,6 +243,7 @@ const workspacePages = {
 };
 const workspaceSections={
  home:[['overview','Overview'],['setup','Setup']],
+ giveaways:[['create','Create'],['active','Active'],['results','Results']],
  roles:[['permissions','Server roles'],['members','Member roles'],['panels','Role panels']],
  tools:[['polls','Polls'],['triggers','Trigger words'],['commands','Commands'],['server','Server info'],['members','Member profiles'],['nickname','Nickname']],
  tickets:[['panel','Ticket panel'],['topics','Topics & questions'],['reminders','Reminders'],['closed','Closed tickets']],
@@ -470,7 +475,7 @@ async function loadDMHistory(older=false){
 }
 $('dm-search').addEventListener('input',renderDMThreads);
 $('dm-older').addEventListener('click',()=>void loadDMHistory(true).catch(error=>showStatus(error.message,'error')));
-async function refreshCurrentTab(){if(currentTab==='home'&&currentSection==='setup')return loadSetup();if(currentTab==='tools'&&currentSection==='commands')return loadCommands();if(currentTab==='embeds'&&['scheduled','history'].includes(currentSection))return loadSchedules();if(currentTab==='channels'&&currentSection==='dms')return loadWelcomeDM();if(['tools','profile'].includes(currentTab)||(currentTab==='roles'&&currentSection==='panels'))return loadCommunityTab();void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
+async function refreshCurrentTab(){if(currentTab==='giveaways')return loadGiveaways();if(currentTab==='home'&&currentSection==='setup')return loadSetup();if(currentTab==='tools'&&currentSection==='commands')return loadCommands();if(currentTab==='embeds'&&['scheduled','history'].includes(currentSection))return loadSchedules();if(currentTab==='channels'&&currentSection==='dms')return loadWelcomeDM();if(['tools','profile'].includes(currentTab)||(currentTab==='roles'&&currentSection==='panels'))return loadCommunityTab();void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
 $('log-search').addEventListener('input',renderLogs);
 $('refresh-logs').addEventListener('click',()=>void loadLogs().catch(error=>showStatus(error.message,'error')));
 $('refresh-chat').addEventListener('click',()=>void loadChat().catch(error=>showStatus(error.message,'error')));
@@ -696,6 +701,7 @@ function renderActivity(data){
 
 let scheduleData=null,scheduleId='',scheduleLoading='',scheduleDateOriginal=null,welcomeDMData=null,welcomeDMLoading='',commandData=null,commandsLoading='';
 let setupData=null,setupFor='',setupLoading='';
+let giveawayData=null,giveawayFor='',giveawayLoading='',giveawayUncertain=new Set(),giveawayChecked=false;
 const featureReady=key=>resources?.features?.[key]===true;
 const setupStatus={ready:'Ready',needs_setup:'Needs setup',blocked:'Check permissions',off:'Off',unknown:'Check again'};
 function renderSetup(data){
@@ -736,6 +742,7 @@ async function loadSetup(){
 }
 $('refresh-setup').addEventListener('click',()=>{if(!busy)void loadSetup().catch(error=>showStatus(error.message,'error'));});
 function applyExtraCapabilities(){
+ applyGiveawayCapabilities();
  const schedules=featureReady('schedules'),canSchedule=schedules&&scheduleData?.canManage===true;
  disableForm('schedule-form',!canSchedule);$('new-schedule').disabled=!canSchedule||((scheduleData?.schedules||[]).length>=20);$('schedule-picker').disabled=!schedules||!scheduleData;
  $('delete-schedule').disabled=!canSchedule||!scheduleId;
@@ -956,3 +963,145 @@ $('bot-profile-form').addEventListener('submit',async event=>{event.preventDefau
 applyCommunityCapabilities();
 
 initializeDashboardSections();
+
+function applyGiveawayCapabilities(){
+ const available=featureReady('giveaways'),can=available&&giveawayFor===selected&&giveawayData?.canManage===true&&!busy;
+ disableForm('giveaway-form',!can||giveawayUncertain.has('start'));
+ $('giveaway-preset').disabled=!can||giveawayUncertain.has('start');
+ for(const control of document.querySelectorAll('[data-giveaway-duration]'))control.disabled=!can||giveawayUncertain.has('start');
+ for(const control of document.querySelectorAll('[data-giveaway-action]'))control.disabled=!can||giveawayUncertain.has(control.dataset.giveawayId);
+ for(const control of document.querySelectorAll('.refresh-giveaways'))control.disabled=!available||Boolean(giveawayLoading)||busy;
+ $('giveaway-uncertain').hidden=!giveawayUncertain.size;$('giveaway-unlock').disabled=!giveawayChecked||busy;
+}
+function giveawayNotice(message,error=false){
+ for(const node of [$('giveaway-note'),...document.querySelectorAll('.giveaway-list-note')]){node.textContent=message;node.className='notice'+(node.classList.contains('giveaway-list-note')?' giveaway-list-note':'')+(error?' error':'');}
+}
+function giveawayChoices(){
+ const channel=$('giveaway-channel'),pickedChannel=channel.value,role=$('giveaway-role'),pickedRole=role.value;
+ options(channel,giveawayData?.channels||[],'Choose channel');
+ for(const option of [...channel.options].slice(1)){const item=giveawayData.channels.find(item=>item.id===option.value);option.disabled=item.canSend!==true;if(option.disabled)option.textContent=item.name+' · '+(item.reason||'Sending unavailable');}
+ channel.value=pickedChannel;
+ options(role,giveawayData?.roles||[],'Anyone in the server');role.value=pickedRole;
+ if(pickedChannel&&!channel.value){const option=textElement('option','Previous channel unavailable');option.value=pickedChannel;option.disabled=true;channel.append(option);channel.value=pickedChannel;}
+ if(pickedRole&&!role.value){const option=textElement('option','Previous role unavailable');option.value=pickedRole;option.disabled=true;role.append(option);role.value=pickedRole;}
+}
+function giveawayEmoji(value){
+ const holder=textElement('span','','giveaway-emoji'),match=/^<(a?):[A-Za-z0-9_]{2,32}:([0-9]{17,20})>$/.exec(value);
+ if(match){const image=document.createElement('img');image.src='https://cdn.discordapp.com/emojis/'+match[2]+(match[1]?'.gif':'.png');image.alt='Custom emoji';image.width=20;image.height=20;image.addEventListener('error',()=>{holder.textContent='🎉';});holder.append(image);}else holder.textContent=String(value||'').slice(0,100);
+ return holder;
+}
+function relativeGiveawayTime(timestamp){
+ if(!Number.isFinite(timestamp))return 'Choose a time';const minutes=Math.ceil((timestamp-Date.now())/60000);
+ if(minutes<=0)return 'Time is up';if(minutes<60)return 'In '+minutes+' '+(minutes===1?'minute':'minutes');const hours=Math.ceil(minutes/60);if(hours<48)return 'In '+hours+' '+(hours===1?'hour':'hours');const days=Math.ceil(hours/24);return 'In '+days+' days';
+}
+function previewGiveaway(){
+ $('giveaway-preview-title').textContent=$('giveaway-title').value||'Your giveaway';$('giveaway-preview-prize').textContent=$('giveaway-prize').value||'Your prize goes here';
+ if($('giveaway-description').value)window.TaggyFormatting.render($('giveaway-description').value,$('giveaway-preview-description'),{headings:false});else $('giveaway-preview-description').replaceChildren();
+ $('giveaway-preview').style.borderLeftColor=$('giveaway-color').value;
+ $('giveaway-preview-winners').textContent=$('giveaway-winners').value;
+ const timestamp=new Date($('giveaway-ends').value).getTime();$('giveaway-preview-ends').textContent=relativeGiveawayTime(timestamp);$('giveaway-preview-ends').title=Number.isFinite(timestamp)?new Date(timestamp).toLocaleString():'';
+ const role=$('giveaway-role').selectedOptions[0];$('giveaway-preview-role').textContent=$('giveaway-role').value?'Requires @'+(role?.textContent||'selected role'):'Anyone in the server can enter.';
+ $('giveaway-preview-button').replaceChildren(giveawayEmoji($('giveaway-emoji').value.trim()),document.createTextNode($('giveaway-button').value||'Enter giveaway'));
+}
+function resetGiveaway(){
+ $('giveaway-form').reset();$('giveaway-ends').value=localDateInput(Date.now()+86400000);previewGiveaway();
+}
+const giveawayStatusLabel=status=>({creating:'Posting in Discord',active:'Open for entries',ending:'Picking winners',ended:'Finished',cancelled:'Cancelled',needs_review:'Check Discord',failed:'Could not finish'}[status]||'Check status');
+function renderGiveaways(){
+ const items=Array.isArray(giveawayData?.giveaways)?giveawayData.giveaways:[];$('giveaway-active').replaceChildren();$('giveaway-results').replaceChildren();
+ const activeStates=new Set(['creating','active','ending','needs_review']);
+ for(const item of [...items].sort((a,b)=>(b.createdAt||0)-(a.createdAt||0))){
+  const row=textElement('article','','giveaway-row');row.dataset.giveaway=item.id;const heading=textElement('div','','section-heading');heading.append(textElement('h4',item.title||item.prize||'Giveaway'),textElement('span',giveawayStatusLabel(item.status),'giveaway-state '+(activeStates.has(item.status)?'live':'done')));
+  const channel=giveawayData.channels?.find(channel=>channel.id===item.channelId)?.name||'Unavailable channel';row.append(heading,textElement('p',item.prize||'Prize','giveaway-prize'),textElement('p','#'+channel+' · '+Number(item.entryCount||0).toLocaleString()+' entries · '+Number(item.winnerCount||1)+' '+(Number(item.winnerCount)===1?'winner':'winners'),'caption'));
+  const end=new Date(item.endsAt);row.append(textElement('p',(item.status==='active'?relativeGiveawayTime(end.getTime())+' · Ends ':'End time: ')+(Number.isFinite(end.getTime())?end.toLocaleString():'Unavailable'),'caption'));
+  if(item.lastError)row.append(textElement('p',item.lastError,'notice error'));
+  if(['creating','ending'].includes(item.status))row.append(textElement('p','TAGGY is working on this. Refresh to see the result.','caption'));
+  if(item.status==='needs_review')row.append(textElement('p','Check the original Discord message before taking another action.','caption'));
+  const winners=Array.isArray(item.winners)?item.winners:[];
+  if(item.status==='ended'){const list=textElement('ul','','giveaway-winners');for(const winner of winners)list.append(textElement('li',String(winner.name||'Discord member')+(/^[0-9]{1,20}$/.test(String(winner.id))?' · '+winner.id:'')));row.append(textElement('p',winners.length?'Winners':'No eligible entries remained.','caption'));if(winners.length)row.append(list);}
+  const actions=textElement('div','','actions');
+  const link=scheduleMessageLink(item);if(link)actions.append(link);
+  if(item.status==='active')for(const [action,label]of [['end','End now'],['cancel','Cancel']])actions.append(giveawayActionButton(item,action,label));
+  if(item.status==='needs_review'){if(item.messageId)actions.append(giveawayActionButton(item,'end','Retry saved result'));actions.append(giveawayActionButton(item,'cancel','Cancel'));}
+  if(item.status==='ended')actions.append(giveawayActionButton(item,'reroll','Reroll winners'));
+  if(['ended','cancelled'].includes(item.status))actions.append(giveawayActionButton(item,'forget','Clear saved record'));
+  if(actions.children.length)row.append(actions);(activeStates.has(item.status)?$('giveaway-active'):$('giveaway-results')).append(row);
+ }
+ if(!$('giveaway-active').children.length)$('giveaway-active').append(textElement('p','Nothing up for grabs yet. Create a giveaway to get everyone involved.','muted'));
+ if(!$('giveaway-results').children.length)$('giveaway-results').append(textElement('p','Winners will appear here when a giveaway ends.','muted'));
+ applyGiveawayCapabilities();
+}
+function giveawayActionButton(item,action,label){
+ const button=textElement('button',label);button.type='button';button.dataset.giveawayAction=action;button.dataset.giveawayId=item.id;button.setAttribute('aria-label',label+' for '+(item.title||item.prize||'giveaway'));
+ button.addEventListener('click',()=>{if(busy||giveawayData?.canManage!==true||giveawayUncertain.has(item.id))return;const retry=action==='end'&&item.status==='needs_review',question=retry?'Retry updating the original Discord message? TAGGY keeps the saved result and does not draw new winners.':{end:'End this giveaway now and pick winners?',cancel:'Cancel this giveaway? Entries close and no new winners will be picked.',reroll:'Reroll the winners? TAGGY rechecks eligible entries and excludes everyone who has already won this giveaway.',forget:'Clear this saved giveaway, its entries and result? The closed Discord post stays. You cannot reroll or restore the saved record afterward.'}[action];if(!confirm(question))return;void mutateGiveaway({action,id:item.id,confirmed:true},item.id,retry?'Giveaway result updated.':{end:'Winners picked.',cancel:'Giveaway cancelled.',reroll:'New winners picked.',forget:'Saved giveaway cleared.'}[action]);});return button;
+}
+async function loadGiveaways(){
+ const id=selected;if(!id)return;if(resourcesFor!==id)await loadResources();if(id!==selected)return;
+ if(!featureReady('giveaways')){giveawayData=null;giveawayFor='';$('giveaway-active').replaceChildren();$('giveaway-results').replaceChildren();giveawayNotice('Upload the bot update to enable giveaways.');applyGiveawayCapabilities();return;}
+ if(giveawayLoading===id)return;giveawayLoading=id;applyGiveawayCapabilities();
+ try{const data=await api('guilds/'+id+'/giveaways');if(id!==selected)return;giveawayData=data;giveawayFor=id;giveawayChoices();renderGiveaways();previewGiveaway();giveawayChecked=true;
+  giveawayNotice(data.canManage?'Choose a prize and a channel. TAGGY handles entries and the draw.':'You can view giveaways. Manage Server and channel access are required to change them.');
+ }catch(error){if(id===selected){giveawayChecked=false;giveawayNotice('Could not refresh giveaways. '+error.message,true);}throw error;}
+ finally{if(giveawayLoading===id)giveawayLoading='';applyGiveawayCapabilities();}
+}
+async function mutateGiveaway(body,key,message){
+ if(busy||!featureReady('giveaways')||giveawayData?.canManage!==true||giveawayFor!==selected||giveawayUncertain.has(key))return;
+ const id=selected,controls=[...document.querySelectorAll('#dashboard button,#dashboard input,#dashboard select,#dashboard textarea,#logout')],disabled=controls.map(control=>control.disabled);busy=true;controls.forEach(control=>{control.disabled=true;});
+ try{
+  const result=await api('guilds/'+id+'/giveaways',body);if(selected!==id)return;
+  if(Array.isArray(result.giveaways))giveawayData.giveaways=result.giveaways;else if(result.giveaway)giveawayData.giveaways=(giveawayData.giveaways||[]).filter(item=>item.id!==result.giveaway.id).concat(result.giveaway);
+  if(body.action==='start'){clearDraft('giveaway-form');resetGiveaway();}
+  renderGiveaways();showStatus(message,'success');
+  if(body.action==='start'){currentSection='active';applyTabState();history.pushState({},'',dashboardURL().href);}
+  try{await loadGiveaways();}catch(error){showStatus('Action completed. Refresh failed: '+error.message,'error');}
+ }catch(error){
+  if(!Number.isInteger(error.status)||error.status>=500){giveawayUncertain.add(key);giveawayChecked=false;showStatus('Connection lost. Check Discord and refresh the list before trying this action again.','error');}
+  else showStatus(error.message,'error');
+ }finally{busy=false;controls.forEach((control,index)=>{control.disabled=disabled[index];});applyCapabilities();}
+}
+$('giveaway-form').addEventListener('input',previewGiveaway);$('giveaway-form').addEventListener('change',previewGiveaway);
+$('giveaway-form').addEventListener('submit',event=>{
+ event.preventDefault();if(busy||giveawayData?.canManage!==true||giveawayUncertain.has('start'))return;
+ const endsAt=new Date($('giveaway-ends').value).getTime();
+ if(!Number.isFinite(endsAt)||endsAt<Date.now()+60000||endsAt>Date.now()+30*86400000){showStatus('Choose a time at least one minute from now and within the next 30 days.','error');$('giveaway-ends').focus();return;}
+ if(!giveawayData.channels?.some(channel=>channel.id===$('giveaway-channel').value&&channel.canSend===true)){showStatus('Choose a channel where you and TAGGY can post.','error');$('giveaway-channel').focus();return;}
+ if($('giveaway-role').value&&!giveawayData.roles?.some(role=>role.id===$('giveaway-role').value)){showStatus('Choose an available role or let everyone enter.','error');$('giveaway-role').focus();return;}
+ const giveaway={prize:$('giveaway-prize').value.trim(),title:$('giveaway-title').value.trim(),description:$('giveaway-description').value,channelId:$('giveaway-channel').value,winnerCount:Number($('giveaway-winners').value),endsAt,requiredRoleId:$('giveaway-role').value,buttonLabel:$('giveaway-button').value.trim(),emoji:$('giveaway-emoji').value.trim(),color:$('giveaway-color').value};
+ if(!giveaway.prize||!giveaway.title||!giveaway.buttonLabel){showStatus('Add a prize, title and button text before creating your giveaway.','error');return;}
+ void mutateGiveaway({action:'start',giveaway},'start','Giveaway posted in Discord.');
+});
+$('giveaway-preset').addEventListener('click',()=>{if(dirtyForms.has('giveaway-form')&&!confirm('Replace this unsaved giveaway with the example?'))return;$('giveaway-prize').value='A surprise from the staff';$('giveaway-title').value='A little something for the server 🎉';$('giveaway-description').value='Thanks for being here!\nPress the button below to enter. Good luck 🍀';$('giveaway-winners').value='1';$('giveaway-role').value='';$('giveaway-button').value='Count me in!';$('giveaway-emoji').value='🎉';$('giveaway-color').value='#a329c8';$('giveaway-ends').value=localDateInput(Date.now()+86400000);communityDirty('giveaway-form');previewGiveaway();showStatus('Example added to your draft. Choose your prize and channel before creating it.','success');});
+for(const button of document.querySelectorAll('[data-giveaway-duration]'))button.addEventListener('click',()=>{$('giveaway-ends').value=localDateInput(Date.now()+Number(button.dataset.giveawayDuration)*60000);communityDirty('giveaway-form');previewGiveaway();});
+for(const button of document.querySelectorAll('.refresh-giveaways'))button.addEventListener('click',()=>{if(!busy)void loadGiveaways().catch(error=>showStatus(error.message,'error'));});
+$('giveaway-unlock').addEventListener('click',()=>{if(!giveawayChecked||busy||!confirm('Have you checked the refreshed list and original message in Discord? A second creation or reroll cannot undo the first one.'))return;giveawayUncertain.clear();applyGiveawayCapabilities();showStatus('Actions unlocked. Check the result before deciding what to do next.','success');});
+$('giveaway-timezone').textContent='Your time zone: '+(Intl.DateTimeFormat().resolvedOptions().timeZone||'local time')+'. TAGGY keeps this time while the page is closed.';resetGiveaway();applyGiveawayCapabilities();
+
+let searchReturnFocus=null;
+const searchFeatures={'home/setup':'setup','embeds/scheduled':'schedules','embeds/history':'schedules','channels/dms':'welcomeDM','tools/commands':'commands','roles/panels':'rolePanels'};
+function dashboardSearchItems(){
+ const result=[];
+ for(const [tab,[name,description]]of Object.entries(workspacePages)){
+  if(!allowedTool(tab)||tab==='profile'&&!profileSupported||tab==='giveaways'&&!featureReady('giveaways'))continue;
+  const sections=workspaceSections[tab]||[['',name]];
+  for(const [section,label]of sections){const feature=searchFeatures[tab+'/'+section];if(feature&&!featureReady(feature))continue;result.push({tab,section,name,label,description});}
+ }
+ return result;
+}
+function renderToolSearch(){
+ const query=$('tool-search-input').value.trim().toLocaleLowerCase(),items=dashboardSearchItems().filter(item=>[item.name,item.label,item.description].join(' ').toLocaleLowerCase().includes(query)),list=$('tool-search-results');list.replaceChildren();
+ for(const item of items){const link=textElement('a','');link.href=dashboardURL(item.tab,item.section).href;link.dataset.searchTool=item.tab;link.dataset.searchSection=item.section;const content=textElement('span','');content.append(textElement('strong',item.label),textElement('small',item.section?item.name:item.description));link.append(content,textElement('span','↗','search-arrow'));link.addEventListener('click',event=>{if(event.button||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();if(busy){$('tool-search-count').textContent='Wait for the current action to finish.';return;}$('tool-search-dialog').close();chooseTool(item.tab,item.section);$('workspace-title').setAttribute('tabindex','-1');$('workspace-title').focus();});list.append(link);}
+ $('tool-search-count').textContent=items.length?items.length+' '+(items.length===1?'tool':'tools')+(query?' match your search.':' available for this server.'):'No tools match. Try roles, tickets or messages.';
+}
+function openToolSearch(){if(!active||!selected)return;searchReturnFocus=document.activeElement;renderToolSearch();if(!$('tool-search-dialog').open)$('tool-search-dialog').showModal();$('tool-search-input').focus();$('tool-search-input').select();}
+for(const button of document.querySelectorAll('.tool-search-open'))button.addEventListener('click',openToolSearch);
+$('tool-search-input').addEventListener('input',renderToolSearch);$('tool-search-close').addEventListener('click',()=>$('tool-search-dialog').close());
+$('tool-search-dialog').addEventListener('close',()=>{searchReturnFocus?.focus?.({preventScroll:true});});
+$('tool-search-dialog').addEventListener('keydown',event=>{
+ if(event.key==='Escape'){event.preventDefault();$('tool-search-dialog').close();return;}
+ if(!['ArrowDown','ArrowUp'].includes(event.key))return;const links=[...$('tool-search-results').querySelectorAll('a')];if(!links.length)return;event.preventDefault();const index=links.indexOf(document.activeElement);links[index<0?(event.key==='ArrowDown'?0:links.length-1):(index+(event.key==='ArrowDown'?1:-1)+links.length)%links.length].focus();
+});
+window.addEventListener('keydown',event=>{
+ if(event.defaultPrevented||event.repeat||$('tool-search-dialog').open||!active)return;
+ const target=event.target;if(target?.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
+ if((event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!event.altKey)||(event.key.toLowerCase()==='k'&&(event.ctrlKey||event.metaKey)&&!event.altKey)){event.preventDefault();openToolSearch();}
+});

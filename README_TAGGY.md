@@ -22,6 +22,18 @@ Announcements > Scheduled posts adds Pause and Resume beside each saved post. Pa
 
 Setup checks and the quick controls appear after the matching bot update is uploaded and restarted. Older bot versions show an update note instead of calling unsupported APIs.
 
+## Giveaways and dashboard search
+
+Giveaways groups Create, Active and Results. Choose the prize, channel, 1 to 10 winners and an end time from one minute to 30 days ahead. A preset and Discord-style preview make it easy to customize the message, embed color, entry button text and emoji. An optional server role limits entry. `.giveaways` opens the builder for the current server; fishing remains the only slash/App feature.
+
+Members click the original Discord button to enter or leave. Entries survive restarts. At the deadline, TAGGY rechecks membership, channel access and the required role, picks distinct eligible winners using cryptographic randomness, and updates that original message. Staff with Manage Server and channel permissions can end, cancel or reroll. Rerolls exclude everyone previously selected for that giveaway, including across restarts. TAGGY must be online and able to edit its post. No new winner is selected when cancelling.
+
+Results are saved before the message edit. Interrupted or uncertain operations show Check Discord and need deliberate review; retrying a saved result keeps the same draw. The service never automatically creates a replacement post or rerolls after an uncertain result. Giveaways are capped at 20 open records, 1000 saved records per server and 5000 entries each. Keep the new private `community-giveaways.json` file on the host, backed up with the other saved state. It contains entrant and selected-winner identifiers; dashboard reads expose entry totals and current winners, and filter hidden channels for ordinary accounts. The published privacy policy already covers giveaway entry/winner identifiers and retained feature records.
+
+Clear saved record removes an ended or cancelled giveaway and its entry/result records from TAGGY's saved history after confirmation. The closed Discord post remains, and further rerolls for that record are unavailable. Remove closed records when no longer needed; this also frees room under the saved-record limit.
+
+Find a tool searches the dashboard's pages and settings. Open it with its button, `/`, or Ctrl/Cmd K while outside a text editor. Arrow keys select a result and Escape closes the dialog. Links keep the selected server and respect feature/account restrictions, including owner DMs and the designated profile server. Mobile has the same search beside its tool selector. Existing legacy reaction giveaway commands now recheck membership and channel visibility within their current server.
+
 ## Trigger replies and polls
 
 Tools contains trigger-word replies instead of `.tag` commands. Replies are configured per server, with a trigger phrase, whole-phrase or exact-message matching, an enable switch and a cooldown. Matching ignores case. Saved legacy reply names become their trigger words. Bots, webhooks, DMs and prefix commands do not activate replies. Responses suppress mention notifications and have minimum channel/user gaps to avoid reply floods.
@@ -102,7 +114,7 @@ Login uses Discord's authorization-code flow and `identify` scope, a browser-bou
 
 ## Update the bot on bot-hosting.net
 
-1. Upload all files from the current update package's `bot/` folder into `/home/container/`, replacing the source files. The package contains 22 production JavaScript modules, required assets, `package.json` and `package-lock.json`. Keep the host's existing `.env` and saved JSON files. The package needs no new bot dependency.
+1. Upload all files from the current update package's `bot/` folder into `/home/container/`, replacing the source files. The package contains 24 production JavaScript modules, required assets, `package.json` and `package-lock.json`. Keep the host's existing `.env` and saved JSON files. The package needs no new bot dependency.
 2. Ensure the bot uses Node.js 20 or newer and starts `index.js` using the host's startup settings. The updated package starts `index.js`; ensure the hosting panel does too.
 3. The dashboard shares TAGGY's existing HTTP listener. The host must supply a valid `SERVER_PORT` matching its allocated port. If the host does not supply it, set the assigned port in the private environment. Do not choose an arbitrary port.
 4. TAGGY's canonical HTTPS address is `https://1u061e9dv7.apps.bot-hosting.cloud`. Its existing `/health` endpoint returned HTTP 200 with `{"ok":true}` during preparation. This is already set as `TAGGY_BACKEND_URL` in `site/wrangler.toml`. No custom domain is required. This check confirms the existing listener, not the new dashboard; verify login after the updated bot is running. `https://bot-hosting.net` is the provider's website, not the bot API.
