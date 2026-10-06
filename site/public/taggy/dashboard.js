@@ -53,7 +53,7 @@ async function api(path, body) {
   try { data = await response.json(); } catch (_) { throw new Error('The dashboard could not reach TAGGY.'); }
   if (response.status === 401) {
     active = false; csrf = ''; selected = ''; isSpecialOwner = false; resources = null; dmUser = ''; currentTab='home';syncMobileTools();
-    giveawayData=null;giveawayFor='';$('giveaway-active').replaceChildren();$('giveaway-results').replaceChildren();$('tool-search-results').replaceChildren();if($('tool-search-dialog').open)$('tool-search-dialog').close();
+    fishingData=null;fishingFor='';fishingPlayer=null;fishingPlayerFor='';$('fishing-player-form').hidden=true;$('fishing-player-profile').replaceChildren();giveawayData=null;giveawayFor='';$('giveaway-active').replaceChildren();$('giveaway-results').replaceChildren();$('tool-search-results').replaceChildren();if($('tool-search-dialog').open)$('tool-search-dialog').close();
     dmRows=[];dmThreads=[];dmBefore=null;$('dm-profile').replaceChildren();$('dm-chat-header').replaceChildren();$('dm-messages').replaceChildren(); $('dm-threads').replaceChildren(); $('channel-messages').replaceChildren(); $('incidents').replaceChildren();
     $('header-login').hidden = false; document.body.classList.remove('signed-in'); $('account-name').hidden = true;
     $('dashboard').hidden = true; $('logout').hidden = true; $('login').hidden = false;
@@ -250,23 +250,23 @@ const workspaceSections={
  security:[['protection','Protection'],['limits','Limits'],['shield','Shield & timeouts']],
  embeds:[['editor','Editor'],['scheduled','Scheduled posts'],['history','History']],
  channels:[['welcome','Welcome'],['dms','Welcome DMs'],['controls','Channels']],
- fishing:[['settings','Settings'],['guide','How to play']]
+ fishing:[['settings','Settings'],['collection','Collection'],['boosts','Boosts'],['players','Players'],['guide','How to play']]
 };
 const rememberedSections={};
 function dashboardURL(tab=currentTab,section=currentSection){const url=new URL(location.href);url.hash='';if(selected)url.searchParams.set('server',selected);else url.searchParams.delete('server');url.searchParams.set('tab',tab);if(section)url.searchParams.set('section',section);else url.searchParams.delete('section');return url;}
 function allowedTool(tab){return Object.hasOwn(workspacePages,tab)&&(tab!=='dms'||isSpecialOwner)&&(tab!=='profile'||profileAllowed());}
-function normalizeWorkspace(){if(!allowedTool(currentTab)){currentTab='home';currentSection='';}const sections=workspaceSections[currentTab];if(sections&&!sections.some(([id])=>id===currentSection))currentSection=rememberedSections[currentTab]||sections[0][0];if(!sections)currentSection='';if(currentSection)rememberedSections[currentTab]=currentSection;}
+function normalizeWorkspace(){if(currentTab==='fishing'&&selected===PROFILE_GUILD_ID&&['boosts','players'].includes(currentSection)&&fishingFor!==selected)return;if(!allowedTool(currentTab)){currentTab='home';currentSection='';}const sections=workspaceSections[currentTab]?availableSections(currentTab):null;if(sections&&!sections.some(([id])=>id===currentSection))currentSection=sections.some(([id])=>id===rememberedSections[currentTab])?rememberedSections[currentTab]:sections[0][0];if(!sections)currentSection='';if(currentSection)rememberedSections[currentTab]=currentSection;}
 function renderSections(){
- const nav=$('workspace-sections'),sections=workspaceSections[currentTab]||[],focusedSection=nav.contains(document.activeElement)?document.activeElement.dataset.sectionLink:'';nav.hidden=!sections.length;nav.replaceChildren();
+ const nav=$('workspace-sections'),sections=availableSections(currentTab),focusedSection=nav.contains(document.activeElement)?document.activeElement.dataset.sectionLink:'';nav.hidden=!sections.length;nav.replaceChildren();
  for(const [id,label]of sections){const link=textElement('a',label);link.dataset.sectionLink=id;link.href=dashboardURL(currentTab,id).href;if(id===currentSection)link.setAttribute('aria-current','page');link.addEventListener('click',event=>{if(event.button||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();chooseTool(currentTab,id);});nav.append(link);if(id===focusedSection)link.focus({preventScroll:true});}
- for(const panel of document.querySelectorAll('[data-panel]'))for(const part of panel.querySelectorAll('[data-section]'))if(part.closest('[data-panel]')===panel)part.hidden=panel.dataset.panel!==currentTab||!part.dataset.section.split(' ').includes(currentSection);
+ for(const panel of document.querySelectorAll('[data-panel]'))for(const part of panel.querySelectorAll('[data-section]'))if(part.closest('[data-panel]')===panel)part.hidden=panel.dataset.panel!==currentTab||!part.dataset.section.split(' ').includes(currentSection)||(panel.dataset.panel==='fishing'&&['boosts','players'].includes(part.dataset.section)&&!fishingAdminAllowed());
  // A shared form keeps drafts from all its sections and saves them together.
  const securitySettings=$('settings-form').closest('.card');securitySettings.hidden=currentTab!=='security'||!['protection','limits'].includes(currentSection);
  const ticketsCard=$('tickets-form').closest('.tickets-card');ticketsCard.hidden=currentTab!=='tickets'||currentSection==='closed';
  document.body.dataset.section=currentSection;
  const sectionsLabel=sections.find(([id])=>id===currentSection)?.[1];document.title=(sectionsLabel?sectionsLabel+' · ':'')+workspacePages[currentTab][0]+' · TAGGY';
  $('copy-dashboard-link').dataset.url=dashboardURL().href;
- if(typeof presetSection!=='undefined')presetSection.hidden=currentTab==='home'||!presetForms[presetTab()]||(currentTab==='roles'&&currentSection!=='permissions')||(currentTab==='channels'&&currentSection!=='welcome')||(currentTab==='embeds'&&currentSection!=='editor');
+ if(typeof presetSection!=='undefined')presetSection.hidden=currentTab==='home'||!presetForms[presetTab()]||(currentTab==='roles'&&currentSection!=='permissions')||(currentTab==='channels'&&currentSection!=='welcome')||(currentTab==='embeds'&&currentSection!=='editor')||(currentTab==='fishing'&&currentSection!=='settings');
 }
 function applyTabState(){
  normalizeWorkspace();document.body.dataset.tool=currentTab;
@@ -323,7 +323,7 @@ function initializeDashboardSections(){
  for(const part of [...ticketForm.children]){if(part===topics||part.classList.contains('form-footer'))continue;if(part.matches('details')){part.dataset.section='reminders';part.open=true;}else part.dataset.section='panel';}
  document.querySelector('.ticket-panel-preview').dataset.section='panel topics';$('closed-tickets').closest('.card').dataset.section='closed';
  for(const part of document.querySelectorAll('[data-panel="channels"] > .card'))part.dataset.section=part.contains($('channel-form'))?'controls':part.contains($('welcome-dm-form'))?'dms':'welcome';
- for(const part of document.querySelectorAll('[data-panel="fishing"] > *')){part.dataset.section=part.classList.contains('fishing-guide')?'guide':'settings';if(part.matches('details'))part.open=true;}
+ for(const part of document.querySelectorAll('[data-panel="fishing"] > *')){part.dataset.section ||= part.classList.contains('fishing-guide')?'guide':'settings';if(part.matches('details'))part.open=true;}
  // Reveal the section containing a missing required value before browser validation focuses it.
  let validationPending=false;
  $('detail').addEventListener('invalid',event=>{
@@ -510,7 +510,7 @@ const presetUse=textElement('button','Use preset'),presetSave=textElement('butto
 presetControls.append(presetCopy,presetSelect,presetUse,presetSave,presetDelete);presetSection.append(presetSummary,presetControls);$('workspace-heading').after(presetSection);
 const presetTab=()=>({security:'home',channels:'welcome'}[currentTab]||currentTab);
 const presetForms={home:'settings-form',verification:'verification-form',roles:'roles-form',embeds:'embed-form',welcome:'welcome-form',fishing:'fishing-form'};
-function renderPresetBar(){const tab=presetTab(),items=serverPresets[tab]||[];const previous=presetSection.dataset.tab===tab?presetSelect.value:'';presetSection.dataset.tab=tab;presetSection.hidden=currentTab==='home'||!presetForms[tab]||(currentTab==='roles'&&currentSection!=='permissions')||(currentTab==='channels'&&currentSection!=='welcome')||(currentTab==='embeds'&&currentSection!=='editor');options(presetSelect,items.map(item=>({id:item.id,name:item.name})),'Choose a preset');if(items.length)presetSelect.value=items.some(item=>item.id===previous)?previous:items[0].id;const can=resources?.capabilities?.changeRoles!==false;presetSave.disabled=!can;presetDelete.disabled=!can||!items.length;presetUse.disabled=!items.length;}
+function renderPresetBar(){const tab=presetTab(),items=serverPresets[tab]||[];const previous=presetSection.dataset.tab===tab?presetSelect.value:'';presetSection.dataset.tab=tab;presetSection.hidden=currentTab==='home'||!presetForms[tab]||(currentTab==='roles'&&currentSection!=='permissions')||(currentTab==='channels'&&currentSection!=='welcome')||(currentTab==='embeds'&&currentSection!=='editor')||(currentTab==='fishing'&&currentSection!=='settings');options(presetSelect,items.map(item=>({id:item.id,name:item.name})),'Choose a preset');if(items.length)presetSelect.value=items.some(item=>item.id===previous)?previous:items[0].id;const can=resources?.capabilities?.changeRoles!==false;presetSave.disabled=!can;presetDelete.disabled=!can||!items.length;presetUse.disabled=!items.length;}
 async function loadPresets(){if(!selected){presetSection.hidden=true;return;}const id=selected;if(presetGuild!==id){const data=await api('guilds/'+id+'/presets');if(id!==selected)return;serverPresets=data.presets;presetGuild=id;}renderPresetBar();}
 function presetControl(form,key){const element=$(key)||form.elements.namedItem(key);return element&&form.contains(element)?element:null;}
 presetUse.addEventListener('click',()=>{const tab=presetTab(),form=$(presetForms[tab]),preset=(serverPresets[tab]||[]).find(p=>p.id===presetSelect.value);if(!form||!preset)return;for(const [key,value]of Object.entries(preset.values)){const field=presetControl(form,key);if(!field)continue;if(field.type==='checkbox')field.checked=Boolean(value);else field.value=String(value);}dirtyForms.add(form.id);dirty=true;if(tab==='verification')verificationVisibility();if(tab==='embeds')previewEmbed();syncRanges();showStatus('Preset added to your draft. Adjust it, then save when ready.','success');});
@@ -615,9 +615,55 @@ $('tickets-form').addEventListener('submit',async event=>{
  },staffRoleIds:chosen($('tickets-staff'))},'Ticket settings saved.');
  if(result){clearDraft('tickets-form');await loadTickets();if(result.warning)showStatus(result.warning,'error');}
 });
-async function loadFishing(){if(!selected||dirtyForms.has('fishing-form'))return;const id=selected,data=await api('guilds/'+id+'/fishing');if(id!==selected||dirtyForms.has('fishing-form'))return;$('fishing-enabled').checked=data.settings.enabled;$('fishing-cooldown').value=data.settings.cooldownSeconds;applyNewCapabilities();}
+let fishingData=null,fishingFor='',fishingPlayer=null,fishingPlayerFor='';
+function fishingAdminAllowed(){return selected===PROFILE_GUILD_ID&&fishingFor===selected&&fishingData?.canAdmin===true;}
+function availableSections(tab){return (workspaceSections[tab]||[]).filter(([id])=>tab!=='fishing'||!['boosts','players'].includes(id)||fishingAdminAllowed());}
+function fishingArt(item){const img=document.createElement('img');try{const url=new URL(item.image);if(url.hostname!=='cdn.discordapp.com'||url.protocol!=='https:'||!/^\/emojis\/\d+\.png$/.test(url.pathname))return null;img.src=url.href;}catch{return null;}img.width=64;img.height=64;img.alt='';img.loading='lazy';return img;}
+function renderFishingCatalog(){
+ const catalog=fishingData?.catalog;if(!catalog)return;
+ for(const [key,id]of [['fish','fishing-fish-catalog'],['rods','fishing-rod-catalog']]){const list=$(id);list.replaceChildren();for(const item of catalog[key]||[]){const card=textElement('article','','fishing-item'),art=fishingArt(item);if(art)card.append(art);card.append(textElement('strong',item.name),textElement('span',key==='fish'?item.rarity:item.price?item.price.toLocaleString()+' coins':'Your first rod','caption'));if(key==='fish')card.append(textElement('small',item.value.toLocaleString()+' sale coins'));list.append(card);}}
+ $('fishing-upgrade-catalog').replaceChildren();for(const upgrade of catalog.upgrades||[]){const card=textElement('article','','fishing-upgrade');card.append(textElement('h4',upgrade.emoji+' '+upgrade.name),textElement('p',upgrade.description),textElement('small','Five levels · /fishupgrades','caption'));$('fishing-upgrade-catalog').append(card);}
+}
+function renderFishingBoost(){const boost=fishingData?.boost;$('fishing-boost-status').textContent=boost?.until>Date.now()?boost.xp+'× catch XP · '+boost.coins+'× sale coins · '+boost.luck+'× rare pool weight. Ends '+new Date(boost.until).toLocaleString()+'.':'No active boost.';}
+async function loadFishing(){
+ if(!selected)return;const id=selected,data=await api('guilds/'+id+'/fishing');if(id!==selected)return;
+ fishingData=data;fishingFor=id;if(!dirtyForms.has('fishing-form')){$('fishing-enabled').checked=data.settings.enabled;$('fishing-cooldown').value=data.settings.cooldownSeconds;}
+ renderFishingCatalog();renderFishingBoost();normalizeWorkspace();renderSections();applyNewCapabilities();applyFishingCapabilities();
+}
+function applyFishingCapabilities(){
+ const can=fishingFor===selected&&fishingData?.canAdmin===true&&fishingAdminAllowed()&&!busy;
+ for(const form of ['fishing-boost-form','fishing-player-lookup','fishing-player-form'])for(const element of $(form).querySelectorAll('input,select,button'))element.disabled=!can||(form==='fishing-player-form'&&fishingPlayerFor!==selected);
+ $('fishing-stop-boost').disabled=!can||!(fishingData?.boost?.until>Date.now());
+}
+async function saveFishingBoost(enabled){if(!fishingAdminAllowed())return;const id=selected,body=enabled?{enabled:true,xp:Number($('fishing-boost-xp').value),coins:Number($('fishing-boost-coins').value),luck:Number($('fishing-boost-luck').value),minutes:Number($('fishing-boost-minutes').value)}:{enabled:false};const result=await action('guilds/'+id+'/fishing-boost',body,enabled?'Fishing boost started.':'Fishing boost stopped.');if(result&&selected===id){clearDraft('fishing-boost-form');await loadFishing();}}
+async function loadFishingPlayer(){
+ const id=selected,memberId=$('fishing-player-id').value.trim();if(!fishingAdminAllowed()||!/^\d{1,20}$/.test(memberId))return;
+ try{const data=await api('guilds/'+id+'/fishing-player?memberId='+encodeURIComponent(memberId));if(selected!==id||$('fishing-player-id').value.trim()!==memberId)return;
+ fishingPlayer=data.player;fishingPlayerFor=id;clearDraft('fishing-player-form');clearDraft('fishing-player-lookup');$('fishing-player-profile').replaceChildren(avatar(data.member),textElement('strong',data.member.name),textElement('span','Level '+data.player.level+' · '+memberId,'caption'));
+ for(const key of ['coins','xp','bait','casts','catches','biggest'])$('fishing-player-'+key).value=data.player[key];
+ for(const key of ['reel','tackle','charm'])$('fishing-player-'+key).value=data.player.upgrades[key];
+ const select=$('fishing-player-rod');select.replaceChildren();for(const rod of fishingData.catalog.rods){const option=textElement('option',rod.name);option.value=rod.id;select.append(option);}select.value=data.player.rod;
+ const species=$('fishing-player-fish');species.replaceChildren();for(const fish of fishingData.catalog.fish){const option=textElement('option',fish.name);option.value=fish.id;species.append(option);}$('fishing-player-quantity').value=data.player.fish[species.value]||0;$('fishing-player-change-fish').checked=false;
+ $('fishing-player-form').hidden=false;applyFishingCapabilities();
+ }catch(error){showStatus(error.message,'error');}
+}
+$('fishing-boost-form').addEventListener('submit',event=>{event.preventDefault();void saveFishingBoost(true);});
+$('fishing-stop-boost').addEventListener('click',()=>void saveFishingBoost(false));
+$('fishing-player-lookup').addEventListener('submit',event=>{event.preventDefault();if(dirtyForms.has('fishing-player-form')&&!confirm('Reload player and discard your unsaved changes?'))return;void loadFishingPlayer();});
+$('fishing-player-reload').addEventListener('click',()=>{if(dirtyForms.has('fishing-player-form')&&!confirm('Reload player and discard your unsaved changes?'))return;void loadFishingPlayer();});
+$('fishing-player-fish').addEventListener('change',()=>{$('fishing-player-quantity').value=fishingPlayer?.fish[$('fishing-player-fish').value]||0;});
+$('fishing-player-id').addEventListener('input',()=>{fishingPlayer=null;fishingPlayerFor='';$('fishing-player-form').hidden=true;$('fishing-player-profile').replaceChildren();applyFishingCapabilities();});
+$('fishing-player-form').addEventListener('submit',async event=>{
+ event.preventDefault();if(!fishingAdminAllowed()||fishingPlayerFor!==selected||!fishingPlayer)return;
+ const id=selected,body={memberId:fishingPlayer.id,revision:fishingPlayer.revision,rod:$('fishing-player-rod').value,upgrades:{}};
+ for(const key of ['coins','xp','bait','casts','catches','biggest'])body[key]=Number($('fishing-player-'+key).value);
+ for(const key of ['reel','tackle','charm'])body.upgrades[key]=Number($('fishing-player-'+key).value);
+ if($('fishing-player-change-fish').checked)body.fish={[$('fishing-player-fish').value]:Number($('fishing-player-quantity').value)};
+ const result=await action('guilds/'+id+'/fishing-player',body,'Player progress saved.');if(result&&selected===id){clearDraft('fishing-player-form');await loadFishingPlayer();}
+});
+
 $('fishing-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/fishing',{enabled:$('fishing-enabled').checked,cooldownSeconds:Number($('fishing-cooldown').value)},'Fishing settings saved.');if(result){clearDraft('fishing-form');await loadFishing();}});
-function applyNewCapabilities(){const can=resources?.capabilities?.changeRoles!==false&&!busy;for(const element of document.querySelectorAll('#tickets-form input,#tickets-form textarea,#tickets-form select,#tickets-form button,#fishing-form input,#fishing-form button'))element.disabled=!can;$('tickets-note').textContent=can?'Save to publish the panel. Open tickets keep their original questions.':'Only the server owner or a Discord administrator can change tickets.';}
+function applyNewCapabilities(){applyFishingCapabilities();const can=resources?.capabilities?.changeRoles!==false&&!busy;for(const element of document.querySelectorAll('#tickets-form input,#tickets-form textarea,#tickets-form select,#tickets-form button,#fishing-form input,#fishing-form button'))element.disabled=!can;$('tickets-note').textContent=can?'Save to publish the panel. Open tickets keep their original questions.':'Only the server owner or a Discord administrator can change tickets.';}
 
 // Pause media out of view. Reduced-motion users get manual controls and static examples.
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -1037,7 +1083,7 @@ function giveawayActionButton(item,action,label){
 }
 async function loadGiveaways(){
  const id=selected;if(!id)return;if(resourcesFor!==id)await loadResources();if(id!==selected)return;
- if(!featureReady('giveaways')){giveawayData=null;giveawayFor='';$('giveaway-active').replaceChildren();$('giveaway-results').replaceChildren();giveawayNotice('Upload the bot update to enable giveaways.');applyGiveawayCapabilities();return;}
+ if(!featureReady('giveaways')){fishingData=null;fishingFor='';fishingPlayer=null;fishingPlayerFor='';$('fishing-player-form').hidden=true;$('fishing-player-profile').replaceChildren();giveawayData=null;giveawayFor='';$('giveaway-active').replaceChildren();$('giveaway-results').replaceChildren();giveawayNotice('Upload the bot update to enable giveaways.');applyGiveawayCapabilities();return;}
  if(giveawayLoading===id)return;giveawayLoading=id;applyGiveawayCapabilities();
  try{const data=await api('guilds/'+id+'/giveaways');if(id!==selected)return;giveawayData=data;giveawayFor=id;giveawayChoices();renderGiveaways();previewGiveaway();giveawayChecked=true;
   giveawayNotice(data.canManage?'Choose a prize and a channel. TAGGY handles entries and the draw.':'You can view giveaways. Manage Server and channel access are required to change them.');
@@ -1082,7 +1128,7 @@ function dashboardSearchItems(){
  const result=[];
  for(const [tab,[name,description]]of Object.entries(workspacePages)){
   if(!allowedTool(tab)||tab==='profile'&&!profileSupported||tab==='giveaways'&&!featureReady('giveaways'))continue;
-  const sections=workspaceSections[tab]||[['',name]];
+  const sections=workspaceSections[tab]?availableSections(tab):[['',name]];
   for(const [section,label]of sections){const feature=searchFeatures[tab+'/'+section];if(feature&&!featureReady(feature))continue;result.push({tab,section,name,label,description});}
  }
  return result;

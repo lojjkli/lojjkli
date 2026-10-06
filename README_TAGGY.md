@@ -176,3 +176,16 @@ The owner DM page now uses searchable avatar conversations, a chat pane and a pr
 New tickets continue in DMs and create a private staff channel. Staff replies/files relay to the member; // notes remain internal. Members can type .close. One DM ticket per person can be open across servers; unrelated DMs are never forwarded. Existing legacy tickets remain in their channels until closed. Upload tickets.js, index.js, message-media.js, dashboard-messaging.js and security-dashboard.js, restart, then run .ticketsetup with your support role to update its panel.
 
 Dashboard Messages and owner DMs now accept up to 10 attachments / 8 MB total, including attachment-only messages. Upload the website Worker and _headers as well as the three dashboard files. Regular users must have Attach Files permission. Discord image/GIF/video/audio attachments render inline. Ticket relay copies supported files and falls back to Discord links when copying fails or exceeds the size limit. The introduction follows the video frames with centered branding and content.
+
+
+## Fishing expansion, 6 October 2026
+
+`/fishmenu` opens public fishing buttons in one message. `/fishsettings menu:true` makes normal fishing button actions update their message too; set it to false for separate replies. Buttons belong to their angler and expire after 15 minutes. Reel in within 60 seconds; use `/fishmenu` again after a restart or an expired menu.
+
+The collection now has 25 fish, eight rods and five spots. Frostglass lake opens at level 16 and Emberfall waters at level 25. `/fishupgrades` adds five levels each of Quick reel (cooldown), Better tackle (catch XP and sale coins) and Lucky charm (rare pool weight). Prices per track are 250, 700, 1,600, 3,500 and 7,000 coins. Klitter Black Fish stays exactly one ticket in 10,000, including during boosts.
+
+Fishing > Collection shows the fish, rods and upgrades. Fishing > Boosts and Fishing > Players are restricted on the backend to administrators, the server owner and the authenticated TAGGY owner in server `1553040593494609920`. They are unavailable in every other server. Boosts last 5 minutes to 24 hours, apply only in that server and do not multiply daily or quest rewards. A cast keeps the boost it started with.
+
+Player editing requires a current member of that server. The profile is shared across servers and DMs. Saves check the profile revision, preserve unrelated progress, record the action in logs and cancel any active cast/menu for that player. Reload if the player has played since opening the form. Existing fishing-state.json is migrated in memory and preserved, together with .env and all other saved JSON.
+
+Ten new fish and three new rod images were drawn on 32px grids and uploaded as TAGGY application emojis. Their public IDs are embedded in fishing.js; no new dependencies or Discord permissions are needed.
