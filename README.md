@@ -79,3 +79,13 @@ Open `/taggy/?tab=verification` and choose a server. In Roblox Verify mode, inde
 At least one available method is required in Roblox mode. Unconfigured methods are disabled in the dashboard. Existing settings keep all previously available methods until a manager saves a selection. Old buttons, submitted modals and verification attempts already in progress cannot finish through a method that the server has disabled.
 
 The V3 video feature list is backed by existing bot modules: Roblox verification, support tickets and DM questions, raid and nuke protection, spam/link/new-account filters, honeypot channels, giveaways, role panels, polls, scheduled posts, setup checklist, dashboard and fishing. Fishing currently includes 35 fish, 6 worlds, 18 maps and 14 rods.
+
+## Expanded TAGGY security
+
+Security now has links for Protection, Messages, New members, Server changes, Limits and Shield & timeouts. Each server keeps its own switches and thresholds. Protection shows enabled checks and recent containment results. Missing optional Manage Webhooks or Kick Members permissions appear as actionable guidance.
+
+Added automatic checks: copied spam across channels, cumulative ping bursts, message-edit filtering, repeated joins, rapid server edits and mass timeouts. Existing anti-nuke containment also covers prunes, thread deletions, emoji deletions and sticker deletions. Text normalization catches case, spacing and invisible-character tricks. Edited messages do not count as new posts.
+
+Optional checks are off by default: executable file extensions, displayed-URL mismatches in Markdown links, deletion of flooded webhooks, owner-approved bot invites and owner-approved powerful permission grants. The last two allow the server owner and TAGGY owner; other actors' fresh, attributed bot additions or dangerous permission grants are contained when enabled. Ordinary staff message/join exemptions still apply. Permission rollback checks current role permissions against the audited change and reports incomplete containment when hierarchy or permissions prevent a response.
+
+Discord deletions, timeouts and role containment require the relevant bot permissions and role position. Protection reacts to events; it does not undo deleted channels, retrieve lost messages or scan attachment contents. Link checks compare hostnames without requesting the destination. Presets adjust thresholds and preserve the selected checks. Existing saved switches retain their values, and new ordinary flood checks use their defaults.

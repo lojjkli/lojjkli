@@ -119,6 +119,16 @@ function renderDetail(data, settings) {
   $('automatic-title').textContent = fullyAutomatic ? 'Automatic protection is on' : 'Some protection is paused';
   $('automatic-copy').textContent = fullyAutomatic ? 'TAGGY checks new joins, spam and destructive changes automatically. It restricts suspicious activity and alerts the bot owner, even when this page is closed.' : 'Turn on automatic protection to let TAGGY handle join raids, spam and destructive changes. Choose the checks below and save your settings.';
   $('automatic-on').hidden = fullyAutomatic;
+  $('security-coverage').textContent=data.coverage?data.coverage.enabledChecks+' of '+data.coverage.totalChecks+' checks on':'Protection checks follow your saved settings.';
+  const extraPermissions=[];
+  if(data.coverage&&data.config.removeFloodWebhooks&&data.config.antiWebhooks&&!data.coverage.manageWebhooks)extraPermissions.push('Give TAGGY Manage Webhooks to remove a flooded webhook.');
+  if(data.coverage&&data.config.blockBotInvites&&!data.coverage.kickMembers)extraPermissions.push('Give TAGGY Kick Members to remove unapproved bot invites.');
+  $('security-extra-permissions').hidden=!extraPermissions.length;$('security-extra-permissions').textContent=extraPermissions.join(' ');
+  const protectionEvents=new Set(['Spam','Webhook flood','Webhook filter','Repeated joins','Permission guard','Bot invite guard','Server edit flood','Mass timeouts','Join raid','Join restriction','New account','Destructive activity','Mass creation']);
+  const recent=(data.incidents||[]).filter(item=>item.at>Date.now()-86400000&&protectionEvents.has(item.type));
+  $('security-recent').replaceChildren(textElement('h4','Recent protection'));
+  for(const event of recent.slice(0,3)){const row=textElement('article','','security-event');row.append(textElement('strong',event.type),textElement('p',event.detail),textElement('small',event.outcome));$('security-recent').append(row);}
+  if(!recent.length)$('security-recent').append(textElement('p','No protection events in the last 24 hours.','caption'));
   const shield = data.shieldUntil > Date.now();
   $('shield-title').textContent = shield ? 'Join shield is active' : 'Monitoring new joins';
   $('shield-copy').textContent = shield
@@ -260,7 +270,7 @@ const workspaceSections={
  roles:[['permissions','Server roles'],['members','Member roles'],['panels','Role panels']],
  tools:[['polls','Polls'],['triggers','Trigger words'],['commands','Commands'],['server','Server info'],['members','Member profiles'],['nickname','Nickname']],
  tickets:[['panel','Ticket panel'],['topics','Topics & questions'],['reminders','Reminders'],['closed','Closed tickets']],
- security:[['protection','Protection'],['limits','Limits'],['shield','Shield & timeouts']],
+ security:[['protection','Protection'],['messages','Messages'],['joins','New members'],['changes','Server changes'],['limits','Limits'],['shield','Shield & timeouts']],
  embeds:[['editor','Editor'],['scheduled','Scheduled posts'],['history','History']],
  channels:[['welcome','Welcome'],['dms','Welcome DMs'],['controls','Channels']],
  fishing:[['settings','Settings'],['collection','Collection'],['worlds','Worlds'],['boosts','Boosts'],['players','Players'],['guide','How to play']]
@@ -274,7 +284,11 @@ function renderSections(){
  for(const [id,label]of sections){const link=textElement('a',label);link.dataset.sectionLink=id;link.href=dashboardURL(currentTab,id).href;if(id===currentSection)link.setAttribute('aria-current','page');link.addEventListener('click',event=>{if(event.button||event.metaKey||event.ctrlKey||event.shiftKey||event.altKey)return;event.preventDefault();chooseTool(currentTab,id);});nav.append(link);if(id===focusedSection)link.focus({preventScroll:true});}
  for(const panel of document.querySelectorAll('[data-panel]'))for(const part of panel.querySelectorAll('[data-section]'))if(part.closest('[data-panel]')===panel)part.hidden=panel.dataset.panel!==currentTab||!part.dataset.section.split(' ').includes(currentSection)||(panel.dataset.panel==='fishing'&&['boosts','players'].includes(part.dataset.section)&&!fishingAdminAllowed());
  // A shared form keeps drafts from all its sections and saves them together.
- const securitySettings=$('settings-form').closest('.card');securitySettings.hidden=currentTab!=='security'||!['protection','limits'].includes(currentSection);
+ const securitySettings=$('settings-form').closest('.card');securitySettings.hidden=currentTab!=='security'||!['protection','messages','joins','changes','limits'].includes(currentSection);
+ if(currentTab==='security'){
+  securitySettings.querySelector('h3').textContent=({protection:'Protection settings',messages:'Keep conversations readable',joins:'Who’s joining',changes:'Look after your server',limits:'Choose your limits'})[currentSection]||'Protection settings';
+  securitySettings.querySelector('.section-heading p').textContent=({protection:'Pick your checks in the sections above. Presets adjust limits and keep your selected checks.',messages:'Choose what gets filtered. Matched messages are deleted and members can receive a temporary timeout.',joins:'Choose how TAGGY handles suspicious arrivals.',changes:'Contain disruptive changes. Owner approval controls are optional.',limits:'Set thresholds for this server. Lower limits react sooner.'})[currentSection]||'';
+ }
  const ticketsCard=$('tickets-form').closest('.tickets-card');ticketsCard.hidden=currentTab!=='tickets'||currentSection==='closed';
  document.body.dataset.section=currentSection;
  const sectionsLabel=sections.find(([id])=>id===currentSection)?.[1];document.title=(sectionsLabel?sectionsLabel+' · ':'')+workspacePages[currentTab][0]+' · TAGGY';
@@ -309,7 +323,7 @@ function readDashboardRoute(refresh=true){
  if(server&&server!==selected&&guilds.some(guild=>guild.id===server)){location.assign(url.href);return;}
  let tab=url.searchParams.get('tab')||'home',section=url.searchParams.get('section')||'';
  let hash='';try{hash=decodeURIComponent(url.hash.slice(1));}catch(_){}if(hash.includes('/'))[tab,section]=hash.split('/');
- const oldAnchors={'security-messages':['security','protection'],'security-joins':['security','protection'],'security-changes':['security','protection'],'poll-card':['tools','polls'],'reply-card':['tools','triggers'],'info-card':['tools','server'],'nickname-card':['tools','nickname']};
+ const oldAnchors={'security-messages':['security','messages'],'security-joins':['security','joins'],'security-changes':['security','changes'],'poll-card':['tools','polls'],'reply-card':['tools','triggers'],'info-card':['tools','server'],'nickname-card':['tools','nickname']};
  if(oldAnchors[hash])[tab,section]=oldAnchors[hash];
  if(tab==='rolepanels'){tab='roles';section='panels';}currentTab=tab;currentSection=section;applyTabState();
  history.replaceState({},'',dashboardURL().href);if(refresh)void refreshCurrentTab().catch(error=>showStatus(error.message,'error'));
@@ -331,7 +345,7 @@ function initializeDashboardSections(){
  const info=$('info-card');info.dataset.section='server';info.querySelector('h3').textContent='Server info';
  const memberCard=textElement('section','','card');memberCard.dataset.section='members';memberCard.append(textElement('p','YOUR COMMUNITY','eyebrow'),textElement('h3','Member profiles'),$('member-profile-form'),$('tools-member-info'),info.querySelector('.caption'));info.after(memberCard);
  const security=document.querySelector('[data-panel="security"]');security.querySelector('.automatic-card').dataset.section='protection';security.querySelector('.overview').dataset.section='shield';security.querySelector('.security-levels').dataset.section='protection';security.querySelector('.section-heading h3').textContent='Protection settings';
- const settings=$('settings-form');for(const part of [...settings.children]){if(part.classList.contains('switches')||part.classList.contains('security-group'))part.dataset.section='protection';if(part.matches('details')){part.dataset.section='limits';part.open=true;part.querySelector('summary').textContent='Protection limits';}if(part.matches('nav'))part.remove();}
+ const settings=$('settings-form');for(const part of [...settings.children]){if(part.classList.contains('switches'))part.dataset.section='protection';if(part.classList.contains('security-group'))part.dataset.section=({'security-messages':'messages','security-joins':'joins','security-changes':'changes'})[part.id];if(part.matches('details')){part.dataset.section='limits';part.open=true;part.querySelector('summary').textContent='Protection limits';}if(part.matches('nav'))part.remove();}
  const ticketForm=$('tickets-form'),topics=textElement('div','','ticket-topic-settings'),topicHeading=$('ticket-types').previousElementSibling;topics.dataset.section='topics';topicHeading.before(topics);topics.append(topicHeading,$('ticket-types'));
  for(const part of [...ticketForm.children]){if(part===topics||part.classList.contains('form-footer'))continue;if(part.matches('details')){part.dataset.section='reminders';part.open=true;}else part.dataset.section='panel';}
  document.querySelector('.ticket-panel-preview').dataset.section='panel topics';$('closed-tickets').closest('.card').dataset.section='closed';
@@ -732,9 +746,9 @@ function syncRanges(){for(const field of document.querySelectorAll('#settings-fo
 $('settings-form').addEventListener('input',syncRanges);
 for(const button of document.querySelectorAll('[data-open-tool]'))button.addEventListener('click',()=>chooseTool(button.dataset.openTool));
 const securityLevels={
- relaxed:{joinLimit:15,messageLimit:12,duplicateLimit:8,mentionLimit:10,timeoutMinutes:5,destructiveLimit:5,linkLimit:10,fileLimit:15,emojiLimit:50,creationLimit:15},
- standard:{joinLimit:8,messageLimit:7,duplicateLimit:5,mentionLimit:6,timeoutMinutes:10,destructiveLimit:3,linkLimit:5,fileLimit:8,emojiLimit:30,creationLimit:8},
- strict:{joinLimit:5,messageLimit:5,duplicateLimit:3,mentionLimit:4,timeoutMinutes:15,destructiveLimit:2,linkLimit:3,fileLimit:5,emojiLimit:20,creationLimit:5}
+ relaxed:{joinLimit:15,messageLimit:12,duplicateLimit:8,mentionLimit:10,timeoutMinutes:5,destructiveLimit:5,linkLimit:10,fileLimit:15,emojiLimit:50,creationLimit:15,crossChannelLimit:5,rejoinLimit:5,rejoinWindowSeconds:120,editLimit:20,timeoutActionLimit:12},
+ standard:{joinLimit:8,messageLimit:7,duplicateLimit:5,mentionLimit:6,timeoutMinutes:10,destructiveLimit:3,linkLimit:5,fileLimit:8,emojiLimit:30,creationLimit:8,crossChannelLimit:3,rejoinLimit:3,rejoinWindowSeconds:120,editLimit:12,timeoutActionLimit:6},
+ strict:{joinLimit:5,messageLimit:5,duplicateLimit:3,mentionLimit:4,timeoutMinutes:15,destructiveLimit:2,linkLimit:3,fileLimit:5,emojiLimit:20,creationLimit:5,crossChannelLimit:3,rejoinLimit:3,rejoinWindowSeconds:300,editLimit:6,timeoutActionLimit:3}
 };
 for(const button of document.querySelectorAll('[data-security-level]'))button.addEventListener('click',()=>{
  const values={...securityLevels[button.dataset.securityLevel],joinWindowSeconds:10,messageWindowSeconds:5,shieldMinutes:10,destructiveWindowSeconds:10};
@@ -743,7 +757,7 @@ for(const button of document.querySelectorAll('[data-security-level]'))button.ad
 });
 function renderActivity(data){
  const activity=data.activity,events=(data.incidents||[]).filter(item=>item.at>Date.now()-86400000);
- const protection=events.filter(item=>['Spam','Webhook flood','New account','Join raid','Join restriction','Destructive activity','Mass creation'].includes(item.type)).length;
+ const protection=events.filter(item=>['Spam','Webhook flood','Webhook filter','Repeated joins','Permission guard','Bot invite guard','Server edit flood','Mass timeouts','New account','Join raid','Join restriction','Destructive activity','Mass creation'].includes(item.type)).length;
  $('activity-stats').replaceChildren();
  for(const [label,value,note]of [['Members',data.memberCount,'In your server now'],['Messages',activity?.messages,'Last 24 hours'],['Joined',activity?.joins,'Last 24 hours'],['Left',activity?.leaves,'Last 24 hours'],['Protection events',protection,'Last 24 hours']]){
   const card=textElement('article','','activity-stat');card.append(textElement('span',label),textElement('strong',value===undefined?'Pending':value.toLocaleString()),textElement('small',note));$('activity-stats').append(card);
