@@ -71,3 +71,11 @@ That is only a health check - the relay speaks WebSocket, not HTTP.
 
 In the mod: `relayUrl` = `wss://relay.lojjkli.site`, `teamKey` = a long random
 string shared with your team, `relayEnabled` = true.
+
+## TAGGY V3 verification
+
+Open `/taggy/?tab=verification` and choose a server. In Roblox Verify mode, independently check Roblox OAuth, Profile Code and TAGS Hub, then select **Save & update panel**. Only selected, configured methods appear in the Discord panel and alternate method picker. Simple Verify and Off remain available. Group requirements and panel copy are still per server.
+
+At least one available method is required in Roblox mode. Unconfigured methods are disabled in the dashboard. Existing settings keep all previously available methods until a manager saves a selection. Old buttons, submitted modals and verification attempts already in progress cannot finish through a method that the server has disabled.
+
+The V3 video feature list is backed by existing bot modules: Roblox verification, support tickets and DM questions, raid and nuke protection, spam/link/new-account filters, honeypot channels, giveaways, role panels, polls, scheduled posts, setup checklist, dashboard and fishing. Fishing currently includes 35 fish, 6 worlds, 18 maps and 14 rods.
