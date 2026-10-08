@@ -254,6 +254,7 @@ const workspacePages = {
   verification:['Verification','Choose how members get in and make the panel yours.'],
   tickets:['Tickets','Set up support, applications and your own conversations.'],
   fishing:['Fishing','A collection to build. A rare catch to chase.'],
+  washing:['Dish washing','Clear the sink. Upgrade your washer. Find something strange.'],
   giveaways:['Giveaways','Put something up for grabs. Let TAGGY pick the lucky ones.'],
   roles:['Roles','Give the right people the right tools.'],
   tools:['Tools','Polls, trigger words and a command when you need one.'],
@@ -273,11 +274,12 @@ const workspaceSections={
  security:[['protection','Protection'],['messages','Messages'],['joins','New members'],['changes','Server changes'],['limits','Limits'],['shield','Shield & timeouts']],
  embeds:[['editor','Editor'],['scheduled','Scheduled posts'],['history','History']],
  channels:[['welcome','Welcome'],['dms','Welcome DMs'],['controls','Channels']],
+ washing:[['settings','Settings'],['washers','Washers & upgrades'],['collection','Dishes'],['kitchens','Kitchens'],['guide','How to play']],
  fishing:[['settings','Settings'],['collection','Collection'],['worlds','Worlds'],['boosts','Boosts'],['players','Players'],['guide','How to play']]
 };
 const rememberedSections={};
 function dashboardURL(tab=currentTab,section=currentSection){const url=new URL(location.href);url.hash='';if(selected)url.searchParams.set('server',selected);else url.searchParams.delete('server');url.searchParams.set('tab',tab);if(section)url.searchParams.set('section',section);else url.searchParams.delete('section');return url;}
-function allowedTool(tab){return Object.hasOwn(workspacePages,tab)&&(tab!=='dms'||isSpecialOwner)&&(tab!=='profile'||profileAllowed());}
+function allowedTool(tab){return Object.hasOwn(workspacePages,tab)&&(tab!=='washing'||!resources||featureReady('washing'))&&(tab!=='dms'||isSpecialOwner)&&(tab!=='profile'||profileAllowed());}
 function normalizeWorkspace(){if(currentTab==='fishing'&&selected===PROFILE_GUILD_ID&&['boosts','players'].includes(currentSection)&&fishingFor!==selected)return;if(!allowedTool(currentTab)){currentTab='home';currentSection='';}const sections=workspaceSections[currentTab]?availableSections(currentTab):null;if(sections&&!sections.some(([id])=>id===currentSection))currentSection=sections.some(([id])=>id===rememberedSections[currentTab])?rememberedSections[currentTab]:sections[0][0];if(!sections)currentSection='';if(currentSection)rememberedSections[currentTab]=currentSection;}
 function renderSections(){
  const nav=$('workspace-sections'),sections=availableSections(currentTab),focusedSection=nav.contains(document.activeElement)?document.activeElement.dataset.sectionLink:'';nav.hidden=!sections.length;nav.replaceChildren();
@@ -299,6 +301,7 @@ function applyTabState(){
  normalizeWorkspace();document.body.dataset.tool=currentTab;
  const page=workspacePages[currentTab]||workspacePages.home;
  $('bot-profile-tab').hidden=!profileAllowed();
+ document.querySelector('[data-tab="washing"]').hidden=!featureReady('washing');
  for(const button of document.querySelectorAll('[data-tab]'))button.setAttribute('aria-pressed',String(button.dataset.tab===currentTab));
  for(const panel of document.querySelectorAll('[data-panel]'))panel.hidden=panel.dataset.panel!==currentTab;
  $('workspace-title').textContent=page[0];$('workspace-description').textContent=page[1];
@@ -502,7 +505,7 @@ async function loadDMHistory(older=false){
 }
 $('dm-search').addEventListener('input',renderDMThreads);
 $('dm-older').addEventListener('click',()=>void loadDMHistory(true).catch(error=>showStatus(error.message,'error')));
-async function refreshCurrentTab(){if(currentTab==='giveaways')return loadGiveaways();if(currentTab==='home'&&currentSection==='setup')return loadSetup();if(currentTab==='tools'&&currentSection==='commands')return loadCommands();if(currentTab==='embeds'&&['scheduled','history'].includes(currentSection))return loadSchedules();if(currentTab==='channels'&&currentSection==='dms')return loadWelcomeDM();if(['tools','profile'].includes(currentTab)||(currentTab==='roles'&&currentSection==='panels'))return loadCommunityTab();void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
+async function refreshCurrentTab(){if(currentTab==='giveaways')return loadGiveaways();if(currentTab==='home'&&currentSection==='setup')return loadSetup();if(currentTab==='tools'&&currentSection==='commands')return loadCommands();if(currentTab==='embeds'&&['scheduled','history'].includes(currentSection))return loadSchedules();if(currentTab==='channels'&&currentSection==='dms')return loadWelcomeDM();if(['tools','profile'].includes(currentTab)||(currentTab==='roles'&&currentSection==='panels'))return loadCommunityTab();void loadPresets().catch(error=>showStatus(error.message,'error'));if(currentTab==='dms')return loadDMs();if(!selected)return;if(currentTab==='tickets')return loadTickets();if(currentTab==='washing')return loadWashing();if(currentTab==='fishing')return loadFishing();if(currentTab==='verification')return loadVerification();if(currentTab==='logs')return loadLogs();if(currentTab==='chat')return loadChat();return loadDetail(!dirtyForms.has('settings-form'));}
 $('log-search').addEventListener('input',renderLogs);
 $('refresh-logs').addEventListener('click',()=>void loadLogs().catch(error=>showStatus(error.message,'error')));
 $('refresh-chat').addEventListener('click',()=>void loadChat().catch(error=>showStatus(error.message,'error')));
@@ -693,7 +696,7 @@ $('fishing-player-form').addEventListener('submit',async event=>{
 });
 
 $('fishing-form').addEventListener('submit',async event=>{event.preventDefault();const result=await action('guilds/'+selected+'/fishing',{enabled:$('fishing-enabled').checked,cooldownSeconds:Number($('fishing-cooldown').value)},'Fishing settings saved.');if(result){clearDraft('fishing-form');await loadFishing();}});
-function applyNewCapabilities(){applyFishingCapabilities();const can=resources?.capabilities?.changeRoles!==false&&!busy;for(const element of document.querySelectorAll('#tickets-form input,#tickets-form textarea,#tickets-form select,#tickets-form button,#fishing-form input,#fishing-form button'))element.disabled=!can;$('tickets-note').textContent=can?'Save to publish the panel. Open tickets keep their original questions.':'Only the server owner or a Discord administrator can change tickets.';}
+function applyNewCapabilities(){applyWashingCapabilities();applyFishingCapabilities();const can=resources?.capabilities?.changeRoles!==false&&!busy;for(const element of document.querySelectorAll('#tickets-form input,#tickets-form textarea,#tickets-form select,#tickets-form button,#fishing-form input,#fishing-form button'))element.disabled=!can;$('tickets-note').textContent=can?'Save to publish the panel. Open tickets keep their original questions.':'Only the server owner or a Discord administrator can change tickets.';}
 
 // Pause media out of view. Reduced-motion users get manual controls and static examples.
 const reducedMotion=matchMedia('(prefers-reduced-motion: reduce)');
@@ -1181,3 +1184,25 @@ window.addEventListener('keydown',event=>{
  const target=event.target;if(target?.closest?.('input,textarea,select,[contenteditable="true"],[role="textbox"]'))return;
  if((event.key==='/'&&!event.ctrlKey&&!event.metaKey&&!event.altKey)||(event.key.toLowerCase()==='k'&&(event.ctrlKey||event.metaKey)&&!event.altKey)){event.preventDefault();openToolSearch();}
 });
+
+let washingFor='';
+function applyWashingCapabilities(){for(const control of $('washing-form').querySelectorAll('input,button'))control.disabled=busy||washingFor!==selected||!featureReady('washing')||resources?.capabilities?.changeRoles===false;}
+async function loadWashing(){
+ if(!selected)return;const id=selected;if(resourcesFor!==id)await loadResources();
+ washingFor='';applyWashingCapabilities();$('washing-note').textContent='Loading your kitchen…';$('washing-note').className='notice';
+ if(!featureReady('washing')){$('washing-note').textContent='Upload the bot update to enable dish washing.';return;}
+ try{const data=await api('guilds/'+id+'/washing');if(selected!==id)return;washingFor=id;
+  if(!dirtyForms.has('washing-form')){$('washing-enabled').checked=data.settings.enabled;$('washing-cooldown').value=data.settings.cooldownSeconds;}
+  $('washing-note').textContent=resources?.capabilities?.changeRoles===false?'Explore the game here. A server owner or administrator can save its settings.':'Choose whether members can play and how quickly new stacks arrive.';
+  for(const [key,target]of [['washers','washing-washers'],['dishes','washing-dishes'],['kitchens','washing-kitchens'],['upgrades','washing-upgrades']]){
+   const list=$(target);list.replaceChildren();for(const item of data.catalog?.[key]||[]){const card=textElement('article','','fishing-item');
+    if(key==='washers'&&/^[a-z]+$/.test(item.id)){const img=document.createElement('img');img.src='/taggy/assets/washing/'+item.id+'.png';img.alt=item.name+' pixel washer';img.width=96;img.height=96;img.loading='lazy';card.append(img);}else card.append(textElement('span',item.emoji,'washing-emoji'));
+    card.append(textElement('strong',item.name));
+    const detail=key==='washers'?item.price.toLocaleString()+' coins · '+item.power+' power · '+item.capacity+' '+(item.capacity===1?'dish':'dishes'):key==='dishes'?item.rarity+' · '+item.value.toLocaleString()+' base coins':key==='kitchens'?'Level '+item.level+' · '+item.multiplier+'× coins':item.description;
+    card.append(textElement('span',detail,'caption'));if(item.description&&key==='kitchens')card.append(textElement('p',item.description));list.append(card);
+   }
+  }
+  $('washing-commands').replaceChildren();for(const [name,description]of [['wash','Start or resume a stack'],['washmenu','All your game controls'],['washshop','Buy and equip washers'],['washupgrades','Upgrade soap, sponges and towels'],['washkitchens','Travel to another kitchen'],['washcollection','Browse your clean dishes'],['washdaily','Collect your daily delivery'],['washquests','Claim completed challenges'],['washstats','See your progress'],['washleaderboard','Compare clean dish totals'],['washsettings','Choose one menu or separate messages']]){const row=textElement('p','');row.append(textElement('code','/'+name),document.createTextNode(' · '+description));$('washing-commands').append(row);}
+ }catch(error){if(selected===id){$('washing-note').textContent=error.message;$('washing-note').className='notice error';}throw error;}finally{if(selected===id)applyWashingCapabilities();}
+}
+$('washing-form').addEventListener('submit',async event=>{event.preventDefault();if(washingFor!==selected||!featureReady('washing')||resources?.capabilities?.changeRoles===false)return;const id=selected,result=await action('guilds/'+id+'/washing',{enabled:$('washing-enabled').checked,cooldownSeconds:Number($('washing-cooldown').value)},'Washing settings saved.');if(result&&selected===id){clearDraft('washing-form');await loadWashing();}});

@@ -189,3 +189,15 @@ Fishing > Collection shows the fish, rods and upgrades. Fishing > Worlds shows e
 Player editing requires a current member of that server. The profile is shared across servers and DMs. Saves check the profile revision, preserve unrelated progress, record the action in logs and cancel any active cast/menu for that player. Reload if the player has played since opening the form. Existing fishing-state.json is migrated in memory and preserved, together with .env and all other saved JSON.
 
 All 35 fish and 14 rods have original pixel sprites uploaded as TAGGY application emojis. Six world atlases and 18 map images use original pixel scenery. Their public IDs are embedded in fishing.js; no new dependencies or Discord permissions are needed.
+
+## Dish washing, 8 October 2026
+
+`/wash` starts or resumes a stack. `/washmenu` opens three actions between two navigation arrows. Follow Rinse, Scrub, Dry for a spotless bonus. Bigger washers clean more dishes per stack and clear more grime per press. A wrong action removes the spotless bonus but keeps the dishes. Three spotless stacks in a row add a 20% coin bonus.
+
+The game has 12 washers, 19 dish types, eight level-gated kitchens and five levels each of Bubble juice, Speed sponge and Fluffy towels. Washers range from Bare hands to Black hole dishwasher and the strongest `._. washer`. The rarest dish is Klitter Black Plate, exactly one chance in 10,000 per stack, independent of washer and kitchen luck. All 12 washers have original pixel PNG art hosted with the website.
+
+Use `/washshop`, `/washupgrades`, `/washkitchens`, `/washcollection`, `/washdaily`, `/washquests`, `/washstats`, `/washleaderboard` and `/washsettings`. These game commands work in server channels, TAGGY DMs and user-installed Apps when User Install is enabled. Management commands remain prefix commands. Washing has its own coins and XP, separate from fishing.
+
+The dashboard has Dish washing > Settings, Washers & upgrades, Dishes, Kitchens and How to play. Server owners and administrators can enable washing and choose 10 to 3,600 seconds between stacks. Progress follows the player across servers and DMs. Each menu belongs to its player and channel; buttons expire after 30 minutes. Use `/washmenu` again to refresh.
+
+Upload washing.js, index.js, security-dashboard.js and command-catalog.js together, then restart. Keep existing .env and all saved JSON files. The new washing-state.json stores Discord IDs, washer ownership, coins, XP, dish collection, active stacks, daily/quest progress, menu preferences and per-server settings. Persistence is atomic; failed writes roll back changes. Active stacks survive restarts. No new dependency, avatar change or Discord permission is needed.
