@@ -1,0 +1,114 @@
+{
+ "stems": {
+  "celesta": {
+   "inst": "('gm', 8)",
+   "shift_ms": 2.7,
+   "peak_db": -11.4
+  },
+  "harp": {
+   "inst": "Harp",
+   "shift_ms": 20.1,
+   "peak_db": -6.0
+  },
+  "glock": {
+   "inst": "Glockenspiel",
+   "shift_ms": 5.0,
+   "peak_db": -9.6
+  },
+  "bells": {
+   "inst": "TubularBells",
+   "shift_ms": 0.0,
+   "peak_db": -9.7
+  },
+  "perc": {
+   "inst": "perc",
+   "shift_ms": 0.9,
+   "peak_db": -8.2
+  },
+  "timpani": {
+   "inst": "Timpani",
+   "shift_ms": 4.2,
+   "peak_db": -8.3
+  },
+  "timp_roll": {
+   "inst": "TimpaniRolls",
+   "shift_ms": 6.3,
+   "peak_db": -16.4
+  },
+  "vln_trem": {
+   "inst": "ViolinEnsTrem",
+   "shift_ms": 214.3,
+   "peak_db": -21.1
+  },
+  "violins": {
+   "inst": "ViolinEnsSusVib",
+   "shift_ms": 300.0,
+   "peak_db": -8.8
+  },
+  "violas": {
+   "inst": "ViolaEnsSusVib",
+   "shift_ms": 94.9,
+   "peak_db": -12.1
+  },
+  "cellos": {
+   "inst": "CelloEnsSusVib",
+   "shift_ms": 35.6,
+   "peak_db": -7.9
+  },
+  "basses": {
+   "inst": "ContrabassSusVB",
+   "shift_ms": 85.7,
+   "peak_db": -15.6
+  },
+  "flute": {
+   "inst": "FluteSusVib",
+   "shift_ms": 52.2,
+   "peak_db": -20.5
+  },
+  "clarinet": {
+   "inst": "ClarinetSus",
+   "shift_ms": 169.8,
+   "peak_db": -19.6
+  },
+  "oboe": {
+   "inst": "OboeSusVib",
+   "shift_ms": 16.5,
+   "peak_db": -19.0
+  },
+  "bassoon": {
+   "inst": "BassoonSus",
+   "shift_ms": 19.0,
+   "peak_db": -20.3
+  },
+  "horns": {
+   "inst": "FHornSus",
+   "shift_ms": 36.0,
+   "peak_db": -7.6
+  },
+  "trumpets": {
+   "inst": "TrumpetSus",
+   "shift_ms": 14.0,
+   "peak_db": -8.2
+  },
+  "trombones": {
+   "inst": "TromboneSus",
+   "shift_ms": 57.1,
+   "peak_db": -13.7
+  },
+  "tuba": {
+   "inst": "TubaSus",
+   "shift_ms": 106.2,
+   "peak_db": -8.6
+  }
+ },
+ "length_samples": 445410,
+ "ogg_peak_dbfs": -1.1,
+ "accents": {
+  "5.3": 5.2976,
+  "5.55": 5.5476,
+  "6.1": 6.0976,
+  "6.55": 6.5476,
+  "7.2": 7.1976,
+  "7.75": 7.7447
+ }
+}

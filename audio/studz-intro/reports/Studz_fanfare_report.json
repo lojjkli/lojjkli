@@ -1,0 +1,136 @@
+{
+ "stems": {
+  "celesta": {
+   "inst": "('gm', 8)",
+   "shift_ms": 2.9,
+   "peak_db": -10.3
+  },
+  "harp": {
+   "inst": "Harp",
+   "shift_ms": 21.5,
+   "peak_db": -4.5
+  },
+  "glock": {
+   "inst": "Glockenspiel",
+   "shift_ms": 5.2,
+   "peak_db": -10.6
+  },
+  "bells": {
+   "inst": "TubularBells",
+   "shift_ms": 0.0,
+   "peak_db": -10.1
+  },
+  "perc": {
+   "inst": "perc",
+   "shift_ms": 1.0,
+   "peak_db": -6.2
+  },
+  "timpani": {
+   "inst": "Timpani",
+   "shift_ms": 4.4,
+   "peak_db": -5.6
+  },
+  "timp_roll": {
+   "inst": "TimpaniRolls",
+   "shift_ms": 4.2,
+   "peak_db": -19.9
+  },
+  "vln_trem": {
+   "inst": "ViolinEnsTrem",
+   "shift_ms": 142.9,
+   "peak_db": -30.3
+  },
+  "violins_soft": {
+   "inst": "ViolinEnsSusVib-Quiet",
+   "shift_ms": 300.0,
+   "peak_db": -14.4
+  },
+  "violins": {
+   "inst": "ViolinEnsSusVib",
+   "shift_ms": 244.9,
+   "peak_db": -8.3
+  },
+  "violins_run": {
+   "inst": "ViolinEnsSpic",
+   "shift_ms": 81.0,
+   "peak_db": -9.2
+  },
+  "violas": {
+   "inst": "ViolaEnsSusVib",
+   "shift_ms": 99.6,
+   "peak_db": -11.7
+  },
+  "cellos": {
+   "inst": "CelloEnsSusVib",
+   "shift_ms": 64.9,
+   "peak_db": -9.5
+  },
+  "basses": {
+   "inst": "ContrabassSusVB",
+   "shift_ms": 50.9,
+   "peak_db": -15.0
+  },
+  "flute": {
+   "inst": "FluteSusVib",
+   "shift_ms": 51.7,
+   "peak_db": -15.5
+  },
+  "piccolo": {
+   "inst": "PiccoloSus",
+   "shift_ms": 47.5,
+   "peak_db": -24.7
+  },
+  "clarinet": {
+   "inst": "ClarinetSus",
+   "shift_ms": 116.6,
+   "peak_db": -20.7
+  },
+  "oboe": {
+   "inst": "OboeSusVib",
+   "shift_ms": 23.8,
+   "peak_db": -21.0
+  },
+  "bassoon": {
+   "inst": "BassoonSus",
+   "shift_ms": 17.1,
+   "peak_db": -17.7
+  },
+  "horns": {
+   "inst": "FHornSus",
+   "shift_ms": 39.3,
+   "peak_db": -7.6
+  },
+  "horns2": {
+   "inst": "FHornSus",
+   "shift_ms": 46.6,
+   "peak_db": -10.2
+  },
+  "trumpets": {
+   "inst": "TrumpetSus",
+   "shift_ms": 12.6,
+   "peak_db": -6.8
+  },
+  "trombones": {
+   "inst": "TromboneSus",
+   "shift_ms": 44.4,
+   "peak_db": -9.2
+  },
+  "tuba": {
+   "inst": "TubaSus",
+   "shift_ms": 70.9,
+   "peak_db": -4.3
+  }
+ },
+ "length_samples": 652680,
+ "ogg_peak_dbfs": -1.03,
+ "accents": {
+  "2.22": 2.2176,
+  "3.86": 3.8576,
+  "8.8": 8.7976,
+  "9.04": 9.0376,
+  "9.28": 9.2776,
+  "9.52": 9.5205,
+  "9.76": 9.7576,
+  "10.0": 9.9947
+ }
+}
