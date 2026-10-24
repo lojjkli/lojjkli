@@ -1,148 +1,142 @@
 {
  "stems": {
-  "mechanics": {
-   "inst": "perc",
-   "shift_ms": 0.0,
-   "peak_db": -4.7
-  },
-  "boom": {
-   "inst": "perc",
-   "shift_ms": 0.0,
-   "peak_db": -3.6
-  },
-  "braam_tbn": {
-   "inst": "TromboneSus",
-   "shift_ms": 29.1,
-   "peak_db": -1.0
-  },
-  "braam_tuba": {
-   "inst": "TubaSus",
-   "shift_ms": 70.9,
-   "peak_db": -6.4
-  },
-  "gong": {
-   "inst": "perc",
-   "shift_ms": 0.0,
-   "peak_db": -10.2
-  },
-  "celesta": {
-   "inst": "('gm', 8)",
-   "shift_ms": 2.0,
-   "peak_db": -9.4
+  "theme_preview": {
+   "inst": "ViolinEnsSusVib-Quiet",
+   "shift_ms": 236.9,
+   "peak_db": -15.6
   },
   "harp": {
    "inst": "Harp",
    "shift_ms": 0.0,
-   "peak_db": -3.3
+   "peak_db": -2.4
   },
-  "theme_preview": {
-   "inst": "ViolinEnsSusVib-Quiet",
-   "shift_ms": 241.3,
-   "peak_db": -3.8
+  "mechanics": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -7.3
   },
-  "string_pad": {
-   "inst": "ViolaEnsSusVib",
-   "shift_ms": 300.0,
-   "peak_db": -17.3
+  "braam": {
+   "inst": "TromboneSus",
+   "shift_ms": 41.3,
+   "peak_db": -4.5
   },
-  "cello_pad": {
-   "inst": "CelloEnsSusVib",
-   "shift_ms": 98.4,
-   "peak_db": -8.0
-  },
-  "bass_pad": {
-   "inst": "ContrabassSusVB",
-   "shift_ms": 102.8,
-   "peak_db": -12.4
+  "braam_tuba": {
+   "inst": "TubaSus",
+   "shift_ms": 70.9,
+   "peak_db": -7.9
   },
   "pulse_violas": {
    "inst": "ViolaEnsSpic",
    "shift_ms": 34.3,
-   "peak_db": -4.3
+   "peak_db": -5.4
   },
   "pulse_cellos": {
    "inst": "CelloEnsSpic",
    "shift_ms": 36.9,
-   "peak_db": -2.8
+   "peak_db": -1.9
+  },
+  "cello_pad": {
+   "inst": "CelloEnsSusVib",
+   "shift_ms": 98.4,
+   "peak_db": -9.7
+  },
+  "bass_pad": {
+   "inst": "ContrabassSusVB",
+   "shift_ms": 50.9,
+   "peak_db": -12.6
   },
   "violin_trem": {
    "inst": "ViolinEnsTrem",
-   "shift_ms": 102.8,
-   "peak_db": -14.8
+   "shift_ms": 95.7,
+   "peak_db": -15.0
   },
   "violins": {
    "inst": "ViolinEnsSusVib",
-   "shift_ms": 300.0,
-   "peak_db": -2.8
+   "shift_ms": 285.0,
+   "peak_db": -5.8
   },
   "choir": {
    "inst": "('gm', 52)",
-   "shift_ms": 273.0,
-   "peak_db": -5.6
+   "shift_ms": 146.2,
+   "peak_db": -8.2
   },
   "horns": {
    "inst": "FHornSus",
    "shift_ms": 36.8,
-   "peak_db": -3.5
+   "peak_db": -2.9
   },
   "trombones": {
    "inst": "TromboneSus",
-   "shift_ms": 28.7,
-   "peak_db": 1.8
+   "shift_ms": 28.6,
+   "peak_db": 1.2
   },
   "tuba": {
    "inst": "TubaSus",
    "shift_ms": 70.9,
-   "peak_db": 0.8
+   "peak_db": 0.1
   },
   "trumpets": {
    "inst": "TrumpetSus",
    "shift_ms": 22.3,
-   "peak_db": 0.0
+   "peak_db": -0.4
   },
   "kick": {
    "inst": "perc",
    "shift_ms": 0.0,
-   "peak_db": -3.6
+   "peak_db": -2.6
   },
   "snare": {
    "inst": "perc",
    "shift_ms": 0.0,
-   "peak_db": -3.2
+   "peak_db": -2.2
+  },
+  "shaker": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -13.7
   },
   "metal": {
    "inst": "perc",
    "shift_ms": 0.0,
-   "peak_db": -2.2
+   "peak_db": -2.0
   },
   "timpani": {
    "inst": "Timpani",
    "shift_ms": 0.0,
-   "peak_db": -4.7
+   "peak_db": -5.5
+  },
+  "gong": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -10.7
   },
   "cym_swell": {
    "inst": "perc",
    "shift_ms": 0.0,
-   "peak_db": -8.7
+   "peak_db": -8.8
   },
   "timp_roll": {
    "inst": "TimpaniRolls",
    "shift_ms": 4.2,
-   "peak_db": -9.3
+   "peak_db": -13.1
   },
   "bells": {
    "inst": "TubularBells",
    "shift_ms": 0.0,
    "peak_db": -9.7
+  },
+  "celesta": {
+   "inst": "('gm', 8)",
+   "shift_ms": 2.0,
+   "peak_db": -12.4
   }
  },
- "length_samples": 1323000,
- "ogg_peak_dbfs": -1.03,
+ "length_samples": 573300,
+ "ogg_peak_dbfs": -1.08,
  "accents": {
-  "2.95": 2.9218,
-  "6.0": 5.9678,
-  "15.0": 15.0017,
-  "21.0": 21.0097,
-  "27.0": 27.0037
+  "2.5": 2.4978,
+  "5.0": 5.0037,
+  "7.5": 7.5017,
+  "10.0": 10.0017
  }
 }

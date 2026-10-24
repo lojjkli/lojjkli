@@ -8,7 +8,7 @@ the sample libraries, then mixed and mastered.
 |---|---|---|
 | `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.302 s |
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
-| `TAGS_theme.ogg` | 30.000 s (1 323 000 samples) | theme 15.000 → 15.002 s, final hit 27.000 → 27.004 s |
+| `TAGS_theme.ogg` | 13.000 s (573 300 samples) | loud at 5.000 → 5.004 s, final hit 10.000 → 10.002 s |
 
 All are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
@@ -29,24 +29,21 @@ sparkling. The melody is original, not a quotation.
 
 Fireworks measured at 5.560, 6.104, 6.554, 7.204 and 7.754 s.
 
-## TAGS_theme (long version with beats, 30 s, B-flat minor → B-flat major, 80 bpm)
+## TAGS_theme (13 s version with beats, B-flat minor → B-flat major, 96 bpm)
 
-Original music in the style of the Transformers-era Paramount intros. It has robotic/metal
-logo sounds and a low braam, a quiet emotional start, a steady 16th-note string pulse with
-choir, half-time drums, and a heroic unison-horn theme over i – VI – III – VII
-(B♭m – G♭ – D♭ – A♭). One bar = 3.0 s.
+Original music in the style of the Transformers-era Paramount intros: robotic/metal sounds
+and a braam, a string pulse with choir, a driving beat, and a heroic unison-horn theme over
+i – VI – III – VII (B♭m – G♭ | D♭ – A♭). One bar = 2.5 s.
 
 | Time | What happens |
 |---|---|
-| 0–3 s | The logo: a deep boom, gong scrape, ratchets and brake-drum/anvil clanks (the "transforming" sounds) over a low trombone/tuba braam that swells up to an anvil hit. |
-| 3–6 s | Quiet and emotional: soft violins preview the opening of the main theme over a slow harp arpeggio and a B♭m string pad. |
-| 6–12 s | The pulse: 16th spiccato violas and cellos, choir "aah", timpani and kick on 1 and 3. Horns hint at the theme. |
-| 12–14.8 s | The rise: drums double up, snare roll, violin tremolo climbs chromatically, trombone braam, ratchets, cymbal swell, harp run, then a split second of silence. |
-| 15–21 s | The theme: horns and trombones play the melody in unison over choir, strings, tuba and big half-time drums (kick on 1 and the "and" of 2, snare plus anvil/brake drum on 3, timpani fills). |
-| 21–27 s | The theme climbs: trumpets and violins join it an octave up. A timpani roll leads into the final hit. |
-| 27 s | Final hit on B-flat **major** (heroic): full orchestra and choir, gong, crash, anvil, tubular bells. It rings out to silence by 30 s. |
+| 0–2.5 s | Starts from silence: soft violins preview the theme over a harp arpeggio. Quiet ratchets and metal clanks, and a low braam fading in. |
+| 2.5–5.0 s | The build: 16th spiccato strings, choir swell, kick doubling up, snare and timpani rolls, trombone braam, violin tremolo climbing, cymbal swell, then a split second of silence. |
+| 5.0–10.0 s | Loud: horns and trombones play the theme. Trumpets and violins join an octave up from 7.5 s. The beat: kick, snare plus anvil/brake drum on 2 and 4, 16th shaker, timpani fills, crashes, choir. |
+| 10.0 s | Final heroic hit on B-flat **major**: gong, crash, anvil, bells, full orchestra and choir. |
+| 10–13 s | It gets quiet again quickly and rings out to silence by 13.0 s. |
 
-Section downbeats measured at 15.002 (theme), 21.012 and 27.004 s (final hit).
+Measured: build starts 2.498, loud section 5.004, second bar 7.502, final hit 10.002 s.
 
 ## Studz_fanfare (game logo, B-flat major)
 
