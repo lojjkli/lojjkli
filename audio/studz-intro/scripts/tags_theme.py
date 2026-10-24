@@ -1,269 +1,153 @@
-"""TAGS_theme - 16.0 s studio intro in the dark blockbuster style, shaped after
-measurements of a modern Paramount logo sequence from a robot-action film:
-1 s of silence, then a low sub/brass growl that dives in pitch, a falling
-'downer' sweep, metal clanks, a fast mechanical ticking pulse (~0.19 s) and a
-low drone - sound design more than melody, dark (centroid 500-900 Hz), sub
-always present. All music and sound design is original.
+"""TAGS_theme - 10.0 s dark studio intro made only from real
+metal recordings (VSCO-2 CE gong, bowed and scraped cymbal, bass-drum rubs,
+brake drum, anvil, ratchet), slowed down 2-8x with sliding playback speed so
+they become giant metal roars, groans and screeches. No melody, no beat.
 
-160 bpm (8th = 0.1875 s, the same rate as the measured mechanical pulse), D minor.
-
-0.0-1.0   silence
-1.0-5.0   the build: low growl + sub, rumble, string tremolo crescendo, a downer at
-          2.5 s, metal clanks, mechanical ticks speeding up, noise riser and a
-          reverse swell sucked into a 70 ms gap
-5.0       BRAAM: low brass + synth braam + sub impact + downer + crash
-5.0-8.0   the beat: spiccato string ostinato (3-3-2), bass drum / metal backbeat,
-          brass stabs, choir; Dm - Bb - C - A
-8.0-9.4   beat down: everything drops into one falling hit, only a low drone,
-          slow ticks and a metal ring are left (Bb, then Gm)
-9.4-10.0  riser: ticks accelerate, timpani roll, strings climb, reverse swell, gap
-10.0      MEGA UP: biggest braam + gong, the heroic theme on trumpets/violins,
-          the beat comes back doubled; Dm - Bb - C - A, drum fill into
-12.5      the final D major braam; from 13.0 it slowly sinks to silence by 16.0."""
+The shape follows measurements of the Paramount logo sequence of a robot-action
+film (loudness every 0.25 s, brightness, where the energy sits), not its audio:
+0.0-1.0 silence | 1.0-1.5 fast swell into a deep metal roar | 2.6 the biggest
+hit with a rising screech | 3.7-4.7 two metal groans (about 240 and 285 Hz) with
+clangs at 4.0 and 4.4 | 5.0-5.5 dip | 5.4-6.6 swell with faint mechanical clicks |
+7.0-7.5 dip | 8.0 deep hit with a falling groan | 8.2-9.9 dark tail into silence."""
 import sys, os, json
+import numpy as np, soundfile as sf
+from scipy import signal as ss
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from orch import Part, PERC, build, export, save_score, accent_time, decode, ogg_peak_db, n
-import fx
-import numpy as np
+from orch import SR, VSCO, sox_reverb, master, export, decode, ogg_peak_db, accent_time
 
-LEN = 16.0
-OPEN, HIT, DOWN, RISE, MEGA, FINAL = 1.0, 5.0, 8.0, 9.4, 10.0, 12.5
-GAP = 0.07                             # silent 'inhale' before the two big hits
-E = 60 / 160 / 2                       # eighth note
-Q = 2 * E
-FADE = [(FINAL, 0), (13.0, -1), (14.3, -9), (15.9, -50)]
-ACC = (0, 3, 6)                        # 3-3-2 accents inside a bar of 8 eighths
-HOT = [(0, -3), (DOWN - 0.03, -3), (DOWN, -60), (MEGA - 0.01, -60), (MEGA, 2)] + FADE   # on for the two loud sections
-BIGGER = [(0, -3), (MEGA - 0.01, -3), (MEGA, 0)]        # the first beat holds back so MEGA can jump
-
-# (start, end, root, chord tones low -> high)
-PROG = [(HIT, 6.5, 'D', ['D2', 'A2', 'D3', 'F3', 'A3', 'D4']), (6.5, 7.25, 'Bb', ['Bb1', 'F2', 'Bb2', 'D3', 'F3', 'Bb3']),
-        (7.25, 7.625, 'C', ['C2', 'G2', 'C3', 'E3', 'G3', 'C4']), (7.625, DOWN, 'A', ['A1', 'E2', 'A2', 'C#3', 'E3', 'A3']),
-        (MEGA, 10.75, 'D', ['D2', 'A2', 'D3', 'F3', 'A3', 'D4']), (10.75, 11.5, 'Bb', ['Bb1', 'F2', 'Bb2', 'D3', 'F3', 'Bb3']),
-        (11.5, 12.0, 'C', ['C2', 'G2', 'C3', 'E3', 'G3', 'C4']), (12.0, FINAL, 'A', ['A1', 'E2', 'A2', 'C#3', 'E3', 'A3']),
-        (FINAL, 15.9, 'D', ['D2', 'A2', 'D3', 'F#3', 'A3', 'D4'])]
+LEN = 10.0
+HIT1, GROAN, HIT2 = 2.6, 3.7, 8.0
+PERC_DIR = os.path.join(VSCO, 'Percussion')
+N = int(LEN * SR)
+mix = np.zeros((N + 8 * SR, 2))
+send = np.zeros_like(mix)
+LAYERS = []
 
 
-def chord_at(t):
-    for s, e, r, tones in PROG:
-        if s <= t < e:
-            return r, tones
-    return None
+def load(name):
+    x, sr = sf.read(os.path.join(PERC_DIR, name), always_2d=True)
+    assert sr == SR
+    return np.repeat(x, 2, axis=1) if x.shape[1] == 1 else x[:, :2]
 
 
-def in_oct(root, lo, hi):
-    """MIDI number of pitch class `root` inside [lo, hi]."""
-    pc = n(root + '4') % 12
-    return next(p for p in range(n(lo), n(hi) + 1) if p % 12 == pc)
+def vari(x, rate, start=0.0, length=None):
+    """Play x at a time-varying speed. rate: list of (t, speed) over the output
+    time (speed 0.25 = two octaves down and four times longer)."""
+    length = length or 12.0
+    t = np.arange(int(length * SR)) / SR
+    r = np.interp(t, [p[0] for p in rate], [p[1] for p in rate])
+    pos = start * SR + np.concatenate([[0], np.cumsum(r)[:-1]])
+    k = pos < len(x) - 2
+    pos = pos[k]
+    i = pos.astype(int); f = (pos - i)[:, None]
+    return x[i] * (1 - f) + x[i + 1] * f
 
 
-def grid(t0, t1, step):
-    out, t = [], t0
-    while t < t1 - 1e-6:
-        out.append(round(t, 5)); t += step
-    return out
+def shape(y, pts):
+    """dB envelope over the layer's own time."""
+    t = np.arange(len(y)) / SR
+    return y * (10 ** (np.interp(t, [p[0] for p in pts], [p[1] for p in pts]) / 20))[:, None]
 
 
-def pumped(env, depth, tau=0.18):
-    """Duck a sustained part after every chord attack in the loud sections
-    (full on the hit, `depth` dB down soon after), so the hits punch out
-    instead of sitting on a flat plateau."""
-    ts = np.arange(0, LEN + 0.005, 0.01)
-    db = np.interp(ts, [p[0] for p in env], [p[1] for p in env])
-    starts = [s for s, *_ in PROG if s < FINAL]
-    for s, e in zip(starts, starts[1:] + [FINAL]):
-        k = (ts >= s) & (ts < e)
-        db[k] += depth * (1 - np.exp(-(ts[k] - s) / tau))
-    return list(zip(ts, db))
+def filt(y, lo=None, hi=None, order=4):
+    if lo:
+        y = ss.sosfiltfilt(ss.butter(order, lo, 'high', fs=SR, output='sos'), y, axis=0)
+    if hi:
+        y = ss.sosfiltfilt(ss.butter(order, hi, 'low', fs=SR, output='sos'), y, axis=0)
+    return y
 
 
-A_BEAT = grid(HIT, DOWN, E)            # 16 eighths
-B_BEAT = grid(MEGA, 12.0, E)           # the first bar and a bit, then the fill
-FILL = grid(12.0, FINAL, E / 2)        # 16ths into the final hit
-BACK = [5.375, 6.125, 6.875, 7.625, 10.375, 11.125, 11.875]       # backbeat
-ACCENTED = [t for beats in (A_BEAT, B_BEAT) for i, t in enumerate(beats) if i % 8 in ACC]
+def place(name, t, y, db, pan=0.0, wet=0.3, width=1.0):
+    """Normalize the layer to its loudest 100 ms RMS, set it to `db`, pan, add."""
+    f = min(len(y), int(0.3 * SR))                              # never cut a ringing layer off dead
+    y = y.copy(); y[-f:] *= np.linspace(1, 0, f)[:, None]
+    k = int(0.1 * SR)
+    rms = np.sqrt(np.convolve((y ** 2).mean(axis=1), np.ones(k) / k, 'same')).max()
+    y = y / max(rms, 1e-9) * 10 ** (db / 20)
+    mid, side = (y[:, 0] + y[:, 1]) / 2, (y[:, 0] - y[:, 1]) / 2 * width
+    a = (pan + 1) * np.pi / 4
+    y = np.stack([(mid + side) * np.cos(a), (mid - side) * np.sin(a)], axis=1) * np.sqrt(2)
+    i = int(round(t * SR))
+    e = min(len(mix), i + len(y))
+    mix[i:e] += y[:e - i]
+    send[i:e] += y[:e - i] * wet
+    LAYERS.append(dict(name=name, t=t, db=db, sec=round(len(y) / SR, 2)))
 
-# ======================= synthesized sound design
-sub = fx.Buf(LEN)                      # sub impacts
-fx.impact(sub, OPEN, f0=55, f1=30, dur=2.5, tau=0.9, gain=0.18)
-fx.impact(sub, HIT, gain=0.8)
-fx.impact(sub, DOWN, f0=70, f1=24, dur=2.0, tau=0.6, gain=0.6)
-fx.impact(sub, MEGA, f0=70, f1=24, dur=2.6, tau=0.8, gain=1.0)
-fx.impact(sub, FINAL, f0=66, f1=26, dur=3.4, tau=1.3, gain=1.0)
-for t in ACCENTED:
-    if t not in (HIT, MEGA):
-        fx.impact(sub, t, f0=80, f1=40, dur=0.5, tau=0.12, gain=0.3)
-grit = fx.Buf(LEN)                     # synth braam layers
-fx.braam(grit, OPEN, [36.71, 55.0], dur=3.6, tau=1.6, bright=900, dive=3, gain=0.2)
-fx.braam(grit, HIT, [36.71, 73.42, 110.0], dur=1.5, tau=0.8, bright=2600, dive=1, gain=0.8)
-fx.braam(grit, MEGA, [36.71, 55.0, 73.42, 110.0, 146.8], dur=2.2, tau=1.2, bright=3400, dive=2, gain=1.0)
-fx.braam(grit, FINAL, [36.71, 55.0, 73.42, 110.0, 146.8, 185.0], dur=3.6, tau=1.6, bright=3000, gain=1.0)
-dn = fx.Buf(LEN)                       # falling 'downer' sweeps
-fx.downer(dn, 2.5, 1100, 90, 1.2, gain=0.6, pan=-0.2)
-fx.downer(dn, HIT, 1500, 60, 1.3, gain=0.9, pan=0.15)
-fx.downer(dn, DOWN, 900, 45, 1.8, gain=1.0)
-fx.downer(dn, MEGA, 1800, 55, 1.6, gain=1.0, pan=-0.15)
-fx.downer(dn, FINAL + 0.7, 700, 40, 3.0, gain=0.5)
-rs = fx.Buf(LEN)                       # risers and reverse swells, cut dead into the hits
-fx.riser(rs, 2.6, HIT - GAP, gain=0.8)
-fx.reverse_swell(rs, HIT - GAP, 1.4, gain=0.7)
-fx.riser(rs, RISE - 0.4, MEGA - GAP, f0=400, f1=11000, tone=(300, 2400), gain=1.0, start_db=-30)
-fx.reverse_swell(rs, MEGA - GAP, 1.0, gain=0.9)
-fx.reverse_swell(rs, FINAL, 0.5, gain=0.5)
-tk = fx.Buf(LEN)                       # mechanical ticks
-build_ticks = [3.0 + Q * i for i in range(4)] + grid(4.5, 4.5 + 4 * E, E) + grid(4.5 + 4 * E, HIT - GAP, E / 2)
-for i, t in enumerate(build_ticks):
-    fx.tick(tk, t, 'click', gain=0.35 + 0.65 * (t - 3.0) / 2.0, pan=(-0.5, 0.5)[i % 2])
-for i, t in enumerate(A_BEAT + B_BEAT):
-    fx.tick(tk, t, 'click', gain=1.0 if t in ACCENTED else 0.6, pan=(-0.6, 0.6)[i % 2])
-for t in B_BEAT:                                               # 16ths in the mega section
-    fx.tick(tk, t + E / 2, 'click', gain=0.45, pan=0.3)
-for t in BACK:
-    fx.tick(tk, t, 'clunk', gain=1.0)
-for t in grid(DOWN + 0.2, RISE, Q):
-    fx.tick(tk, t, 'click', gain=0.45)
-for i, t in enumerate(grid(RISE, MEGA - GAP - 0.2, E / 2) + grid(MEGA - GAP - 0.2, MEGA - GAP, E / 4)):
-    fx.tick(tk, t, 'click', gain=0.5 + 0.5 * (t - RISE) / 0.6, pan=(-0.5, 0.5)[i % 2])
-for t in (3.6, 9.2):
-    fx.tick(tk, t, 'servo', gain=0.6)
-mt = fx.Buf(LEN)                       # metal hits
-fx.metal(mt, 3.0, 290, gain=0.7, pan=-0.3)
-fx.metal(mt, 3.9, 410, 2.0, 0.5, gain=0.8, pan=0.35)
-fx.metal(mt, 4.4, 230, 2.0, 0.6, gain=0.9, pan=-0.1)
-fx.metal(mt, HIT, 180, 3.0, 1.0, gain=0.8)
-fx.metal(mt, DOWN, 150, 3.5, 1.4, gain=1.0)
-fx.metal(mt, MEGA, 170, 3.0, 1.1, gain=0.9, pan=0.2)
-fx.metal(mt, FINAL, 140, 4.0, 1.8, gain=1.0)
-rb = fx.Buf(LEN)                       # low rumble / drone on D
-fx.rumble(rb, OPEN, 15.9, 36.71, env=[(OPEN, -18), (2.0, -10), (4.9, 0), (HIT, -6), (DOWN, -6), (8.2, 0), (RISE, 0),
-                                      (MEGA, -6), (FINAL, -4), (13.0, -2), (15.9, -40)])
 
-FX = [Part('fx_sub', sub, level=-9, send=0.05), Part('fx_braam', grit, level=-14, send=0.25),
-      Part('fx_downer', dn, level=-19, send=0.4), Part('fx_riser', rs, level=-17, send=0.35),
-      Part('fx_ticks', tk, level=-21, send=0.25), Part('fx_metal', mt, level=-22, send=0.5),
-      Part('fx_rumble', rb, level=-22, send=0.1)]
+gong_fff, gong_f, gong_mf = load('gongHit_fff.wav'), load('gongHit_f.wav'), load('gongHit_mf.wav')
+scrape = load('gongscrape_pp.wav')
+bow1, bow3, bow4 = load('susCymb1-bow-1.wav'), load('susCymb1-bow-3.wav'), load('susCymb1-bow-4.wav')
+rub2, rub4 = load('bassdrum_rub2_v1.wav'), load('bassdrum_rub4_v1.wav')
+brake, anvil = load('BrakeDrum1_Hammer_v3_Sum.wav'), load('Anvil_Hit1_v3_Sum.wav')
+ratchet, bd = load('Ratchet1-Slow_v1_rr1_Sum.wav'), load('BDrumNewhit_v7_rr1_Sum.wav')
 
-# ======================= strings
-trem_env = [(OPEN, -30), (2.5, -18), (4.0, -7), (HIT - GAP, 0), (HIT - 0.03, -60)]
-vct = Part('cello_trem', 'CelloEnsTrem', level=-17, pan=0.3, send=0.4, env=trem_env)
-vct.add(OPEN, ['D2', 'A2'], 3.95, 110)
-vlt = Part('viola_trem', 'ViolaEnsTrem', level=-19, pan=0.1, send=0.45, env=trem_env)
-vlt.add(2.5, ['D3', 'F3'], 1.5, 104).add(4.0, ['E3', 'A3'], 0.95, 116)
-vnt = Part('violin_trem', 'ViolinEnsTrem', level=-20, pan=-0.35, send=0.5,
-           env=[(3.5, -20), (HIT - GAP, 0), (HIT - 0.03, -60), (RISE - 0.01, -60), (RISE, -14), (MEGA - GAP, 0), (MEGA - 0.03, -60)])
-vnt.add(3.5, ['D5', 'A5'], 0.95, 104).add(4.4, ['E5', 'C#6'], 0.55, 118)
-for i, p in enumerate(['A4', 'C5', 'E5', 'A5']):
-    vnt.add(RISE + i * 0.14, [p, n(p) - 12], 0.18, 100 + i * 8)
+# ---- the body: a deep metal roar under everything (gongs slowed 3-4x, a bass-drum rub slowed 2x)
+START = 1.2                                                     # the roar fades in from here
+BODY = [(START, -60), (START + 0.25, -10), (START + 0.4, -2), (2.4, -2), (2.6, -2), (2.7, -4), (2.7, -4), (3.4, -6), (3.7, -13), (4.0, -6), (5.0, -8),
+        (5.5, -9), (6.6, -2), (6.85, -3), (7.05, -8), (7.5, -9), (8.0, -3), (8.15, -14), (8.5, -16), (8.8, -14), (9.0, -15), (9.4, -30), (9.6, -80)]
+body_t = lambda pts: [(t - START, d) for t, d in pts]            # absolute times -> layer time
+place('roar_gong_fff/4', START, filt(shape(vari(gong_fff, [(0, .25), (1.5, .26), (3, .22), (5.5, .24), (8.6, .2)], start=0.02, length=8.7),
+                                        body_t(BODY)), lo=30, hi=900), -20, wet=0.25)
+place('roar_gong_f/3', START, filt(shape(vari(gong_f, [(0, .34), (2, .32), (4, .35), (8.6, .3)], length=8.7), body_t(BODY)), lo=25, hi=500),
+      -21, pan=0.1, wet=0.2)
+place('growl_rub4/2', START, filt(shape(vari(rub4, [(0, .55), (1.0, .5), (2.0, .62), (3.0, .48), (6.0, .55), (8.6, .45)], length=8.7),
+                                      body_t(BODY)), lo=25, hi=700), -22, pan=-0.15, wet=0.15)
 
-# spiccato ostinato: 3-3-2 accents, octave leaps
-osc_vc = Part('cello_spic', 'CelloEnsSpic', level=-14, pan=0.3, send=0.25, env=BIGGER)
-osc_cb = Part('bass_spic', 'ContrabassSpic', level=-15, pan=0.4, send=0.2, env=BIGGER)
-osc_va = Part('viola_spic', 'ViolaEnsSpic', level=-19, pan=0.05, send=0.3)
-PAT = [0, 0, 12, 0, 0, 12, 0, 12]
-for beats in (A_BEAT, B_BEAT):
-    for i, t in enumerate(beats):
-        r, _ = chord_at(t)
-        v = 124 if i % 8 in ACC else 96
-        osc_vc.add(t, in_oct(r, 'C2', 'B2') + PAT[i % 8], E * 0.9, v)
-        osc_cb.add(t, in_oct(r, 'C1', 'B1'), E * 0.9, v)
-        if beats is B_BEAT:
-            osc_va.add(t, in_oct(r, 'C3', 'B3') + PAT[i % 8], E * 0.9, v)
-for i, t in enumerate(FILL):
-    osc_vc.add(t, n('A2') + (12 if i % 2 else 0), E * 0.45, 100 + i * 2)
-    osc_va.add(t, n('A3') + (12 if i % 2 else 0), E * 0.45, 100 + i * 2)
+# ---- 2.6 s: the biggest hit (fresh gong strike 2x down, slowed brake drum and anvil, a slowed kick)
+place('hit1_gong/2', HIT1, filt(shape(vari(gong_fff, [(0, .5), (3, .45)], length=3.0), [(0, 0), (0.8, -10), (2.5, -40)]), lo=30, hi=1500), -10, wet=0.4)
+place('hit1_brake/4', HIT1, filt(vari(brake, [(0, .25)], length=3), hi=2500), -19, pan=0.2, wet=0.5)
+place('hit1_anvil/6', HIT1 + 0.01, filt(vari(anvil, [(0, .16)], length=3), lo=200, hi=3000), -23, pan=-0.25, wet=0.5)
+place('hit1_kick/2', HIT1, filt(vari(bd, [(0, .5)], length=3), hi=300), -13, wet=0.1)
+# the screech: bowed cymbal slowed 2x, its speed rising (a metal scream sliding up 1.4-2.0 and 2.4-3.5)
+place('screech_fall', 1.4, filt(shape(vari(bow4, [(0, .9), (0.6, .6)], start=1.0, length=0.7), [(0, -30), (0.2, 0), (0.5, -3), (0.7, -40)]), lo=250, hi=3500),
+      -30, pan=-0.3, wet=0.5)
+place('screech_rise', 2.4, filt(shape(vari(bow3, [(0, .45), (1.1, .75)], start=1.5, length=1.15), [(0, -24), (0.25, 0), (0.8, -2), (1.15, -40)]), lo=250, hi=3500),
+      -27, pan=0.3, wet=0.5)
 
-low_env = [(0, -60), (DOWN - 0.01, -60), (DOWN, 0), (RISE, -2), (MEGA - GAP, -6), (MEGA - 0.03, -60)]
-vc = Part('cellos', 'CelloEnsSusVib', level=-19, pan=0.3, send=0.4, env=low_env)
-cb = Part('basses', 'ContrabassSusVB', level=-19, pan=0.4, send=0.3, env=low_env)
-vc.add(DOWN, ['Bb2', 'D3'], 0.75, 90).add(8.75, ['Bb2', 'D3'], 0.65, 84).add(RISE, ['A2', 'E3'], 0.6, 110)
-cb.add(DOWN, 'Bb1', 0.75, 92).add(8.75, 'G1', 0.65, 86).add(RISE, 'A1', 0.6, 110)
+# ---- 3.7-4.7 s: two metal groans (bowed cymbal 2x down, ~240 and ~285 Hz), clangs at 4.0 and 4.4
+wob = lambda base: [(i * 0.1, base * (1 + 0.006 * np.sin(i * 1.7))) for i in range(13)]
+place('groan_240', GROAN, filt(shape(vari(bow4, wob(0.43), start=1.0, length=1.2), [(0, -30), (0.25, 0), (0.9, 0), (1.2, -40)]), lo=150, hi=2000),
+      -25, pan=-0.2, wet=0.45)
+place('groan_285', GROAN + 0.1, filt(shape(vari(bow1, wob(0.505), start=2.0, length=1.1), [(0, -30), (0.25, 0), (0.8, 0), (1.1, -40)]), lo=150, hi=2000),
+      -26, pan=0.25, wet=0.45)
+place('clang_4.0', 4.0, filt(vari(brake, [(0, .3)], length=2.5), hi=1500), -26, pan=0.3, wet=0.5)
+place('clang_4.4', 4.4, filt(vari(anvil, [(0, .2)], length=2.5), lo=150, hi=2000), -28, pan=-0.3, wet=0.5)
+place('clang_4.4_gong', 4.4, filt(shape(vari(gong_mf, [(0, .5)], length=2.5), [(0, 0), (2.5, -30)]), lo=40, hi=1200), -24, wet=0.4)
 
-vln = Part('violins', 'ViolinEnsSusVib', level=-15, pan=-0.35, send=0.45, align=HIT, env=pumped(HOT, -5))
-for t, p, d in [(HIT, 'D5', 1.5), (6.5, 'F5', 0.75), (7.25, 'E5', 0.375), (7.625, 'C#5', 0.36)]:
-    vln.add(t, [p, n(p) - 12], d + 0.03, 120)
-THEME = [(MEGA, 'A5', 0.75), (10.75, 'Bb5', 0.375), (11.125, 'A5', 0.375), (11.5, 'G5', 0.5), (12.0, 'A5', 0.25),
-         (12.25, 'C#6', 0.25), (FINAL, 'D6', 3.4)]
-for t, p, d in THEME:
-    vln.add(t, [p, n(p) - 12], d + 0.03, 126)
+# ---- 4.9-5.5 s: the dip, a short scrape
+place('scrape_5.0', 4.7, filt(shape(vari(scrape, [(0, .5)], start=0.3, length=0.75), [(0, -20), (0.1, 0), (0.5, -3), (0.75, -40)]), lo=300, hi=4000), -25, wet=0.5)
+# a metallic mid texture under the second half (two bowed-cymbal takes slowed ~2.5x, slowly drifting)
+TEX = [(4.6, -30), (5.0, -4), (5.5, -6), (6.6, 0), (7.0, -2), (7.5, -2), (8.0, 0), (8.6, -1), (9.0, -2), (9.4, -40)]
+place('texture_bow4', 4.6, filt(shape(vari(bow4, [(0, .44), (2, .4), (4.6, .37)], start=1.0, length=4.6), [(t - 4.6, d) for t, d in TEX]), lo=200, hi=2500),
+      -32, pan=0.2, wet=0.45)
+place('texture_bow3', 4.6, filt(shape(vari(bow3, [(0, .4), (2.5, .46), (4.6, .42)], start=2.0, length=4.6), [(t - 4.6, d) for t, d in TEX]), lo=200, hi=2500),
+      -33, pan=-0.25, wet=0.45)
 
-# ======================= brass: the low growl of the opening, then the braams
-hn = Part('horns', 'FHornSus', level=-12, pan=-0.15, send=0.45, align=HIT, env=pumped([(OPEN, -22), (3.0, -14), (4.9, -5), (HIT, -3)] + HOT[1:], -9))
-tbn = Part('trombones', 'TromboneSus', level=-12, pan=0.35, send=0.4, align=HIT, env=pumped([(OPEN, -24), (3.0, -15), (4.9, -6), (HIT, -3)] + HOT[1:], -9))
-tba = Part('tuba', 'TubaSus', level=-15, pan=0.4, send=0.3, align=HIT, env=pumped([(OPEN, -24), (4.9, -6), (HIT, -3)] + HOT[1:], -8))
-hn.add(OPEN, ['D3', 'A3'], 3.95, 70)
-tbn.add(OPEN, ['D2', 'A2'], 3.95, 76)
-tba.add(OPEN, 'D2', 3.95, 76)
-for s, e, r, tones in PROG:
-    d = e - s + (0.03 if e < FINAL else 0)
-    hn.add(s, [p for p in tones if n('C3') <= n(p) <= n('A4')][-3:] + (['F#4'] if s == FINAL else []), d, 127)
-    tbn.add(s, [p for p in tones if n('A#1') <= n(p) <= n('E3')][:3], d, 127)
-    tba.add(s, in_oct(r, 'F1', 'E2'), d, 127)
-tpt = Part('trumpets', 'TrumpetSus', level=-12, pan=0.2, send=0.45, align=MEGA, env=pumped(HOT, -4))
-for t, p, d in THEME:
-    tpt.add(t, n(p) - 12, d + 0.03, 127)
-tpt.add(FINAL, ['F#4', 'A4'], 3.4, 124)
-stab_hn = Part('horn_stabs', 'FHornStac', level=-15, pan=-0.15, send=0.4, split=True, thresh=0.6, env=BIGGER)
-stab_tb = Part('trombone_stabs', 'TromboneStac', level=-15, pan=0.35, send=0.35, split=True, thresh=0.6, env=BIGGER)
-for t in ACCENTED:
-    if t not in (HIT, MEGA):
-        r, tones = chord_at(t)
-        stab_hn.add(t, [p for p in tones if n('C3') <= n(p) <= n('A4')][-2:], 0.15, 118)
-        stab_tb.add(t, [p for p in tones if n('A#1') <= n(p) <= n('E3')][:2], 0.18, 118)
+# ---- 5.4-6.6 s: swell with faint mechanical clicks (ratchet a bit slowed), a rub groaning upward
+place('clicks', 5.4, filt(shape(vari(ratchet, [(0, .7)], start=0.5, length=1.4), [(0, -12), (0.4, 0), (1.1, -2), (1.4, -40)]), lo=300, hi=4500),
+      -36, pan=0.2, wet=0.3, width=0.6)
+place('groan_rub2', 5.4, filt(shape(vari(rub2, [(0, .45), (1.2, .6)], start=1.0, length=1.6), [(0, -24), (1.1, 0), (1.6, -30)]), lo=30, hi=900),
+      -24, pan=-0.1, wet=0.3)
 
-choir = Part('choir', ('gm', 52), level=-18, pan=-0.05, send=0.55, env=pumped([(3.5, -20), (4.9, -8), (HIT, -3)] + HOT[1:], -7))
-choir.add(3.5, ['D3', 'A3', 'D4'], 1.45, 90)
-for s, e, r, tones in PROG:
-    choir.add(s, [p for p in tones if n('D3') <= n(p) <= n('A4')] + (['D5'] if s >= MEGA else []), e - s + 0.03, 124)
-
-# ======================= drums
-drum = Part('bass_drum', 'perc', level=-12, send=0.25, split=True, env=BIGGER)
-timp = Part('timpani', 'Timpani', level=-14, pan=-0.15, send=0.3, split=True)
-snr = Part('snare', 'perc', level=-17, pan=0.1, send=0.3, split=True, env=BIGGER)
-metal_k = Part('metal_hits', 'perc', level=-19, pan=-0.25, send=0.4, split=True)
-for beats in (A_BEAT, B_BEAT):
-    for i, t in enumerate(beats):
-        r, tones = chord_at(t)
-        if i % 8 in ACC:
-            drum.add(t, PERC['bd'], 1.5, 127 if t in (HIT, MEGA) else 116)
-            timp.add(t, in_oct(r, 'C2', 'B2'), 1.0, 124)
-        elif beats is B_BEAT and i % 2 == 0:
-            drum.add(t, PERC['bdd'], 0.6, 100)
-for t in BACK:
-    snr.add(t, PERC['snare'], 0.5, 118)
-    metal_k.add(t, PERC['brake'], 0.5, 110)
-for t in (3.0, 4.4, DOWN):
-    metal_k.add(t, PERC['anvil'], 1.0, 120)
-for i, t in enumerate(FILL):
-    snr.add(t, PERC['snare'], 0.2, 90 + i * 2)
-    if i % 2 == 0:
-        timp.add(t, n('A2') if i % 4 else n('E2'), 0.4, 112)
-for t in (OPEN, DOWN, FINAL):
-    drum.add(t, PERC['bd'], 2.5, 96 if t == OPEN else 127)
-timp.add(DOWN, 'Bb2', 1.5, 120).add(FINAL, ['D2', 'A2'], 2.5, 127)
-troll = Part('timp_roll', 'TimpaniRolls', level=-16, pan=-0.15, send=0.35,
-             env=[(3.8, -30), (HIT - GAP, 0), (HIT - 0.03, -60), (RISE - 0.01, -60), (RISE, -16), (MEGA - GAP, 0), (MEGA - 0.03, -60)])
-troll.add(3.8, 'A2', 1.2, 110).add(RISE, 'A2', 0.6, 116)
-cym = Part('cymbals', 'perc', level=-18, pan=0.15, send=0.45, split=True)
-cym.add(HIT, PERC['crash'], 3.0, 127).add(MEGA, PERC['crash'], 3.0, 127).add(FINAL, PERC['crash'], 3.0, 127)
-cym.add(6.5, PERC['crash'], 1.5, 100).add(10.75, PERC['crash'], 1.5, 104).add(11.5, PERC['crash'], 1.5, 104)
-gong = Part('gong', 'perc', level=-19, pan=-0.1, send=0.5, split=True, env=[(0, 0)] + FADE)
-gong.add(DOWN, PERC['gong'], 1.4, 100).add(MEGA, PERC['gong'], 2.5, 124).add(FINAL, PERC['gong'], 3.4, 127)
-ratchet = Part('ratchet', 'perc', level=-24, pan=0.45, send=0.35, env=[(0, -6), (4.9, 0), (HIT - 0.05, -60)])
-ratchet.add(4.0, PERC['ratchet_fast'], 0.93, 110)
-
-PARTS = FX + [vct, vlt, vnt, osc_vc, osc_cb, osc_va, vc, cb, vln, hn, tbn, tba, tpt, stab_hn, stab_tb, choir,
-              drum, timp, snr, metal_k, troll, cym, gong, ratchet]
-ACCENTS = [OPEN, HIT, DOWN, MEGA, FINAL]
+# ---- 7.5-8.0 rise (a reversed slowed gong), 8.0 deep hit, a falling groan 7.8-8.6
+rev = filt(vari(gong_f, [(0, .4)], length=1.2), lo=30, hi=1200)[::-1]
+place('rise_rev_gong', HIT2 - len(rev) / SR, shape(rev, [(0, -30), (len(rev) / SR - 0.05, 0), (len(rev) / SR, -60)]), -24, wet=0.3)
+place('hit2_gong/3', HIT2, filt(shape(vari(gong_f, [(0, .33), (2, .3)], length=2.0), [(0, 0), (0.5, -9), (2.0, -40)]), lo=25, hi=700), -21, wet=0.35)
+place('hit2_kick/2', HIT2, filt(shape(vari(bd, [(0, .45)], length=3), [(0, 0), (0.3, -6), (1.5, -40)]), hi=250), -19, wet=0.1)
+place('hit2_brake/5', HIT2, filt(vari(brake, [(0, .2)], length=3), hi=1800), -28, pan=-0.2, wet=0.5)
+place('fall_groan', 7.8, filt(shape(vari(gong_mf, [(0, .7), (0.8, .32)], start=0.05, length=1.1), [(0, -18), (0.2, 0), (0.8, -4), (1.1, -40)]), lo=40, hi=1500),
+      -25, wet=0.4)
 
 if __name__ == '__main__':
     out = sys.argv[1]
-    y, rep = build('TAGS_theme', PARTS, LEN, os.path.join(out, 'build'), reverb=(80, 50, 100, 100, 30, 0), wet=0.3,
-                   fade=(14.8, 15.95))
+    wd = os.path.join(out, 'build', 'TAGS_metal'); os.makedirs(wd, exist_ok=True)
+    rv = sox_reverb(send, (85, 60, 100, 100, 40, 0), wd)
+    L = min(len(rv), len(mix))
+    y = (mix[:L] + rv[:L] * 0.3)[:N]
+    y = master(y, os.path.join(out, 'build'), 'TAGS_metal', (9.3, 9.95), True)
     wav, ogg = export(y, out, 'TAGS_theme')
-    save_score([p for p in PARTS if not callable(p.inst)], os.path.join(out, 'TAGS_theme.mid'))
     y = decode(ogg)
-    rep['length_samples'] = len(y)
-    rep['ogg_peak_dbfs'] = round(ogg_peak_db(ogg), 2)
-    rep['accents'] = {str(round(t, 2)): round(accent_time(y, t), 4) for t in ACCENTS}
+    rep = dict(length_samples=len(y), ogg_peak_dbfs=round(ogg_peak_db(ogg), 2), layers=LAYERS,
+               accents={str(t): round(accent_time(y, t), 4) for t in (HIT1, 4.0, 4.4, HIT2)})
     json.dump(rep, open(os.path.join(out, 'TAGS_theme_report.json'), 'w'), indent=1)
-    print(json.dumps(rep['accents']))
+    print(json.dumps(rep['accents']), rep['length_samples'], rep['ogg_peak_dbfs'])

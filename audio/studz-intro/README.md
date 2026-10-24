@@ -2,15 +2,14 @@
 
 Orchestral cues for the Roblox game **Studz**, played with real recorded
 instrument samples. Each part is written as MIDI, rendered through the sample
-libraries, then mixed and mastered. TAGS_theme also has a layer of trailer sound
-design (sub impacts, braams, pitch dives, ticks, metal hits, risers) synthesized
-in `scripts/fx.py`.
+libraries, then mixed and mastered. TAGS_theme is pure sound design instead: real
+metal recordings from the same library, slowed down and layered.
 
 | File | Length | Main accent (target → measured in the .ogg) |
 |---|---|---|
 | `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.302 s |
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
-| `TAGS_theme.ogg` | 16.000 s (705 600 samples) | growl 1.000 → 1.002 s, BRAAM 5.000 → 5.002 s, beat down 8.000 → 8.002 s, MEGA UP 10.000 → 9.998 s, final chord 12.500 → 12.502 s |
+| `TAGS_theme.ogg` | 10.000 s (441 000 samples) | big hit 2.600 → 2.604 s, clangs 4.000 → 3.990 s and 4.400 → 4.448 s, deep hit 8.000 → 8.002 s |
 
 All are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
@@ -31,38 +30,48 @@ sparkling. The melody is original, not a quotation.
 
 Fireworks measured at 5.560, 6.104, 6.554, 7.204 and 7.754 s.
 
-## TAGS_theme (16 s studio intro, dark blockbuster style, D minor)
+## TAGS_theme (10 s dark metal intro, no music)
 
-The sound follows measurements of the Paramount logo sequence from a modern
-robot-action film (`scripts/analyze_ref.py`). The reference audio is not included.
-What the measurements showed:
+This is the dark, heavy feel of the Paramount logo sequence from a modern robot-action
+film, made only from real metal recordings. There's no melody and no beat. The
+reference audio is not included; only measurements of it were used:
 
-- 1 s of silence, then a low sub and brass growl that dives in pitch
-- a falling "downer" sweep at the loudest moment, then metal clanks
-- a fast mechanical ticking pulse, one tick every 0.19 s
-- a low drone underneath and a dark sound overall (spectral centroid 500–900 Hz)
-- big 10–15 dB swings between the hits instead of a flat wall
+- its loudness every 0.25 s
+- its brightness (spectral centroid)
+- how much of its energy sits below 250 Hz
+- where its hits and groans fall
 
-It is more sound design than melody. The music and sound design here are original.
-The pulse is 160 bpm, so an eighth note is 0.1875 s, the same rate as the measured ticks.
-`reports/TAGS_theme_vs_reference_shape.png` compares the two loudness curves.
+Those measurements were made with `scripts/analyze_ref.py` and `scripts/compare.py`.
+
+Every sound comes from the VSCO-2 CE percussion recordings: gong hits and scrape, bowed
+cymbal, bass-drum rubs, brake drum, anvil, ratchet and kick. Each is slowed down 2–8×
+with a sliding playback speed, so a gong becomes a giant metal roar and a bowed cymbal
+becomes a groan or a screech.
 
 | Time | What happens |
 |---|---|
-| 0–1.0 s | Silence. |
-| 1.0–5.0 s | The build: a low growl (brass, synth braam and sub, all diving in pitch), rumble, and a string tremolo crescendo. A downer at 2.5 s, metal clanks at 3.0, 3.9 and 4.4 s, and mechanical ticks speeding up. A noise riser and a reverse swell are sucked into a 70 ms silent gap. |
-| 5.0 s | BRAAM: low brass, synth braam, sub impact, downer, crash. |
-| 5.0–8.0 s | The beat: a spiccato string ostinato with 3-3-2 accents, bass drum, snare and brake-drum backbeat, brass stabs, choir and ticks (Dm – B♭ – C – A). Held notes duck after every hit so the hits punch out. |
-| 8.0 s | Beat down: everything drops into one falling hit (sub, downer, gong, anvil). |
-| 8.0–9.4 s | Only a low drone, slow ticks and a metal ring remain (B♭, then G). |
-| 9.4–10.0 s | Riser: the ticks accelerate, with a timpani roll, climbing strings, a reverse swell and another gap. |
-| 10.0 s | MEGA UP: the biggest braam, with gong. The heroic theme plays on trumpets and violins, and the beat returns doubled (violas, 16th ticks, a bass drum on every beat). Then Dm – B♭ – C – A and a drum fill. |
-| 12.5 s | The final D major braam. |
-| 13–16 s | It slowly sinks to silence. |
+| 0–1.2 s | Silence |
+| 1.2–1.6 s | A fast swell into a deep metal roar (two gongs slowed 3–4×, a bass-drum rub slowed 2×). Its pitch drifts. |
+| 1.4–2.0 s | A metal screech sliding down |
+| **2.6 s** | **The biggest hit:** a fresh gong strike, brake drum, anvil and kick, all slowed down. A bowed-cymbal screech rises from 2.4 to 3.5 s. |
+| 3.7–4.7 s | Two metal groans (about 240 and 285 Hz) with slowed clangs at 4.0 and 4.4 s |
+| 4.7–5.5 s | Dip, with a gong scrape |
+| 5.4–6.6 s | A swell with faint mechanical clicks (ratchet) and a bass-drum rub groaning upward. A slowed bowed-cymbal texture runs underneath until the end. |
+| 7.0–7.5 s | Dip |
+| 7.5–8.0 s | A reversed gong rises into **8.0 s**, a deep hit, with a gong groan falling in pitch. |
+| 8.2–10 s | A dark tail into silence |
 
-Measured: growl 1.002 s, BRAAM 5.002 s, beat down 8.002 s, MEGA UP 9.998 s, final 12.502 s.
-Loudness (0.125 s RMS): the build rises to about -25 dB, and the first beat swings between -16 and -26 dB.
-MEGA UP averages about 4 dB louder than the first beat.
+How close it is to the reference, by `scripts/compare.py` from 1 to 9 s, after matching levels:
+
+| Measure | Reference | TAGS_theme |
+|---|---|---|
+| Loudness-curve correlation | | 0.93 |
+| Average gap every 0.25 s | | about 3 dB |
+| Brightness (power-weighted spectral centroid) | 239 Hz | 284 Hz |
+| Energy below 250 Hz | 73% | 77% |
+
+`reports/TAGS_theme_vs_reference_shape.png` shows both spectrograms and loudness curves.
+This piece has no MIDI because it is not written as notes.
 
 ## Studz_fanfare (game logo, B-flat major)
 
@@ -89,14 +98,13 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
   - strings: violin, viola, cello and contrabass ensembles (sustain/vibrato, tremolo, spiccato), harp
   - winds: flute, piccolo, oboe, clarinet, bassoon
   - brass: F horn, trumpet, tenor trombone, tuba (sustain; trumpet and trombone staccato)
-  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, snare, ratchet, anvil, brake drum, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
+  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, snare, ratchet, anvil, brake drum, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong hits and scrape, bass-drum rubs, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
 - **GeneralUser GS 2.0.3** (S. Christian Collins, free for any use), commit `684543d`: celesta and choir "aahs" only (VSCO-2 has neither).
-- **Synthesized** in `scripts/fx.py` (numpy/SciPy, no samples), TAGS_theme only: the sub impacts, braam layer, downers, risers and reverse swells, mechanical ticks, metal hits and rumble.
 
 ## Tools
 
 - sfizz `sfizz_render` (built from commit `f5c6e29`) for the SFZ instruments; FluidSynth 2.3.4 for the celesta and choir.
-- Python 3 with mido, numpy, SciPy, soundfile and matplotlib: score, sound design, mixing, alignment and checks; librosa for `analyze_ref.py`.
+- Python 3 with mido, numpy, SciPy, soundfile and matplotlib: score, sound design, mixing, alignment and checks; librosa for `analyze_ref.py` and `compare.py`.
 - SoX 14.4.2 hall reverb (wet send), and FFmpeg 6.1 for the master: high-pass, gentle EQ, 2:1 compression.
 - vorbis-tools 1.4.2 (`oggenc -q 7`).
 
@@ -104,13 +112,13 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
 
 - `TAGS_ident.ogg`, `Studz_fanfare.ogg`, `TAGS_theme.ogg`: the deliverables.
 - `wav/`: 24-bit masters.
-- `midi/*.mid`: full score of each piece (one track per part). `midi/parts/<piece>/`: the exact per-part MIDI that was rendered.
+- `midi/*.mid`: full score of TAGS_ident and Studz_fanfare (one track per part). `midi/parts/<piece>/`: the exact per-part MIDI that was rendered.
 - `scripts/`:
   - `orch.py`: render, align, mix and master toolkit
-  - `fx.py`: synthesized trailer sound design for TAGS_theme
   - `tags_ident.py`, `studz_fanfare.py`, `tags_theme.py`: the compositions
   - `plot_check.py`: the waveform, spectrogram and loudness plots
   - `analyze_ref.py`: measures a reference intro (loudness curve, frequency bands, hits, tempo, chords)
+  - `compare.py`: compares a render with a reference every 0.25 s (loudness, brightness, low-end share)
 - `reports/`: stem shifts, levels, measured accents and the plots.
 
 ## Rebuild
