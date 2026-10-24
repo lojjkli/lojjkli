@@ -8,7 +8,7 @@ the sample libraries, then mixed and mastered.
 |---|---|---|
 | `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.302 s |
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
-| `TAGS_theme.ogg` | 13.000 s (573 300 samples) | loud at 5.000 → 5.004 s, final hit 10.000 → 10.002 s |
+| `TAGS_theme.ogg` | 16.000 s (705 600 samples) | loud 5.000 → 5.004 s, MEGA UP 10.000 → 10.002 s, final hit 12.500 → 12.510 s |
 
 All are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
@@ -29,21 +29,23 @@ sparkling. The melody is original, not a quotation.
 
 Fireworks measured at 5.560, 6.104, 6.554, 7.204 and 7.754 s.
 
-## TAGS_theme (13 s version with beats, B-flat minor → B-flat major, 96 bpm)
+## TAGS_theme (16 s version with beats, B-flat minor → B-flat major, 96 bpm)
 
 Original music in the style of the Transformers-era Paramount intros: robotic/metal sounds
 and a braam, a string pulse with choir, a driving beat, and a heroic unison-horn theme over
-i – VI – III – VII (B♭m – G♭ | D♭ – A♭). One bar = 2.5 s.
+i – VI – III – VII. One bar = 2.5 s.
 
 | Time | What happens |
 |---|---|
 | 0–2.5 s | Starts from silence: soft violins preview the theme over a harp arpeggio. Quiet ratchets and metal clanks, and a low braam fading in. |
-| 2.5–5.0 s | The build: 16th spiccato strings, choir swell, kick doubling up, snare and timpani rolls, trombone braam, violin tremolo climbing, cymbal swell, then a split second of silence. |
-| 5.0–10.0 s | Loud: horns and trombones play the theme. Trumpets and violins join an octave up from 7.5 s. The beat: kick, snare plus anvil/brake drum on 2 and 4, 16th shaker, timpani fills, crashes, choir. |
-| 10.0 s | Final heroic hit on B-flat **major**: gong, crash, anvil, bells, full orchestra and choir. |
-| 10–13 s | It gets quiet again quickly and rings out to silence by 13.0 s. |
+| 2.5–5.0 s | The build: 16th spiccato strings, choir swell, kick doubling up, snare and timpani rolls, braam, cymbal swell, then a split second of silence. |
+| 5.0–7.5 s | Loud: horns and trombones play the theme over the full beat (kick, snare plus anvil/brake drum on 2 and 4, 16th shaker, timpani fills, crash). B♭m – G♭. |
+| 7.5–10.0 s | Beat down: the drums drop to a heartbeat and the strings hold G♭ → A♭ quietly. Then a riser: snare roll, climbing tremolo, braam, ratchets, timpani, cymbal swell, and a split second of silence. |
+| 10.0–12.5 s | MEGA UP, the loudest part: the theme climax with trumpets and violins an octave up, double-time kick, timpani 16ths, full choir, gong and crashes. D♭ – A♭. |
+| 12.5 s | Final hit on B-flat **major**, held to 13.0 s. |
+| 13–16 s | Slowly down to silence. |
 
-Measured: build starts 2.498, loud section 5.004, second bar 7.502, final hit 10.002 s.
+Measured: loud 5.004 s, beat down 7.522 s, MEGA UP 10.002 s, final hit 12.510 s.
 
 ## Studz_fanfare (game logo, B-flat major)
 
