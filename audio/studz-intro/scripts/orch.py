@@ -126,7 +126,7 @@ PERC = dict(bd=36, crash=49, cym=51, swell_s=52, swell_m=53, swell_l=54, gong=55
 
 class Part:
     def __init__(self, name, inst, level=-20.0, pan=0.0, send=0.3, align=None, env=None, split=False, thresh=0.35):
-        self.name, self.inst = name, inst          # inst: 'Harp' (VSCO sfz) / 'perc' / ('gm', program)
+        self.name, self.inst = name, inst          # inst: 'Harp' (VSCO sfz) / 'perc' / ('gm', program) / fx.Buf
         self.level = level                         # loudest 100 ms RMS of the stem, dBFS (before the master)
         self.notes = []                            # (start s, dur s, midi note, velocity)
         self.pan, self.send = pan, send
@@ -269,8 +269,11 @@ def build(title, parts, length, workdir, reverb=(60, 45, 100, 100, 20, 0), wet=0
     N = int(round(length * SR))
     dry = np.zeros((N + SR * 8, 2)); send = np.zeros_like(dry)
     report = {'stems': {}}
+    os.makedirs(os.path.join(workdir, title), exist_ok=True)
     for p in parts:
-        if p.split:
+        if callable(p.inst):                       # synthesized sound design (fx.Buf)
+            x, shift = p.inst(), 0.0
+        elif p.split:
             x, shift = render_split(p, os.path.join(workdir, title)), 0.0
         else:
             x = render(p, os.path.join(workdir, title))
@@ -288,7 +291,7 @@ def build(title, parts, length, workdir, reverb=(60, 45, 100, 100, 20, 0), wet=0
         send[:L] += x * p.send
         if os.environ.get('SAVE_STEMS'):
             sf.write(os.path.join(workdir, title, p.name + '_stem.wav'), x[:N], SR, subtype='FLOAT')
-        report['stems'][p.name] = dict(inst=str(p.inst), shift_ms=round(shift * 1000, 1),
+        report['stems'][p.name] = dict(inst=getattr(p.inst, '__name__', str(p.inst)), shift_ms=round(shift * 1000, 1),
                                        peak_db=round(20 * math.log10(np.abs(x).max() + 1e-12), 1))
     rv = sox_reverb(send, reverb, os.path.join(workdir, title))
     L = min(len(rv), len(dry))
@@ -380,7 +383,7 @@ def save_score(parts, path):
     meta.append(mido.MetaMessage('set_tempo', tempo=1_000_000, time=0))
     for ch_i, p in enumerate(parts):
         tr = mido.MidiTrack(); mid.tracks.append(tr)
-        tr.append(mido.MetaMessage('track_name', name=f'{p.name} ({p.inst})', time=0))
+        tr.append(mido.MetaMessage('track_name', name=f"{p.name} ({getattr(p.inst, '__name__', p.inst)})", time=0))
         ch = 9 if p.inst == 'perc' else ch_i % 9
         ev = []
         for (t, d, q, v) in p.notes:
