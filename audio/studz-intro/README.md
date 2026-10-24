@@ -8,7 +8,7 @@ the sample libraries, then mixed and mastered.
 |---|---|---|
 | `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.302 s |
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
-| `TAGS_theme.ogg` | 30.000 s (1 323 000 samples) | drop 14.400 → 14.402 s, final hit 26.400 → 26.400 s |
+| `TAGS_theme.ogg` | 30.000 s (1 323 000 samples) | theme 15.000 → 15.002 s, final hit 27.000 → 27.004 s |
 
 All are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
@@ -29,24 +29,24 @@ sparkling. The melody is original, not a quotation.
 
 Fireworks measured at 5.560, 6.104, 6.554, 7.204 and 7.754 s.
 
-## TAGS_theme (long version with beats, 30 s, D-flat major / B-flat minor, 100 bpm)
+## TAGS_theme (long version with beats, 30 s, B-flat minor → B-flat major, 80 bpm)
 
-The TAGS opening grows into a dark, driving hybrid-orchestral theme in the spirit of the
-Transformers-era Paramount intro (original music): pounding drums, galloping spiccato
-strings, brass braams, and anvil and brake-drum clangs. One bar = 2.4 s.
+Original music in the style of the Transformers-era Paramount intros. It has robotic/metal
+logo sounds and a low braam, a quiet emotional start, a steady 16th-note string pulse with
+choir, half-time drums, and a heroic unison-horn theme over i – VI – III – VII
+(B♭m – G♭ – D♭ – A♭). One bar = 3.0 s.
 
 | Time | What happens |
 |---|---|
-| 0–4.8 s | The magical opening from the logo version: celesta, harp, soft strings, the flute phrase. |
-| 4.8–9.6 s | The beat kicks in: bass drum, snare backbeat and shaker, galloping spiccato cellos and basses. The violins sing the theme over B♭m and G♭. |
-| 9.6–14.15 s | Build: pulls back, then grows. Horns take the theme, violas join the ostinato, trombone/tuba braam, timpani roll, double-time drums, a 16th-note snare roll, harp and flute run-ups and a cymbal swell. |
-| 14.15–14.4 s | A split second of silence. |
-| 14.4–24.0 s | The drop: trumpets and violins play the theme fortissimo with horns an octave below, over B♭m – G♭ – D♭ – A♭. Brass braams, the full drum pattern (bass drum, snare plus brake drum on the backbeat, timpani "toms", 16th shaker), anvil clangs and spiccato ostinato. Crashes at 14.4 and 19.2. |
-| 24.0–26.4 s | Fill: staccato brass stabs, snare crescendo, violin run-up, timpani run down into the final hit. |
-| 26.4 s | The final hit on D♭ major (the loudest section): full orchestra, gong, crash, anvil, tubular bells. |
-| after 26.4 s | The opening melody returns on celesta over a harp arpeggio, fading to silence by 30.0 s. |
+| 0–3 s | The logo: a deep boom, gong scrape, ratchets and brake-drum/anvil clanks (the "transforming" sounds) over a low trombone/tuba braam that swells up to an anvil hit. |
+| 3–6 s | Quiet and emotional: the TAGS melody on celesta over a soft B♭m string pad and harp. |
+| 6–12 s | The pulse: 16th spiccato violas and cellos, choir "aah", timpani and kick on 1 and 3. Horns hint at the theme. |
+| 12–14.8 s | The rise: drums double up, snare roll, violin tremolo climbs chromatically, trombone braam, ratchets, cymbal swell, harp run, then a split second of silence. |
+| 15–21 s | The theme: horns and trombones play the melody in unison over choir, strings, tuba and big half-time drums (kick on 1 and the "and" of 2, snare plus anvil/brake drum on 3, timpani fills). |
+| 21–27 s | The theme climbs: trumpets and violins join it an octave up. A timpani roll leads into the final hit. |
+| 27 s | Final hit on B-flat **major** (heroic): full orchestra and choir, gong, crash, anvil, tubular bells. It rings out to silence by 30 s. |
 
-Section downbeats measured at 14.402 (drop), 19.206, 24.016 and 26.400 s (final hit).
+Section downbeats measured at 15.002 (theme), 21.012 and 27.004 s (final hit).
 
 ## Studz_fanfare (game logo, B-flat major)
 
@@ -73,12 +73,12 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
   - strings: violin, viola, cello and contrabass ensembles (sustain/vibrato, tremolo, spiccato), harp
   - winds: flute, piccolo, oboe, clarinet, bassoon
   - brass: F horn, trumpet, tenor trombone, tuba (sustain; trumpet and trombone staccato)
-  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, snare, tambourine shake, anvil, brake drum, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
-- **GeneralUser GS 2.0.3** (S. Christian Collins, free for any use), commit `684543d`: celesta only, because VSCO-2 has no celesta.
+  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, snare, ratchet, anvil, brake drum, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
+- **GeneralUser GS 2.0.3** (S. Christian Collins, free for any use), commit `684543d`: celesta and choir "aahs" only (VSCO-2 has neither).
 
 ## Tools
 
-- sfizz `sfizz_render` (built from commit `f5c6e29`) for the SFZ instruments; FluidSynth 2.3.4 for the celesta.
+- sfizz `sfizz_render` (built from commit `f5c6e29`) for the SFZ instruments; FluidSynth 2.3.4 for the celesta and choir.
 - Python 3 with mido, numpy, soundfile and matplotlib: score, mixing, alignment and checks.
 - SoX 14.4.2 hall reverb (wet send), and FFmpeg 6.1 for the master: high-pass, gentle EQ, 2:1 compression.
 - vorbis-tools 1.4.2 (`oggenc -q 7`).
