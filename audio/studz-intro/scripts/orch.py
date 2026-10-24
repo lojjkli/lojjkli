@@ -76,19 +76,41 @@ PERC_SFZ = r"""
 <region> key=64 sample=Triangle6-HitM_v2_rr1_Sum.wav
 <group> key=65 // bowed suspended cymbal (shimmer)
 <region> sample=susCymb1-bow-1.wav
+<group> key=37 // snare taps (soft ticking)
+<region> sample=Snare2-taps_v1_rr1_Sum.wav hivel=40
+<region> sample=Snare2-taps_v2_rr1_Sum.wav lovel=41 hivel=70
+<region> sample=Snare2-taps_v3_rr1_Sum.wav lovel=71 hivel=100
+<region> sample=Snare2-taps_v4_rr1_Sum.wav lovel=101
+<group> key=38 // snare hit
+<region> sample=Snare2-HitSN_v1_rr1_Sum.wav hivel=30
+<region> sample=Snare2-HitSN_v3_rr1_Sum.wav lovel=31 hivel=60
+<region> sample=Snare2-HitSN_v5_rr1_Sum.wav lovel=61 hivel=90
+<region> sample=Snare2-HitSN_v7_rr1_Sum.wav lovel=91 hivel=112
+<region> sample=Snare2-HitSN_v9_rr1_Sum.wav lovel=113
+<group> key=40 loop_mode=no_loop ampeg_release=0.12 // snare roll (note-off cuts it)
+<region> sample=Snare2-rollSN_v1_rr1_Sum.wav hivel=50
+<region> sample=Snare2-rollSN_v3_rr1_Sum.wav lovel=51 hivel=95
+<region> sample=Snare2-rollSN_v5_rr1_Sum.wav lovel=96
+<group> key=75 // claves
+<region> sample=Claves1_Hit_v1_rr1_Sum.wav hivel=50
+<region> sample=Claves1_Hit_v2_rr1_Sum.wav lovel=51 hivel=95
+<region> sample=Claves1_Hit_v3_rr1_Sum.wav lovel=96
 """
 PERC = dict(bd=36, crash=49, cym=51, swell_s=52, swell_m=53, swell_l=54, gong=55,
-            tree1=57, tree2=58, tree3=59, tree4=60, tri3=62, tri6=63, tri6m=64, bow=65)
+            tree1=57, tree2=58, tree3=59, tree4=60, tri3=62, tri6=63, tri6m=64, bow=65,
+            taps=37, snare=38, sroll=40, claves=75)
 
 
 class Part:
-    def __init__(self, name, inst, level=-20.0, pan=0.0, send=0.3, align=None, env=None):
+    def __init__(self, name, inst, level=-20.0, pan=0.0, send=0.3, align=None, env=None, split=False, thresh=0.35):
         self.name, self.inst = name, inst          # inst: 'Harp' (VSCO sfz) / 'perc' / ('gm', program)
         self.level = level                         # loudest 100 ms RMS of the stem, dBFS (before the master)
         self.notes = []                            # (start s, dur s, midi note, velocity)
         self.pan, self.send = pan, send
         self.align = align                         # time (s) of the accent this stem must hit exactly
         self.env = env or []                       # [(t, dB)] gain automation
+        self.split = split                         # time every chord on its own (stabs)
+        self.thresh = thresh                       # fraction of the peak that counts as the attack
 
     def add(self, t, pitches, dur, vel):
         for p in (pitches if isinstance(pitches, (list, tuple)) else [pitches]):
@@ -140,16 +162,18 @@ def render(part, workdir):
     return x[:, :2]
 
 
-def latency(p, workdir, thresh=0.35):
+def latency(p, workdir, ref=None):
     """How late the accent (or first) chord of a part sounds after its note-on:
     render just that chord on its own and find where it reaches `thresh` of
     its peak (a stand-in for the perceived attack of slow-speaking samples)."""
     if not p.notes:
         return 0.0
-    ref = p.align if p.align is not None else min(t for t, *_ in p.notes)
+    if ref is None:
+        ref = p.align if p.align is not None else min(t for t, *_ in p.notes)
     chord = [(0.5, d, q, v) for (t, d, q, v) in p.notes if abs(t - ref) < 1e-3]
-    probe = Part(p.name + '_probe', p.inst); probe.notes = chord
+    probe = Part(f'{p.name}_probe', p.inst); probe.notes = chord
     x = render(probe, workdir)
+    thresh = p.thresh
     e = envelope(x, 0.01)
     i0, i1 = int(0.45 * SR), int(2.0 * SR)
     seg = e[i0:i1]
@@ -157,6 +181,24 @@ def latency(p, workdir, thresh=0.35):
         return 0.0
     k = int(np.argmax(seg >= thresh * seg.max()))
     return float(np.clip((i0 + k) / SR - 0.5, 0.0, 0.3))
+
+
+def render_split(p, workdir):
+    """Render each chord of a stab part separately and place it so its own
+    attack lands exactly on its time. Returns the assembled stem (no shift)."""
+    times = sorted({round(t, 4) for t, *_ in p.notes})
+    out = np.zeros((int((max(t + d for t, d, *_ in p.notes) + 8) * SR), 2))
+    for t0 in times:
+        lat = latency(p, workdir, t0)
+        probe = Part(f'{p.name}_at{int(t0 * 1000)}', p.inst)
+        probe.notes = [(0.5, d, q, v) for (t, d, q, v) in p.notes if abs(t - t0) < 1e-3]
+        x = render(probe, workdir)
+        start = int(round((t0 - 0.5 - lat) * SR))
+        a0 = max(0, -start)
+        seg = x[a0:]
+        e = min(len(out), start + a0 + len(seg))
+        out[start + a0:e] += seg[:e - start - a0]
+    return out
 
 
 def envelope(x, win=0.005):
@@ -204,8 +246,11 @@ def build(title, parts, length, workdir, reverb=(60, 45, 100, 100, 20, 0), wet=0
     dry = np.zeros((N + SR * 8, 2)); send = np.zeros_like(dry)
     report = {'stems': {}}
     for p in parts:
-        x = render(p, os.path.join(workdir, title))
-        shift = latency(p, os.path.join(workdir, title))
+        if p.split:
+            x, shift = render_split(p, os.path.join(workdir, title)), 0.0
+        else:
+            x = render(p, os.path.join(workdir, title))
+            shift = latency(p, os.path.join(workdir, title))
         s = int(round(shift * SR))
         x = x[s:] if s > 0 else np.vstack([np.zeros((-s, 2)), x])
         L = min(len(x), len(dry))
@@ -217,6 +262,8 @@ def build(title, parts, length, workdir, reverb=(60, 45, 100, 100, 20, 0), wet=0
         x = np.stack([x[:, 0] * gl, x[:, 1] * gr], axis=1)
         dry[:L] += x
         send[:L] += x * p.send
+        if os.environ.get('SAVE_STEMS'):
+            sf.write(os.path.join(workdir, title, p.name + '_stem.wav'), x[:N], SR, subtype='FLOAT')
         report['stems'][p.name] = dict(inst=str(p.inst), shift_ms=round(shift * 1000, 1),
                                        peak_db=round(20 * math.log10(np.abs(x).max() + 1e-12), 1))
     rv = sox_reverb(send, reverb, os.path.join(workdir, title))
@@ -247,6 +294,24 @@ def master(mix, workdir, title, fade, comp):
     return y
 
 
+def accent_time(y, t, win=0.06):
+    """Measured accent time near t in a finished mix: the 2 ms frame where the
+    energy above 1.5 kHz (where attacks live) rises most steeply, in dB,
+    compared with the 20 ms before it."""
+    m = y.mean(axis=1)
+    i0 = max(0, int((t - win - 0.05) * SR)); i1 = min(len(m), int((t + win + 0.02) * SR))
+    seg = m[i0:i1]
+    spec = np.fft.rfft(seg); f = np.fft.rfftfreq(len(seg), 1 / SR); spec[f < 1500] = 0
+    hf = np.fft.irfft(spec, len(seg))
+    hop = int(0.002 * SR)
+    e = np.array([np.mean(hf[k:k + hop] ** 2) for k in range(0, len(hf) - hop, hop)]) + 1e-12
+    db = 10 * np.log10(np.convolve(e, np.ones(3) / 3, 'same'))
+    rise = np.array([db[k] - db[max(0, k - 10):k].mean() if k >= 10 else -99 for k in range(len(db))])
+    k_lo, k_hi = int(0.05 / 0.002), int((0.05 + 2 * win) / 0.002)
+    k = k_lo + int(np.argmax(rise[k_lo:k_hi]))
+    return (i0 + k * hop) / SR
+
+
 def spectral_flux_onset(y, t, win=0.06):
     """Measured accent time near t in a finished mix (broadband spectral flux peak)."""
     m = y.mean(axis=1)
@@ -256,7 +321,8 @@ def spectral_flux_onset(y, t, win=0.06):
     frames = [seg[k:k + nfft] * np.hanning(nfft) for k in range(0, len(seg) - nfft, hop)]
     S = np.abs(np.fft.rfft(np.array(frames), axis=1))
     flux = np.maximum(0, np.diff(np.log1p(S * 50), axis=0)).sum(axis=1)
-    k = int(np.argmax(flux)) + 1
+    k0 = int(np.argmax(flux >= 0.5 * flux.max()))          # first strong attack in the window
+    k = k0 + int(np.argmax(flux[k0:k0 + 4])) + 1
     return (i0 + k * hop + nfft // 2) / SR
 
 

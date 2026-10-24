@@ -6,24 +6,28 @@ the sample libraries, then mixed and mastered.
 
 | File | Length | Main accent (target → measured in the .ogg) |
 |---|---|---|
-| `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.298 s |
-| `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 9.995 s |
+| `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.300 s |
+| `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
 
 Both are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
 
-## TAGS_ident (studio logo, D major)
+## TAGS_ident (studio logo, secret-agent version, E minor)
+
+Dark and stealthy: creeping pizzicato bass, ticking snare and whispered muted brass,
+built around the minor chord with a major 7th (E–G–B–D♯). Played on a 120 bpm grid that is
+offset so 5.3 s falls on a beat.
 
 | Time | What happens |
 |---|---|
-| 0–2.3 s | Night sky. Celesta twinkles and a harp roll over a floating G-lydian chord (violin tremolo, violas, cellos, clarinet). |
-| 2.3 s | The star appears (bell tree). |
-| 2.3–5.3 s | Accelerating harp glissando (D3 → D7), rising violin line, Em9 → Bm7 → A7sus4 → A7, flute run, timpani roll and suspended-cymbal swell. |
-| 5.3 s | Logo lights up: full-orchestra D major with tubular bells, glockenspiel, crash, bass drum and timpani. |
-| 5.55, 6.10, 6.55, 7.20, 7.75 s | Firework sparkles: glockenspiel, celesta, harp, triangle, bell tree and soft cymbal. |
-| after 7.75 s | The chord rings out, then fades to silence by 10.1 s. |
+| 0–2.3 s | In the shadows: a creeping pizzicato bass riff, snare taps ticking on the off-beats, a B/C tremolo cluster high in the violins. A muted trumpet whispers the motif (B–C–B), with a celesta glint. |
+| 2.3–5.0 s | The agent moves in: cellos join the riff and the string tremolo creeps up chromatically. Muted-horn stabs (Em(maj7) → F♯m7♭5 → B7). The bass turns to 16ths, with snare and timpani rolls and a quick harp swish. |
+| 5.05–5.3 s | A breath: everything drops out except a cymbal swell. |
+| 5.3 s | The reveal: full-orchestra E minor (major 7th) stinger with timpani, bass drum, crash, snare, low pizzicato and a low tubular bell. Kept short so the stabs that follow cut through. |
+| 5.55, 6.10, 6.55, 7.20, 7.75 s | Gadget stabs: staccato trumpets, trombones, horns and tuba, violin and cello pizzicato, claves, snare. The last one locks shut on a low E. |
+| 7.9–10.1 s | Low string tremolo, the muted trumpet whispers the motif once more, a last low pizzicato E at 9.3 s, fade to silence. |
 
-Fireworks measured at 5.548, 6.098, 6.548, 7.198 and 7.745 s.
+Stabs measured at 5.550, 6.102, 6.554, 7.190 and 7.742 s.
 
 ## Studz_fanfare (game logo, B-flat major)
 
@@ -35,20 +39,22 @@ Fireworks measured at 5.548, 6.098, 6.548, 7.198 and 7.745 s.
 | 10.0 s | Logo lands: B-flat tutti with tubular bells, crash, gong, bass drum and timpani. |
 | 10–14.8 s | Held chord decays to silence. |
 
-Measured: splashes at 2.218 and 3.858 s; letters at 8.798, 9.038, 9.278, 9.521 and 9.758 s.
+Measured: splashes at 2.224 and 3.916 s; letters at 8.804, 9.044, 9.282, 9.524 and 9.758 s. The second splash is soft (mallet cymbal, bell tree, harp drip), so its attack builds gradually and measures later than its scheduled 3.86 s.
 
-Accent times are measured on the decoded .ogg as the peak of broadband spectral flux
-(about 3 ms resolution); see `reports/*.json` and `reports/*.png`. Every stem is shifted by
-its own measured attack delay (slow-speaking strings and brass get up to 300 ms), so the
-accents land on the requested times.
+Accent times are measured on the decoded .ogg: the 2 ms frame where the energy above 1.5 kHz
+rises most steeply. See `reports/*.json` and `reports/*.png`.
+
+Every track is shifted by its own measured attack delay, so the accents land on the requested
+times. Slow-speaking strings and brass get up to 300 ms. For staccato and pizzicato stabs,
+each chord is timed on its own (the `split` option in `scripts/orch.py`).
 
 ## Instruments and samples
 
 - **VSCO-2 Community Edition** (Versilian Studios, CC0), SFZ branch, commit `6dd651d`:
-  - strings: violin, viola, cello and contrabass ensembles (sustain/vibrato), violin tremolo and spiccato, harp
-  - winds: flute, piccolo, oboe, clarinet, bassoon
-  - brass: F horn, trumpet, tenor trombone, tuba
-  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
+  - strings: violin, viola, cello and contrabass ensembles (sustain/vibrato, tremolo, pizzicato), violin spiccato, harp
+  - winds: flute, piccolo, oboe, clarinet (sustain and staccato), bassoon
+  - brass: F horn (open, muted, staccato), trumpet (open, straight mute, staccato), tenor trombone (sustain, staccato), tuba (sustain, staccato)
+  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, snare (hits, rolls, taps), claves, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
 - **GeneralUser GS 2.0.3** (S. Christian Collins, free for any use), commit `684543d`: celesta only, because VSCO-2 has no celesta.
 
 ## Tools
@@ -72,7 +78,7 @@ accents land on the requested times.
 ## Rebuild
 
 ```sh
-git clone -b SFZ https://github.com/sgossner/VSCO-2-CE vsco      # ~1.6 GB of samples are used
+git clone -b SFZ https://github.com/sgossner/VSCO-2-CE vsco      # ~2 GB of samples are used
 git clone https://github.com/mrbumpy409/GeneralUser-GS gugs
 git clone --recursive https://github.com/sfztools/sfizz && cmake -S sfizz -B sfizz/build -DSFIZZ_JACK=OFF -DSFIZZ_RENDER=ON && cmake --build sfizz/build
 sudo apt install fluidsynth sox ffmpeg vorbis-tools && pip install mido numpy soundfile matplotlib

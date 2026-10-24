@@ -10,7 +10,7 @@
 10-14.8 held chord decays to silence."""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from orch import Part, PERC, build, export, save_score, spectral_flux_onset, decode, ogg_peak_db, n
+from orch import Part, PERC, build, export, save_score, spectral_flux_onset, accent_time, decode, ogg_peak_db, n
 
 T_HIT = 10.0
 LETTERS = [8.80, 9.04, 9.28, 9.52, 9.76]
@@ -171,6 +171,6 @@ if __name__ == '__main__':
     y = decode(ogg)                         # measure on the delivered file
     rep['length_samples'] = len(y)
     rep['ogg_peak_dbfs'] = round(ogg_peak_db(ogg), 2)
-    rep['accents'] = {str(t): round(spectral_flux_onset(y, t), 4) for t in SPLASH + LETTERS + [T_HIT]}
+    rep['accents'] = {str(t): round(accent_time(y, t), 4) for t in SPLASH + LETTERS + [T_HIT]}
     json.dump(rep, open(os.path.join(out, 'Studz_fanfare_report.json'), 'w'), indent=1)
     print(json.dumps(rep['accents']))
