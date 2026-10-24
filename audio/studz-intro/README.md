@@ -12,6 +12,7 @@ those same metal recordings, but tuned so they play the chords and the melody.
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
 | `TAGS_theme.ogg` | 10.000 s (441 000 samples) | big hit 2.600 → 2.604 s, clangs 4.000 → 3.990 s and 4.400 → 4.448 s, deep hit 8.000 → 8.002 s |
 | `TAGS_disney.ogg` | 16.000 s (705 600 samples) | lift 5.000 → 5.004 s, MEGA UP 10.000 → 10.002 s, final chord 12.500 → 12.500 s |
+| `TAGS_intro.ogg` | 16.000 s (705 600 samples) | drop 8.000 → 8.000 s, final chime 12.000 → 12.002 s |
 
 All are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
@@ -120,6 +121,28 @@ Loudness every 0.5 s: -55, -44, -39, -39, -34, -32, -31, -28, -24, -21 dB, then 
 
 `midi/TAGS_disney.mid` holds the instrument parts. The tuned metal recordings are placed by `scripts/tags_disney.py` itself.
 
+## TAGS_intro (16 s purple, agentic synth intro, E♭ Lydian)
+
+A fresh intro that follows no reference, fully synthesized in `scripts/tags_intro.py`
+(numpy/SciPy, no samples). At 120 bpm it uses:
+
+- lush E♭ Lydian chords: E♭maj9(♯11), Cm11, A♭maj9(♯11) and B♭9sus
+- digital "thinking" blips with ping-pong echoes
+- a 16th-note arpeggio that opens up
+- a three-note signature chime (B♭ – E♭ – B♭ – A)
+
+| Time | What happens |
+|---|---|
+| 0–2 s | A glassy pad fades in from silence, with soft blips. |
+| 2–6 s | The arpeggio starts and opens up; a sub pulse and ticks join at 4 s. |
+| 6–8 s | Build: the filters sweep open, a digital stutter speeds up, a riser, a 60 ms silent gap, and a soft preview of the chime at 7 s. |
+| 8 s | Drop: sub hit, wide chord, the chime. |
+| 8–12 s | Groove: kick, pumping chords and sub, off-beat stabs, the arpeggio; one chord per second. |
+| 12 s | Final hit: the chime over E♭maj9(♯11), with a glitchy echo tail. |
+| 13–16 s | It fades to silence. |
+
+Loudness every second: -54, -38, -32, -30, -27, -25, -24, -19 dB, then -14 at the drop, -14 at the final hit, and down to silence.
+
 ## Studz_fanfare (game logo, B-flat major)
 
 | Time | What happens |
@@ -157,12 +180,12 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
 
 ## Files
 
-- `TAGS_ident.ogg`, `Studz_fanfare.ogg`, `TAGS_theme.ogg`, `TAGS_disney.ogg`: the deliverables.
+- `TAGS_ident.ogg`, `Studz_fanfare.ogg`, `TAGS_theme.ogg`, `TAGS_disney.ogg`, `TAGS_intro.ogg`: the deliverables.
 - `wav/`: 24-bit masters.
 - `midi/*.mid`: full score of TAGS_ident, Studz_fanfare and TAGS_disney (one track per part). `midi/parts/<piece>/`: the exact per-part MIDI that was rendered.
 - `scripts/`:
   - `orch.py`: render, align, mix and master toolkit
-  - `tags_ident.py`, `studz_fanfare.py`, `tags_theme.py`, `tags_disney.py`: the compositions
+  - `tags_ident.py`, `studz_fanfare.py`, `tags_theme.py`, `tags_disney.py`, `tags_intro.py`: the compositions
   - `plot_check.py`: the waveform, spectrogram and loudness plots
   - `analyze_ref.py`: measures a reference intro (loudness curve, frequency bands, hits, tempo, chords)
   - `compare.py`: compares a render with a reference every 0.25 s (loudness, brightness, low-end share)
@@ -176,5 +199,5 @@ git clone https://github.com/mrbumpy409/GeneralUser-GS gugs
 git clone --recursive https://github.com/sfztools/sfizz && cmake -S sfizz -B sfizz/build -DSFIZZ_JACK=OFF -DSFIZZ_RENDER=ON && cmake --build sfizz/build
 sudo apt install fluidsynth sox ffmpeg vorbis-tools && pip install mido numpy scipy soundfile matplotlib librosa
 export VSCO_DIR=$PWD/vsco GUGS_SF2=$PWD/gugs/GeneralUser-GS.sf2 SFIZZ=$PWD/sfizz/build/library/bin/sfizz_render
-python3 scripts/tags_ident.py out && python3 scripts/studz_fanfare.py out && python3 scripts/tags_theme.py out && python3 scripts/tags_disney.py out
+python3 scripts/tags_ident.py out && python3 scripts/studz_fanfare.py out && python3 scripts/tags_theme.py out && python3 scripts/tags_disney.py out && python3 scripts/tags_intro.py out
 ```

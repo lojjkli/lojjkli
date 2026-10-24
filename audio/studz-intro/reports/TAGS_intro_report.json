@@ -1,0 +1,22 @@
+{
+ "length_samples": 705600,
+ "ogg_peak_dbfs": -1.17,
+ "stem_levels": {
+  "pad": -18,
+  "glass": -24,
+  "blips": -24,
+  "arp": -20,
+  "sub": -17,
+  "drums": -14,
+  "ticks": -26,
+  "build": -20,
+  "riser": -21,
+  "impact": -13,
+  "stabs": -21,
+  "chime": -16
+ },
+ "accents": {
+  "8.0": 7.9998,
+  "12.0": 12.0017
+ }
+}
