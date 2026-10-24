@@ -94,6 +94,20 @@ PERC_SFZ = r"""
 <group> key=56 // gong scrape (dark shimmer)
 <region> sample=gongscrape_pp.wav hivel=80
 <region> sample=gongscrape_mf.wav lovel=81
+<group> key=35 loop_mode=no_loop ampeg_release=0.18 // bass drum, damped (for beat patterns)
+<region> sample=BDrumNewhit_v3_rr1_Sum.wav hivel=60
+<region> sample=BDrumNewhit_v5_rr1_Sum.wav lovel=61 hivel=100
+<region> sample=BDrumNewhit_v7_rr1_Sum.wav lovel=101
+<group> key=67 // anvil
+<region> sample=Anvil_Hit1_v1_Sum.wav hivel=60
+<region> sample=Anvil_Hit1_v2_Sum.wav lovel=61 hivel=100
+<region> sample=Anvil_Hit1_v3_Sum.wav lovel=101
+<group> key=68 // brake drum (metal)
+<region> sample=BrakeDrum1_Hammer_v1_Sum.wav hivel=60
+<region> sample=BrakeDrum1_Hammer_v2_Sum.wav lovel=61 hivel=100
+<region> sample=BrakeDrum1_Hammer_v3_Sum.wav lovel=101
+<group> key=70 // tambourine shake
+<region> sample=Tamb1-Shake_v1_rr1_Sum.wav
 <group> key=75 // claves
 <region> sample=Claves1_Hit_v1_rr1_Sum.wav hivel=50
 <region> sample=Claves1_Hit_v2_rr1_Sum.wav lovel=51 hivel=95
@@ -101,7 +115,8 @@ PERC_SFZ = r"""
 """
 PERC = dict(bd=36, crash=49, cym=51, swell_s=52, swell_m=53, swell_l=54, gong=55,
             tree1=57, tree2=58, tree3=59, tree4=60, tri3=62, tri6=63, tri6m=64, bow=65,
-            taps=37, snare=38, sroll=40, claves=75, gscrape=56)
+            taps=37, snare=38, sroll=40, claves=75, gscrape=56,
+            bdd=35, anvil=67, brake=68, shaker=70)
 
 
 class Part:

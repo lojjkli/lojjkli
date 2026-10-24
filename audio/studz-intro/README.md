@@ -1,6 +1,6 @@
 # Studz intro music
 
-Two short orchestral cues for the Roblox game **Studz**, played with real recorded
+Orchestral cues for the Roblox game **Studz**, played with real recorded
 instrument samples (no synthesis). Each part is written as MIDI, rendered through
 the sample libraries, then mixed and mastered.
 
@@ -8,8 +8,9 @@ the sample libraries, then mixed and mastered.
 |---|---|---|
 | `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.302 s |
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
+| `TAGS_theme.ogg` | 30.000 s (1 323 000 samples) | drop 14.400 → 14.402 s, final hit 26.400 → 26.400 s |
 
-Both are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
+All are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
 
 ## TAGS_ident (studio logo, magical castle-intro style, D-flat major)
@@ -27,6 +28,25 @@ sparkling. The melody is original, not a quotation.
 | after 7.75 s | It rings out with a last celesta and harp arpeggio and fades to silence by 10.1 s. |
 
 Fireworks measured at 5.560, 6.104, 6.554, 7.204 and 7.754 s.
+
+## TAGS_theme (long version with beats, 30 s, D-flat major / B-flat minor, 100 bpm)
+
+The TAGS opening grows into a dark, driving hybrid-orchestral theme in the spirit of the
+Transformers-era Paramount intro (original music): pounding drums, galloping spiccato
+strings, brass braams, and anvil and brake-drum clangs. One bar = 2.4 s.
+
+| Time | What happens |
+|---|---|
+| 0–4.8 s | The magical opening from the logo version: celesta, harp, soft strings, the flute phrase. |
+| 4.8–9.6 s | The beat kicks in: bass drum, snare backbeat and shaker, galloping spiccato cellos and basses. The violins sing the theme over B♭m and G♭. |
+| 9.6–14.15 s | Build: pulls back, then grows. Horns take the theme, violas join the ostinato, trombone/tuba braam, timpani roll, double-time drums, a 16th-note snare roll, harp and flute run-ups and a cymbal swell. |
+| 14.15–14.4 s | A split second of silence. |
+| 14.4–24.0 s | The drop: trumpets and violins play the theme fortissimo with horns an octave below, over B♭m – G♭ – D♭ – A♭. Brass braams, the full drum pattern (bass drum, snare plus brake drum on the backbeat, timpani "toms", 16th shaker), anvil clangs and spiccato ostinato. Crashes at 14.4 and 19.2. |
+| 24.0–26.4 s | Fill: staccato brass stabs, snare crescendo, violin run-up, timpani run down into the final hit. |
+| 26.4 s | The final hit on D♭ major (the loudest section): full orchestra, gong, crash, anvil, tubular bells. |
+| after 26.4 s | The opening melody returns on celesta over a harp arpeggio, fading to silence by 30.0 s. |
+
+Section downbeats measured at 14.402 (drop), 19.206, 24.016 and 26.400 s (final hit).
 
 ## Studz_fanfare (game logo, B-flat major)
 
@@ -50,10 +70,10 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
 ## Instruments and samples
 
 - **VSCO-2 Community Edition** (Versilian Studios, CC0), SFZ branch, commit `6dd651d`:
-  - strings: violin, viola, cello and contrabass ensembles (sustain/vibrato, tremolo), violin spiccato, harp
+  - strings: violin, viola, cello and contrabass ensembles (sustain/vibrato, tremolo, spiccato), harp
   - winds: flute, piccolo, oboe, clarinet, bassoon
-  - brass: F horn, trumpet, tenor trombone, tuba
-  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
+  - brass: F horn, trumpet, tenor trombone, tuba (sustain; trumpet and trombone staccato)
+  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, snare, tambourine shake, anvil, brake drum, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
 - **GeneralUser GS 2.0.3** (S. Christian Collins, free for any use), commit `684543d`: celesta only, because VSCO-2 has no celesta.
 
 ## Tools
@@ -65,12 +85,12 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
 
 ## Files
 
-- `TAGS_ident.ogg`, `Studz_fanfare.ogg`: the deliverables.
+- `TAGS_ident.ogg`, `Studz_fanfare.ogg`, `TAGS_theme.ogg`: the deliverables.
 - `wav/`: 24-bit masters.
 - `midi/*.mid`: full score of each piece (one track per part). `midi/parts/<piece>/`: the exact per-part MIDI that was rendered.
 - `scripts/`:
   - `orch.py`: render, align, mix and master toolkit
-  - `tags_ident.py`, `studz_fanfare.py`: the compositions
+  - `tags_ident.py`, `studz_fanfare.py`, `tags_theme.py`: the compositions
   - `plot_check.py`: the waveform, spectrogram and loudness plots
 - `reports/`: stem shifts, levels, measured accents and the plots.
 
@@ -82,5 +102,5 @@ git clone https://github.com/mrbumpy409/GeneralUser-GS gugs
 git clone --recursive https://github.com/sfztools/sfizz && cmake -S sfizz -B sfizz/build -DSFIZZ_JACK=OFF -DSFIZZ_RENDER=ON && cmake --build sfizz/build
 sudo apt install fluidsynth sox ffmpeg vorbis-tools && pip install mido numpy soundfile matplotlib
 export VSCO_DIR=$PWD/vsco GUGS_SF2=$PWD/gugs/GeneralUser-GS.sf2 SFIZZ=$PWD/sfizz/build/library/bin/sfizz_render
-python3 scripts/tags_ident.py out && python3 scripts/studz_fanfare.py out
+python3 scripts/tags_ident.py out && python3 scripts/studz_fanfare.py out && python3 scripts/tags_theme.py out
 ```
