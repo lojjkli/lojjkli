@@ -54,7 +54,13 @@ function renderVerificationPreview(){
 function verificationVisibility(){const roblox=$('verification-mode').value==='roblox';$('verification-roblox').hidden=!roblox;$('verification-group-label').hidden=!roblox||!$('verification-group-required').checked;$('verification-group').required=roblox&&$('verification-group-required').checked;const missing=roblox&&!Object.values(verificationMethodsDraft()).some(Boolean);$('verification-method-error').textContent=missing?'Choose at least one available verification method.':'';for(const id of verificationMethodIds)$('verification-method-'+id).setCustomValidity('');const first=verificationMethodIds.map(id=>$('verification-method-'+id)).find(input=>!input.disabled);if(missing&&first)first.setCustomValidity('Choose at least one available verification method.');renderVerificationPreview();}
 let lookedUpMember = '';
 let resourceRequest = null;
-const showStatus = (text, type = '') => { $('status').textContent = text; $('status').className = `notice ${type}`; };
+// Signed-in success notes show as a toast and fade after a few seconds; errors stay put.
+// The fade is an attribute so code that reads the status text and class sees no change.
+let statusTimer = 0;
+const showStatus = (text, type = '') => {
+  const status = $('status'); status.textContent = text; status.className = `notice ${type}`; delete status.dataset.faded; clearTimeout(statusTimer);
+  if (type === 'success' && text) statusTimer = setTimeout(() => { if (status.textContent === text) status.dataset.faded = ''; }, 5000);
+};
 
 async function api(path, body) {
   const response = await fetch(`/taggy/api/${path}`, {
