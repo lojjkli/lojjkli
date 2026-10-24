@@ -6,7 +6,7 @@ time drums, and a heroic unison-horn theme over i - VI - III - VII.
 
 bar 0    0-3    the logo: boom, gong scrape, ratchets and metal clanks (the "transforming"
                 sounds), a low brass braam swelling up, an anvil
-bar 1    3-6    quiet and emotional: the TAGS melody on celesta over a soft Bbm string pad
+bar 1    3-6    quiet and emotional: soft violins preview the main theme over a harp arpeggio
 bars 2-3 6-12   the pulse: 16th spiccato strings, choir "aah", timpani on 1 and 3;
                 horns hint at the theme
 bar 4    12-15  the rise: drums double up, snare roll, string tremolo climbs, choir and
@@ -59,15 +59,19 @@ braam_u.add(0.40, 'Bb1', 2.55, 120)
 gong = Part('gong', 'perc', level=-20, pan=-0.1, send=0.5, split=True)
 gong.add(FINAL, PERC['gong'], 4.0, 127)
 
-# ======================= bar 1: quiet and emotional (the TAGS melody)
+# ======================= bar 1: quiet and emotional (a preview of the theme)
 cel = Part('celesta', ('gm', 8), level=-21, pan=-0.3, send=0.55, env=[(3.0, 3), (6.2, 1)])
-for t, p in [(3.20, 'Ab5'), (3.70, 'Eb6'), (4.20, 'F6'), (4.45, 'Eb6'), (4.70, 'Db6'), (5.30, 'Bb5'), (5.60, 'F6')]:
-    cel.add(t, p, 0.8, 70)
 for k in range(5, 9):
     cel.add(b(k), [CH[k][0] + '6', CH[k][2] + '6'], 0.9, 80)
 harp = Part('harp', 'Harp', level=-18, pan=-0.55, send=0.45, split=True)
-for i, p in enumerate(['Bb1', 'F2', 'Db3', 'F3', 'Ab3', 'C4']):
-    harp.add(3.0 + i * 0.09, p, 2.0, 66 + i * 2)
+harp.add(3.0, 'Bb1', 3.0, 76)
+for i, p in enumerate(['Bb2', 'F3', 'Db4', 'F3', 'Bb3', 'F3', 'Db4', 'F3']):      # slow arpeggio under the preview
+    harp.add(3.0 + i * 0.375, p, 1.2, 72 + (8 if i % 4 == 0 else 0))
+# a soft preview of the main theme (bars 5-6), sung by quiet violins
+preview = Part('theme_preview', 'ViolinEnsSusVib-Quiet', level=-15, pan=-0.3, send=0.55,
+               env=[(3.0, -4), (4.0, 0), (5.6, 0), (6.4, -8), (7.0, -40)])
+for beat, p, ln in [(0, 'Bb4', 1.0), (1, 'F5', 2.0), (3, 'Eb5', 0.5), (3.5, 'Db5', 1.5)]:
+    preview.add(b(1, beat), p, ln * BEAT + 0.05, 64)
 for i, p in enumerate([p for p in range(n('F3'), n('F6') + 1) if p % 12 in (10, 0, 1, 3, 5, 6, 8)]):
     harp.add(14.20 + i * 0.028, p, 0.4, 70 + i * 2)
 harp.add(FINAL, ['Bb1', 'F2', 'Bb2', 'D3', 'F3', 'Bb3'], 3.0, 124)
@@ -191,7 +195,7 @@ troll.add(25.5, 'F2', 1.5, 110)
 bells = Part('bells', 'TubularBells', level=-22, pan=0.2, send=0.5, split=True)
 bells.add(THEME_T, ['F4', 'Bb4'], 3.0, 110).add(FINAL, ['F4', 'Bb4', 'D5'], 4.0, 122)
 
-PARTS = [mech, boom, braam_t, braam_u, gong, cel, harp, pad, vc_pad, cb_pad, osti_va, osti_vc, trem, vln, choir,
+PARTS = [mech, boom, braam_t, braam_u, gong, cel, harp, preview, pad, vc_pad, cb_pad, osti_va, osti_vc, trem, vln, choir,
          hn, tbn, tba, tpt, kick, snare, metal, timp, swell, troll, bells]
 ACCENTS = [2.95, b(2), THEME_T, b(7), FINAL]
 

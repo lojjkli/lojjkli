@@ -27,13 +27,18 @@
   },
   "celesta": {
    "inst": "('gm', 8)",
-   "shift_ms": 3.1,
+   "shift_ms": 2.0,
    "peak_db": -9.4
   },
   "harp": {
    "inst": "Harp",
    "shift_ms": 0.0,
    "peak_db": -3.3
+  },
+  "theme_preview": {
+   "inst": "ViolinEnsSusVib-Quiet",
+   "shift_ms": 241.3,
+   "peak_db": -3.8
   },
   "string_pad": {
    "inst": "ViolaEnsSusVib",
@@ -132,12 +137,12 @@
   }
  },
  "length_samples": 1323000,
- "ogg_peak_dbfs": -1.01,
+ "ogg_peak_dbfs": -1.03,
  "accents": {
   "2.95": 2.9218,
   "6.0": 5.9678,
   "15.0": 15.0017,
-  "21.0": 21.0117,
+  "21.0": 21.0097,
   "27.0": 27.0037
  }
 }

@@ -39,7 +39,7 @@ choir, half-time drums, and a heroic unison-horn theme over i – VI – III –
 | Time | What happens |
 |---|---|
 | 0–3 s | The logo: a deep boom, gong scrape, ratchets and brake-drum/anvil clanks (the "transforming" sounds) over a low trombone/tuba braam that swells up to an anvil hit. |
-| 3–6 s | Quiet and emotional: the TAGS melody on celesta over a soft B♭m string pad and harp. |
+| 3–6 s | Quiet and emotional: soft violins preview the opening of the main theme over a slow harp arpeggio and a B♭m string pad. |
 | 6–12 s | The pulse: 16th spiccato violas and cellos, choir "aah", timpani and kick on 1 and 3. Horns hint at the theme. |
 | 12–14.8 s | The rise: drums double up, snare roll, violin tremolo climbs chromatically, trombone braam, ratchets, cymbal swell, harp run, then a split second of silence. |
 | 15–21 s | The theme: horns and trombones play the melody in unison over choir, strings, tuba and big half-time drums (kick on 1 and the "and" of 2, snare plus anvil/brake drum on 3, timpani fills). |
