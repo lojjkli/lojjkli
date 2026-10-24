@@ -13,67 +13,67 @@
   "violins": {
    "inst": "ViolinEnsSusVib",
    "shift_ms": 300.0,
-   "peak_db": -5.0
+   "peak_db": -2.7
   },
   "violins2": {
    "inst": "ViolinEnsSusVib",
    "shift_ms": 285.0,
-   "peak_db": -10.0
+   "peak_db": -9.6
   },
   "violins_soft": {
    "inst": "ViolinEnsSusVib-Quiet",
    "shift_ms": 300.0,
-   "peak_db": -13.6
+   "peak_db": -9.6
   },
   "vln_trem": {
    "inst": "ViolinEnsTrem",
    "shift_ms": 152.7,
-   "peak_db": -23.6
+   "peak_db": -19.6
   },
   "violas": {
    "inst": "ViolaEnsSusVib",
    "shift_ms": 109.8,
-   "peak_db": -9.1
+   "peak_db": -8.9
   },
   "cellos": {
    "inst": "CelloEnsSusVib",
    "shift_ms": 37.4,
-   "peak_db": -4.8
+   "peak_db": -2.6
   },
   "basses": {
    "inst": "ContrabassSusVB",
    "shift_ms": 90.9,
-   "peak_db": -11.7
+   "peak_db": -9.0
   },
   "clarinet": {
    "inst": "ClarinetSus",
    "shift_ms": 128.2,
-   "peak_db": -19.5
+   "peak_db": -19.4
   },
   "oboe": {
    "inst": "OboeSusVib",
    "shift_ms": 17.6,
-   "peak_db": -17.5
+   "peak_db": -16.3
   },
   "horns": {
    "inst": "FHornSus",
    "shift_ms": 30.2,
-   "peak_db": -6.9
+   "peak_db": -1.5
   },
   "trumpets": {
    "inst": "TrumpetSus",
-   "shift_ms": 15.2,
-   "peak_db": -12.0
+   "shift_ms": 13.4,
+   "peak_db": -1.6
   },
   "trombones": {
    "inst": "TromboneSus",
-   "shift_ms": 38.8,
-   "peak_db": -7.5
+   "shift_ms": 58.4,
+   "peak_db": -0.4
   },
   "tuba": {
    "inst": "TubaSus",
    "shift_ms": 115.9,
-   "peak_db": -10.5
+   "peak_db": -2.0
   },
   "celesta": {
    "inst": "('gm', 8)",
@@ -83,7 +83,7 @@
   "harp": {
    "inst": "Harp",
    "shift_ms": 0.0,
-   "peak_db": -4.1
+   "peak_db": -3.4
   },
   "glock": {
    "inst": "Glockenspiel",
@@ -98,7 +98,7 @@
   "perc": {
    "inst": "perc",
    "shift_ms": 0.0,
-   "peak_db": -6.7
+   "peak_db": -2.7
   },
   "cym_swell": {
    "inst": "perc",
@@ -108,22 +108,27 @@
   "timpani": {
    "inst": "Timpani",
    "shift_ms": 0.0,
-   "peak_db": -7.6
+   "peak_db": -2.6
+  },
+  "drums": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -4.6
   },
   "timp_roll": {
    "inst": "TimpaniRolls",
    "shift_ms": 6.7,
-   "peak_db": -19.9
+   "peak_db": -13.4
   }
  },
  "length_samples": 445410,
- "ogg_peak_dbfs": -1.02,
+ "ogg_peak_dbfs": -1.05,
  "accents": {
   "5.3": 5.3017,
   "5.55": 5.5597,
-  "6.1": 6.1057,
+  "6.1": 6.1037,
   "6.55": 6.5537,
   "7.2": 7.2037,
-  "7.75": 7.7517
+  "7.75": 7.7537
  }
 }

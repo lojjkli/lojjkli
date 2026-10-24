@@ -21,12 +21,12 @@ sparkling. The melody is original, not a quotation.
 |---|---|
 | 0–2.3 s | Night sky over the water. Celesta and harp twinkle over a soft string pad (D♭maj9 → G♭maj7♯11). A solo flute sings the first phrase. |
 | 2.3 s | The star appears (bell tree). |
-| 2.3–5.3 s | The shooting star draws its arc: the violins carry the melody higher over E♭m9 → G♭maj7 → Amaj7 (the "magic" lift) → A♭9sus4 → A♭7. An accelerating harp glissando rises with the star, horns sing a warm counter-line, then a flute run, timpani roll and cymbal swell. |
-| 5.3 s | The castle lights up: full orchestra on D♭ major (strings and woodwinds leading, warm brass) with tubular bells, glockenspiel, bell tree, crash and timpani. The violin melody peaks on high D♭. |
-| 5.55, 6.10, 6.55, 7.20, 7.75 s | Fireworks: glockenspiel, celesta, harp, triangle and piccolo sparkles. Meanwhile the strings sing the cadence D♭ → B♭m7 → G♭maj7 → G♭m6 (the wistful minor iv) → D♭. |
+| 2.3–5.2 s | The shooting star draws its arc: the violins carry the melody higher over E♭m9 → G♭maj7 → Amaj7 (the "magic" lift) → A♭9sus4 → A♭7. An accelerating harp glissando rises with the star and horns sing a warm counter-line. The build stays held back, then a quick inhale while the flute run, timpani roll and cymbal swell sweep up into the drop. |
+| 5.3 s | The drop: the castle lights up. Full orchestra fortissimo on D♭ major, about 10 dB above the build: the violins peak on high D♭, trumpets sing the melody in thirds, with horns, trombones, tuba, timpani, bass drum, crash, tubular bells, glockenspiel and bell tree. It stays big through the fireworks. |
+| 5.55, 6.10, 6.55, 7.20, 7.75 s | Fireworks: glockenspiel, celesta, harp, triangle and piccolo sparkles, with timpani and full brass on each one. The whole orchestra sings the cadence D♭ → B♭m7 → G♭maj7 → G♭m6 (the wistful minor iv) → D♭. A timpani roll leads into the grand final chord at 7.75 (crash, bass drum). |
 | after 7.75 s | It rings out with a last celesta and harp arpeggio and fades to silence by 10.1 s. |
 
-Fireworks measured at 5.560, 6.106, 6.554, 7.204 and 7.752 s.
+Fireworks measured at 5.560, 6.104, 6.554, 7.204 and 7.754 s.
 
 ## Studz_fanfare (game logo, B-flat major)
 
