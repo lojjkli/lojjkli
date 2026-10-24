@@ -3,11 +3,11 @@
   "flute": {
    "inst": "FluteSusVib",
    "shift_ms": 144.4,
-   "peak_db": -10.4
+   "peak_db": -11.6
   },
   "violins": {
    "inst": "ViolinEnsSusVib",
-   "shift_ms": 156.7,
+   "shift_ms": 144.1,
    "peak_db": -2.9
   },
   "violins_soft": {
@@ -28,12 +28,12 @@
   "basses": {
    "inst": "ContrabassSusVB",
    "shift_ms": 12.7,
-   "peak_db": -3.9
+   "peak_db": -5.6
   },
   "violin_trem": {
    "inst": "ViolinEnsTrem",
    "shift_ms": 84.4,
-   "peak_db": -10.2
+   "peak_db": -13.2
   },
   "choir": {
    "inst": "('gm', 52)",
@@ -43,17 +43,17 @@
   "celesta": {
    "inst": "('gm', 8)",
    "shift_ms": 2.9,
-   "peak_db": -11.3
+   "peak_db": -11.7
   },
   "harp": {
    "inst": "Harp",
    "shift_ms": 0.0,
-   "peak_db": -3.1
+   "peak_db": -2.7
   },
   "glock": {
    "inst": "Glockenspiel",
    "shift_ms": 0.0,
-   "peak_db": -9.5
+   "peak_db": -8.7
   },
   "horns": {
    "inst": "FHornSus",
@@ -62,28 +62,28 @@
   },
   "trumpets": {
    "inst": "TrumpetSus",
-   "shift_ms": 12.0,
+   "shift_ms": 10.9,
    "peak_db": 2.0
   },
   "trombones": {
    "inst": "TromboneSus",
-   "shift_ms": 56.5,
-   "peak_db": 4.5
+   "shift_ms": 44.7,
+   "peak_db": 4.7
   },
   "tuba": {
    "inst": "TubaSus",
    "shift_ms": 62.8,
-   "peak_db": 1.1
+   "peak_db": 1.3
   },
   "trumpet_hits": {
    "inst": "TrumpetStac",
    "shift_ms": 0.0,
-   "peak_db": -2.7
+   "peak_db": -1.5
   },
   "trombone_hits": {
    "inst": "TromboneStac",
    "shift_ms": 0.0,
-   "peak_db": 6.0
+   "peak_db": 6.2
   },
   "timpani": {
    "inst": "Timpani",
@@ -93,12 +93,12 @@
   "timp_roll": {
    "inst": "TimpaniRolls",
    "shift_ms": 4.2,
-   "peak_db": -10.5
+   "peak_db": -12.8
   },
   "bass_drum": {
    "inst": "perc",
    "shift_ms": 0.0,
-   "peak_db": -3.5
+   "peak_db": -3.6
   },
   "cymbals": {
    "inst": "perc",
@@ -127,7 +127,7 @@
   }
  },
  "length_samples": 529200,
- "ogg_peak_dbfs": -1.04,
+ "ogg_peak_dbfs": -1.02,
  "accents": {
   "5.0": 5.0017,
   "8.0": 8.0037,

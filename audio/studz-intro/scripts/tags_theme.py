@@ -10,23 +10,24 @@ TAGS tune.
           weight (timpani roll, bass drum, tuba) only in the last 1.5 s;
           Bb - Eb/Bb - Gm7 - Eb - F - Ab - Bb  ->  lift
 5.0       KEY CHANGE UP TO C: full orchestra and choir, the melody soars
-5.0-8.0   brass + timpani hits at 5.0 5.9 6.8 7.4; C - Am - F - G, and over the G a
-          riser (timpani roll, harp glissando, strings climb, cymbal swell)
-8.0       MEGA UP: key change up to D, everything bigger; hits speed up
-          (8.0 8.75 9.5 10.0 10.25) into D - G - A - D
+5.0-8.0   brass + timpani hits on a steady 0.75 s pulse (5.0 5.75 6.5 7.25);
+          C - Am - F - G, and over the G a riser (timpani roll, harp glissando,
+          strings climb, cymbal swell)
+8.0       MEGA UP: key change up to D, everything bigger; the same steady pulse
+          (8.0 8.75 9.5) under a slow rising line A - B - C# - D; D - G - A - D
 10.5      final grand D major chord; from 11.0 it fades to silence by 12.0."""
 import sys, os, json
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from orch import Part, PERC, build, export, save_score, accent_time, decode, ogg_peak_db, n
 
 LEN = 12.0
-LIFT, RISE, MEGA, FINAL = 5.0, 7.4, 8.0, 10.5
-HITS1 = [5.0, 5.9, 6.8, 7.4]
-HITS2 = [8.0, 8.75, 9.5, 10.0, 10.25]
+LIFT, RISE, MEGA, FINAL = 5.0, 7.25, 8.0, 10.5
+HITS1 = [5.0, 5.75, 6.5, 7.25]       # one steady pulse, no speeding up
+HITS2 = [8.0, 8.75, 9.5]
 FADE = [(FINAL, 0), (11.0, -1), (11.6, -10), (11.95, -50)]
 
 # global dynamic shape (dB): silence -> long crescendo -> loud -> mega -> fade
-SHAPE = [(0.3, -32), (1.5, -25), (2.5, -19), (3.5, -13), (4.5, -6), (4.95, -3), (5.0, 0), (7.4, 0), (7.95, 1),
+SHAPE = [(0.3, -32), (1.5, -25), (2.5, -19), (3.5, -13), (4.5, -6), (4.95, -3), (5.0, 0), (7.25, 0), (7.95, 1),
          (8.0, 2), (10.5, 2)] + [(t, d + 2) for t, d in FADE[1:]]
 
 
@@ -39,10 +40,10 @@ PROG = [(0.3, 1.8, 'Bb', ['Bb2', 'F3', 'D4', 'F4', 'C5']), (1.8, 3.0, 'Eb', ['Bb
         (3.0, 3.8, 'G', ['G2', 'D3', 'Bb3', 'F4', 'Bb4']), (3.8, 4.4, 'Eb', ['Eb2', 'Bb2', 'G3', 'Eb4', 'G4']),
         (4.4, 4.75, 'F', ['F2', 'C3', 'A3', 'F4', 'A4']), (4.75, 4.95, 'Ab', ['Ab2', 'Eb3', 'C4', 'Eb4', 'Ab4']),
         (4.95, 5.0, 'Bb', ['Bb2', 'F3', 'D4', 'F4', 'Bb4']),
-        (5.0, 5.9, 'C', ['C2', 'G2', 'E3', 'C4', 'G4']), (5.9, 6.8, 'A', ['A1', 'E2', 'C3', 'A3', 'E4']),
-        (6.8, 7.4, 'F', ['F1', 'C2', 'A2', 'F3', 'C4']), (7.4, 8.0, 'G', ['G1', 'D2', 'B2', 'G3', 'D4']),
-        (8.0, 9.0, 'D', ['D2', 'A2', 'F#3', 'D4', 'A4']), (9.0, 9.75, 'G', ['G1', 'D2', 'B2', 'G3', 'D4']),
-        (9.75, 10.5, 'A', ['A1', 'E2', 'C#3', 'A3', 'E4']), (10.5, 11.95, 'D', ['D2', 'A2', 'F#3', 'D4', 'A4'])]
+        (5.0, 5.75, 'C', ['C2', 'G2', 'E3', 'C4', 'G4']), (5.75, 6.5, 'A', ['A1', 'E2', 'C3', 'A3', 'E4']),
+        (6.5, 7.25, 'F', ['F1', 'C2', 'A2', 'F3', 'C4']), (7.25, 8.0, 'G', ['G1', 'D2', 'B2', 'G3', 'D4']),
+        (8.0, 8.75, 'D', ['D2', 'A2', 'F#3', 'D4', 'A4']), (8.75, 9.5, 'G', ['G1', 'D2', 'B2', 'G3', 'D4']),
+        (9.5, 10.5, 'A', ['A1', 'E2', 'C#3', 'A3', 'E4']), (10.5, 11.95, 'D', ['D2', 'A2', 'F#3', 'D4', 'A4'])]
 
 
 def chord(t):
@@ -55,10 +56,10 @@ def chord(t):
 # ======================= melody (the TAGS tune, adapted)
 MEL1 = [(0.9, 'F4', .5), (1.4, 'C5', .6), (2.0, 'D5', .3), (2.3, 'C5', .3), (2.6, 'Bb4', .5),
         (3.1, 'D5', .4), (3.5, 'F5', .5), (4.0, 'G5', .3), (4.3, 'F5', .3), (4.6, 'A5', .3), (4.82, 'Bb5', .2)]
-MEL2 = [(5.0, 'C6', .9), (5.9, 'B5', .3), (6.2, 'A5', .3), (6.5, 'E5', .3), (6.8, 'F5', .45), (7.25, 'A5', .15),
-        (7.4, 'G5', .3), (7.7, 'B5', .15), (7.85, 'C#6', .15)]
-MEL3 = [(8.0, 'D6', .75), (8.75, 'C#6', .3), (9.05, 'B5', .45), (9.5, 'A5', .5), (10.0, 'B5', .25), (10.25, 'C#6', .25),
-        (10.5, 'D6', 1.45)]
+MEL2 = [(5.0, 'C6', .75), (5.75, 'B5', .25), (6.0, 'A5', .25), (6.25, 'E5', .25), (6.5, 'F5', .375), (6.875, 'A5', .375),
+        (7.25, 'G5', .75)]
+# MEGA UP: not the tune again - one slow, broad rising line into the final chord
+MEL3 = [(8.0, 'A5', .75), (8.75, 'B5', .75), (9.5, 'C#6', 1.0), (10.5, 'D6', 1.45)]
 
 fl = Part('flute', 'FluteSusVib', level=-18, pan=-0.1, send=0.45, env=[(0.8, -8), (2.0, -4), (3.0, -1), (4.0, 2), (4.9, 2), (5.0, 0)] + FADE)
 for t, p, d in MEL1:
@@ -152,15 +153,14 @@ for t in HITS1 + HITS2 + [FINAL]:
     low = [p for p in tones if n('C2') <= n(p) <= n('A2')][:2] or [n(tones[0]) + 12]
     timp.add(t, low, 1.2, 127 if t in (LIFT, MEGA, FINAL) else 110)
 troll = Part('timp_roll', 'TimpaniRolls', level=-16, pan=-0.15, send=0.35,
-             env=[(3.5, -30), (4.95, 0), (4.99, -60), (RISE - 0.01, -60), (RISE, -14), (MEGA - 0.05, 0), (MEGA - 0.01, -60),
-                  (10.24, -60), (10.25, -6), (10.48, 0), (10.5, -60)])
-troll.add(3.5, 'F2', 1.5, 110).add(RISE, 'A2', 0.6, 110).add(10.25, 'A2', 0.27, 110)
+             env=[(3.5, -30), (4.95, 0), (4.99, -60), (RISE - 0.01, -60), (RISE, -14), (MEGA - 0.05, 0), (MEGA - 0.01, -60)])
+troll.add(3.5, 'F2', 1.5, 110).add(RISE, 'A2', MEGA - RISE, 110)
 drum = Part('bass_drum', 'perc', level=-13, pan=0.0, send=0.3, split=True)
 for t in HITS1 + HITS2 + [FINAL]:
     drum.add(t, PERC['bd'], 2.5, 127 if t in (LIFT, MEGA, FINAL) else 108)
 cym = Part('cymbals', 'perc', level=-18, pan=0.15, send=0.45, split=True)
 cym.add(LIFT, PERC['crash'], 3.0, 127).add(MEGA, PERC['crash'], 3.0, 127).add(FINAL, PERC['crash'], 3.0, 124)
-for t in (6.8, 9.5):
+for t in (6.5, 9.5):
     cym.add(t, PERC['crash'], 2.0, 96)
 cym.add(0.3, PERC['bow'], 4.0, 100)
 swell = Part('cym_swell', 'perc', level=-21, pan=0.1, send=0.5, thresh=0.001)

@@ -43,8 +43,8 @@ The reference audio is not included. The music is original, built on the TAGS me
 |---|---|
 | 0–5.0 s | From silence, one continuous crescendo in B♭ (B♭ – E♭/B♭ – Gm7 – E♭ – F – A♭ – B♭). Celesta, harp, soft strings and choir, with the flute singing the TAGS melody. Cellos and basses enter at 2.5 s; the sub weight (timpani roll, tuba, trombones) only arrives in the last second. |
 | 5.0 s | Key change up to C: full orchestra and choir. The violins soar with the melody, and the trumpets double it an octave lower. |
-| 5.0–8.0 s | Brass, timpani and bass-drum hits at 5.0, 5.9, 6.8 and 7.4 s (C – Am – F – G). Over the G comes a riser: timpani roll, harp glissando, string tremolo climbing and a cymbal swell. |
-| 8.0 s | MEGA UP: key change up to D, with gong. Hits at 8.0, 8.75, 9.5, 10.0 and 10.25 s (D – G – A). |
+| 5.0–8.0 s | Brass, timpani and bass-drum hits on a steady 0.75 s pulse, at 5.0, 5.75, 6.5 and 7.25 s (C – Am – F – G). Over the G comes a riser: timpani roll, harp glissando, string tremolo climbing and a cymbal swell. |
+| 8.0 s | MEGA UP: key change up to D, with gong. The same steady pulse continues (8.0, 8.75, 9.5 s; D – G – A). Instead of repeating the tune, the violins and trumpets play one slow, broad rising line, A – B – C♯ – D, into the final chord. |
 | 10.5 s | Final grand D major chord. |
 | 11–12 s | Fades to silence. |
 
