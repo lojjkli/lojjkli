@@ -1,0 +1,92 @@
+{
+ "stems": {
+  "glass_pads": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -9.1
+  },
+  "warm_pads": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -10.7
+  },
+  "metal_bar_melody": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -1.6
+  },
+  "gong_bass": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -7.6
+  },
+  "gong_roar": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -12.7
+  },
+  "gong_hits": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -2.6
+  },
+  "brake_clangs": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -9.0
+  },
+  "anvil_clangs": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -13.7
+  },
+  "slowed_kick": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -5.7
+  },
+  "cymbal_risers": {
+   "inst": "metal",
+   "shift_ms": 0.0,
+   "peak_db": -10.6
+  },
+  "tubular_bells": {
+   "inst": "TubularBells",
+   "shift_ms": 0.0,
+   "peak_db": -5.4
+  },
+  "glock": {
+   "inst": "Glockenspiel",
+   "shift_ms": 0.0,
+   "peak_db": -7.3
+  },
+  "celesta": {
+   "inst": "('gm', 8)",
+   "shift_ms": 2.9,
+   "peak_db": -10.9
+  },
+  "cymbals": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -4.1
+  },
+  "cym_swell": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -7.9
+  },
+  "bell_tree": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -13.3
+  }
+ },
+ "length_samples": 705600,
+ "ogg_peak_dbfs": -1.51,
+ "accents": {
+  "5.0": 5.0037,
+  "8.0": 8.0377,
+  "10.0": 10.0017,
+  "12.5": 12.4998
+ }
+}

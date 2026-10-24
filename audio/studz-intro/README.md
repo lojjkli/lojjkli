@@ -3,13 +3,15 @@
 Orchestral cues for the Roblox game **Studz**, played with real recorded
 instrument samples. Each part is written as MIDI, rendered through the sample
 libraries, then mixed and mastered. TAGS_theme is pure sound design instead: real
-metal recordings from the same library, slowed down and layered.
+metal recordings from the same library, slowed down and layered. TAGS_disney uses
+those same metal recordings, but tuned so they play the chords and the melody.
 
 | File | Length | Main accent (target → measured in the .ogg) |
 |---|---|---|
 | `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.302 s |
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
 | `TAGS_theme.ogg` | 10.000 s (441 000 samples) | big hit 2.600 → 2.604 s, clangs 4.000 → 3.990 s and 4.400 → 4.448 s, deep hit 8.000 → 8.002 s |
+| `TAGS_disney.ogg` | 16.000 s (705 600 samples) | lift 5.000 → 5.004 s, MEGA UP 10.000 → 10.002 s, final chord 12.500 → 12.500 s |
 
 All are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
@@ -73,6 +75,51 @@ How close it is to the reference, by `scripts/compare.py` from 1 to 9 s, after m
 `reports/TAGS_theme_vs_reference_shape.png` shows both spectrograms and loudness curves.
 This piece has no MIDI because it is not written as notes.
 
+## TAGS_disney (16 s magical intro made from metal, B♭ → C → D)
+
+This intro has the shape of a modern animation-studio intro, measured with
+`scripts/analyze_ref.py`. The reference audio is not included. Its shape:
+
+- one long crescendo from silence
+- the bass arriving late
+- a whole-step key change at the big moment
+- hits about once a second
+- a quiet minor-iv dip, then a second, bigger lift and a slow ring-out
+
+The difference is that every sound is metal. The melody is the TAGS tune.
+
+The metal recordings come from the VSCO-2 CE percussion set. Each one is tuned to the
+chords by changing its playback speed, so its main pitch lands on the right note:
+
+| Recording | Main pitch | Becomes |
+|---|---|---|
+| Bowed cymbal | 560 Hz, nearly a pure tone | the glassy chord pads |
+| A second bowed-cymbal take | 652 Hz | the warmer pads, and the risers (played backwards into the lifts, and screaming upward at 9.4 s) |
+| Ringing metal bar | 341 Hz | the melody, re-pitched note by note |
+| Soft gong | 144 Hz | the bass on each chord root, from 2.5 s |
+| Loud gong | 416 Hz | slowed into a roar under the loud parts, and struck on each hit, tuned to the chord |
+| Brake drum and anvil, slowed | | the clangs on the hits |
+| Kick, slowed | | weight under the hits |
+
+Played as instruments on top: tubular bells and glockenspiel (VSCO-2), celesta (GeneralUser GS), cymbal
+swells, crash and bell tree.
+
+| Time | What happens |
+|---|---|
+| 0–5.0 s | From silence, one long crescendo in B♭ (B♭ – E♭/B♭ – Gm7 – E♭ – F – A♭ – B♭). Glass pads, celesta, and the melody on the metal bar and glockenspiel. The gong bass enters at 2.5 s, the roar only in the last 1.5 s, with a cymbal swell into the lift. |
+| 5.0 s | Key change up to C: a tuned gong hit, and the tubular bells take the melody. |
+| 5.0–8.0 s | Hits at 5.0, 5.9, 6.8 and 7.7 s (C – Am – F – G). |
+| 8.0–9.4 s | The dip, about 10 dB quieter: soft glass pads, F → Fm. |
+| 9.4–10.0 s | Riser: the bowed cymbal screams upward, with a glockenspiel run and a cymbal swell. |
+| 10.0 s | MEGA UP: key change up to D. Hits at 10.0, 10.75, 11.5, 12.0 and 12.25 s (D – G – A). |
+| 12.5 s | Final D major chord. |
+| 13–16 s | It slowly fades to silence. |
+
+Measured: lift 5.004 s, MEGA UP 10.002 s, final chord 12.500 s.
+Loudness every 0.5 s: -55, -44, -39, -39, -34, -32, -31, -28, -24, -21 dB, then -17 at the lift, -26 to -28 in the dip and -16 at MEGA UP.
+
+`midi/TAGS_disney.mid` holds the instrument parts. The tuned metal recordings are placed by `scripts/tags_disney.py` itself.
+
 ## Studz_fanfare (game logo, B-flat major)
 
 | Time | What happens |
@@ -110,12 +157,12 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
 
 ## Files
 
-- `TAGS_ident.ogg`, `Studz_fanfare.ogg`, `TAGS_theme.ogg`: the deliverables.
+- `TAGS_ident.ogg`, `Studz_fanfare.ogg`, `TAGS_theme.ogg`, `TAGS_disney.ogg`: the deliverables.
 - `wav/`: 24-bit masters.
-- `midi/*.mid`: full score of TAGS_ident and Studz_fanfare (one track per part). `midi/parts/<piece>/`: the exact per-part MIDI that was rendered.
+- `midi/*.mid`: full score of TAGS_ident, Studz_fanfare and TAGS_disney (one track per part). `midi/parts/<piece>/`: the exact per-part MIDI that was rendered.
 - `scripts/`:
   - `orch.py`: render, align, mix and master toolkit
-  - `tags_ident.py`, `studz_fanfare.py`, `tags_theme.py`: the compositions
+  - `tags_ident.py`, `studz_fanfare.py`, `tags_theme.py`, `tags_disney.py`: the compositions
   - `plot_check.py`: the waveform, spectrogram and loudness plots
   - `analyze_ref.py`: measures a reference intro (loudness curve, frequency bands, hits, tempo, chords)
   - `compare.py`: compares a render with a reference every 0.25 s (loudness, brightness, low-end share)
@@ -129,5 +176,5 @@ git clone https://github.com/mrbumpy409/GeneralUser-GS gugs
 git clone --recursive https://github.com/sfztools/sfizz && cmake -S sfizz -B sfizz/build -DSFIZZ_JACK=OFF -DSFIZZ_RENDER=ON && cmake --build sfizz/build
 sudo apt install fluidsynth sox ffmpeg vorbis-tools && pip install mido numpy scipy soundfile matplotlib librosa
 export VSCO_DIR=$PWD/vsco GUGS_SF2=$PWD/gugs/GeneralUser-GS.sf2 SFIZZ=$PWD/sfizz/build/library/bin/sfizz_render
-python3 scripts/tags_ident.py out && python3 scripts/studz_fanfare.py out && python3 scripts/tags_theme.py out
+python3 scripts/tags_ident.py out && python3 scripts/studz_fanfare.py out && python3 scripts/tags_theme.py out && python3 scripts/tags_disney.py out
 ```
