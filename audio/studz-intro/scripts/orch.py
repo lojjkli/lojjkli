@@ -256,10 +256,11 @@ def pan_gains(p):
 
 def sox_reverb(x, args, tmp):
     a, b = os.path.join(tmp, '_rv_in.wav'), os.path.join(tmp, '_rv_out.wav')
-    sf.write(a, x, SR, subtype='FLOAT')
+    g = max(1e-9, np.abs(x).max()) / 0.5          # keep sox's input well below clipping
+    sf.write(a, x / g, SR, subtype='FLOAT')
     subprocess.run(['sox', a, b, 'reverb', '-w'] + [str(v) for v in args], check=True)
     y, _ = sf.read(b, always_2d=True)
-    return y
+    return y * g
 
 
 def build(title, parts, length, workdir, reverb=(60, 45, 100, 100, 20, 0), wet=0.32,

@@ -8,7 +8,7 @@ the sample libraries, then mixed and mastered.
 |---|---|---|
 | `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.302 s |
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
-| `TAGS_theme.ogg` | 16.000 s (705 600 samples) | loud 5.000 → 5.004 s, MEGA UP 10.000 → 10.002 s, final hit 12.500 → 12.510 s |
+| `TAGS_theme.ogg` | 16.000 s (705 600 samples) | lift 5.000 → 5.002 s, MEGA UP 10.000 → 10.002 s, final chord 12.500 → 12.502 s |
 
 All are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
@@ -29,23 +29,32 @@ sparkling. The melody is original, not a quotation.
 
 Fireworks measured at 5.560, 6.104, 6.554, 7.204 and 7.754 s.
 
-## TAGS_theme (16 s version with beats, B-flat minor → B-flat major, 96 bpm)
+## TAGS_theme (16 s studio intro, B♭ → C → D)
 
-Original music in the style of the Transformers-era Paramount intros: robotic/metal sounds
-and a braam, a string pulse with choir, a driving beat, and a heroic unison-horn theme over
-i – VI – III – VII. One bar = 2.5 s.
+The shape follows measurements of a modern animation-studio intro (`scripts/analyze_ref.py`).
+The reference audio is not included. Its features:
+
+- one long, continuous crescendo from silence
+- the bass and sub weight arriving only just before the big moment
+- a whole-step key change when it gets loud
+- rhythmic orchestral hits about once a second instead of a drum beat
+- a quiet minor-iv dip, then a second, bigger lift and a slow ring-out
+
+The music itself is original, built on the TAGS melody.
+`reports/TAGS_theme_vs_reference_shape.png` compares the two loudness curves.
 
 | Time | What happens |
 |---|---|
-| 0–2.5 s | Starts from silence: soft violins preview the theme over a harp arpeggio. Quiet ratchets and metal clanks, and a low braam fading in. |
-| 2.5–5.0 s | The build: 16th spiccato strings, choir swell, kick doubling up, snare and timpani rolls, braam, cymbal swell, then a split second of silence. |
-| 5.0–7.5 s | Loud: horns and trombones play the theme over the full beat (kick, snare plus anvil/brake drum on 2 and 4, 16th shaker, timpani fills, crash). B♭m – G♭. |
-| 7.5–10.0 s | Beat down: the drums drop to a heartbeat and the strings hold G♭ → A♭ quietly. Then a riser: snare roll, climbing tremolo, braam, ratchets, timpani, cymbal swell, and a split second of silence. |
-| 10.0–12.5 s | MEGA UP, the loudest part: the theme climax with trumpets and violins an octave up, double-time kick, timpani 16ths, full choir, gong and crashes. D♭ – A♭. |
-| 12.5 s | Final hit on B-flat **major**, held to 13.0 s. |
+| 0–5.0 s | From silence, one continuous crescendo in B♭ (B♭ – E♭/B♭ – Gm7 – E♭ – F – A♭ – B♭). Celesta, harp, soft strings and choir, with the flute singing the TAGS melody. Cellos and basses enter at 2.5 s; the sub weight (timpani roll, tuba, trombones) only arrives in the last second. |
+| 5.0 s | Key change up to C: full orchestra and choir, the violins soar with the melody, and the trumpets double it an octave lower. |
+| 5.0–8.0 s | Loud plateau (C – Am – F – G): brass, timpani and bass-drum hits at 5.0, 5.9, 6.8 and 7.7 s, with crash, bells and bell tree. |
+| 8.0–9.4 s | The dip, about 14 dB quieter: soft strings, harp and celesta, F → Fm (minor iv). |
+| 9.4–10.0 s | Riser: timpani roll, harp glissando, string tremolo climbing, cymbal swell. |
+| 10.0 s | MEGA UP: key change up to D, everything bigger, with gong. Hits speed up (10.0, 10.75, 11.5, 12.0, 12.25 s) over D – G – A. |
+| 12.5 s | Final grand D major chord, held. |
 | 13–16 s | Slowly down to silence. |
 
-Measured: loud 5.004 s, beat down 7.522 s, MEGA UP 10.002 s, final hit 12.510 s.
+Measured: lift 5.002 s, MEGA UP 10.002 s, final chord 12.502 s.
 
 ## Studz_fanfare (game logo, B-flat major)
 
@@ -91,6 +100,7 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
   - `orch.py`: render, align, mix and master toolkit
   - `tags_ident.py`, `studz_fanfare.py`, `tags_theme.py`: the compositions
   - `plot_check.py`: the waveform, spectrogram and loudness plots
+  - `analyze_ref.py`: measures a reference intro (loudness curve, frequency bands, hits, tempo, chords)
 - `reports/`: stem shifts, levels, measured accents and the plots.
 
 ## Rebuild
