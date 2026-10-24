@@ -2,15 +2,15 @@
 
 Orchestral cues for the Roblox game **Studz**, played with real recorded
 instrument samples. Each part is written as MIDI, rendered through the sample
-libraries, then mixed and mastered. TAGS_theme is pure sound design instead: real
-metal recordings from the same library, slowed down and layered. TAGS_disney uses
-those same metal recordings, but tuned so they play the chords and the melody.
+libraries, then mixed and mastered. TAGS_disney is made from metal recordings from the
+same library, tuned so they play the chords and the melody. TAGS_intro is fully
+synthesized.
 
 | File | Length | Main accent (target → measured in the .ogg) |
 |---|---|---|
 | `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.302 s |
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
-| `TAGS_theme.ogg` | 10.000 s (441 000 samples) | big hit 2.600 → 2.604 s, clangs 4.000 → 3.990 s and 4.400 → 4.448 s, deep hit 8.000 → 8.002 s |
+| `TAGS_theme.ogg` | 12.000 s (529 200 samples) | lift 5.000 → 5.002 s, MEGA UP 8.000 → 8.004 s, final chord 10.500 → 10.502 s |
 | `TAGS_disney.ogg` | 16.000 s (705 600 samples) | lift 5.000 → 5.004 s, MEGA UP 10.000 → 10.002 s, final chord 12.500 → 12.500 s |
 | `TAGS_intro.ogg` | 16.000 s (705 600 samples) | drop 8.000 → 8.000 s, final chime 12.000 → 12.002 s |
 
@@ -33,48 +33,22 @@ sparkling. The melody is original, not a quotation.
 
 Fireworks measured at 5.560, 6.104, 6.554, 7.204 and 7.754 s.
 
-## TAGS_theme (10 s dark metal intro, no music)
+## TAGS_theme (12 s studio intro, B♭ → C → D)
 
-This is the dark, heavy feel of the Paramount logo sequence from a modern robot-action
-film, made only from real metal recordings. There's no melody and no beat. The
-reference audio is not included; only measurements of it were used:
-
-- its loudness every 0.25 s
-- its brightness (spectral centroid)
-- how much of its energy sits below 250 Hz
-- where its hits and groans fall
-
-Those measurements were made with `scripts/analyze_ref.py` and `scripts/compare.py`.
-
-Every sound comes from the VSCO-2 CE percussion recordings: gong hits and scrape, bowed
-cymbal, bass-drum rubs, brake drum, anvil, ratchet and kick. Each is slowed down 2–8×
-with a sliding playback speed, so a gong becomes a giant metal roar and a bowed cymbal
-becomes a groan or a screech.
+This is the version shaped on measurements of a modern animation-studio intro, made
+shorter and without the quiet dip, so it stays big from the lift to the end.
+The reference audio is not included. The music is original, built on the TAGS melody.
 
 | Time | What happens |
 |---|---|
-| 0–1.2 s | Silence |
-| 1.2–1.6 s | A fast swell into a deep metal roar (two gongs slowed 3–4×, a bass-drum rub slowed 2×). Its pitch drifts. |
-| 1.4–2.0 s | A metal screech sliding down |
-| **2.6 s** | **The biggest hit:** a fresh gong strike, brake drum, anvil and kick, all slowed down. A bowed-cymbal screech rises from 2.4 to 3.5 s. |
-| 3.7–4.7 s | Two metal groans (about 240 and 285 Hz) with slowed clangs at 4.0 and 4.4 s |
-| 4.7–5.5 s | Dip, with a gong scrape |
-| 5.4–6.6 s | A swell with faint mechanical clicks (ratchet) and a bass-drum rub groaning upward. A slowed bowed-cymbal texture runs underneath until the end. |
-| 7.0–7.5 s | Dip |
-| 7.5–8.0 s | A reversed gong rises into **8.0 s**, a deep hit, with a gong groan falling in pitch. |
-| 8.2–10 s | A dark tail into silence |
+| 0–5.0 s | From silence, one continuous crescendo in B♭ (B♭ – E♭/B♭ – Gm7 – E♭ – F – A♭ – B♭). Celesta, harp, soft strings and choir, with the flute singing the TAGS melody. Cellos and basses enter at 2.5 s; the sub weight (timpani roll, tuba, trombones) only arrives in the last second. |
+| 5.0 s | Key change up to C: full orchestra and choir. The violins soar with the melody, and the trumpets double it an octave lower. |
+| 5.0–8.0 s | Brass, timpani and bass-drum hits at 5.0, 5.9, 6.8 and 7.4 s (C – Am – F – G). Over the G comes a riser: timpani roll, harp glissando, string tremolo climbing and a cymbal swell. |
+| 8.0 s | MEGA UP: key change up to D, with gong. Hits at 8.0, 8.75, 9.5, 10.0 and 10.25 s (D – G – A). |
+| 10.5 s | Final grand D major chord. |
+| 11–12 s | Fades to silence. |
 
-How close it is to the reference, by `scripts/compare.py` from 1 to 9 s, after matching levels:
-
-| Measure | Reference | TAGS_theme |
-|---|---|---|
-| Loudness-curve correlation | | 0.93 |
-| Average gap every 0.25 s | | about 3 dB |
-| Brightness (power-weighted spectral centroid) | 239 Hz | 284 Hz |
-| Energy below 250 Hz | 73% | 77% |
-
-`reports/TAGS_theme_vs_reference_shape.png` shows both spectrograms and loudness curves.
-This piece has no MIDI because it is not written as notes.
+Measured: lift 5.002 s, MEGA UP 8.004 s, final chord 10.502 s.
 
 ## TAGS_disney (16 s magical intro made from metal, B♭ → C → D)
 
@@ -182,7 +156,7 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
 
 - `TAGS_ident.ogg`, `Studz_fanfare.ogg`, `TAGS_theme.ogg`, `TAGS_disney.ogg`, `TAGS_intro.ogg`: the deliverables.
 - `wav/`: 24-bit masters.
-- `midi/*.mid`: full score of TAGS_ident, Studz_fanfare and TAGS_disney (one track per part). `midi/parts/<piece>/`: the exact per-part MIDI that was rendered.
+- `midi/*.mid`: full score of TAGS_ident, Studz_fanfare, TAGS_theme and TAGS_disney (one track per part). `midi/parts/<piece>/`: the exact per-part MIDI that was rendered.
 - `scripts/`:
   - `orch.py`: render, align, mix and master toolkit
   - `tags_ident.py`, `studz_fanfare.py`, `tags_theme.py`, `tags_disney.py`, `tags_intro.py`: the compositions

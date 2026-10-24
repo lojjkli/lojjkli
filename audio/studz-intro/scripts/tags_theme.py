@@ -1,153 +1,190 @@
-"""TAGS_theme - 10.0 s dark studio intro made only from real
-metal recordings (VSCO-2 CE gong, bowed and scraped cymbal, bass-drum rubs,
-brake drum, anvil, ratchet), slowed down 2-8x with sliding playback speed so
-they become giant metal roars, groans and screeches. No melody, no beat.
+"""TAGS_theme - 12.0 s studio intro. Shaped after measurements of a modern
+animation-studio intro (one long crescendo from silence, bass weight arriving
+late, a whole-step key change at the big moment, rhythmic orchestral hits about
+once a second instead of a drum beat, a second, bigger lift). It stays big from
+the lift to the end (no quiet dip). All music is original; the melody is the
+TAGS tune.
 
-The shape follows measurements of the Paramount logo sequence of a robot-action
-film (loudness every 0.25 s, brightness, where the energy sits), not its audio:
-0.0-1.0 silence | 1.0-1.5 fast swell into a deep metal roar | 2.6 the biggest
-hit with a rising screech | 3.7-4.7 two metal groans (about 240 and 285 Hz) with
-clangs at 4.0 and 4.4 | 5.0-5.5 dip | 5.4-6.6 swell with faint mechanical clicks |
-7.0-7.5 dip | 8.0 deep hit with a falling groan | 8.2-9.9 dark tail into silence."""
+0.0-5.0   from silence, one continuous crescendo in B-flat: strings, celesta, harp,
+          flute with the TAGS melody, choir; cellos/basses only from 2.5 s, the sub
+          weight (timpani roll, bass drum, tuba) only in the last 1.5 s;
+          Bb - Eb/Bb - Gm7 - Eb - F - Ab - Bb  ->  lift
+5.0       KEY CHANGE UP TO C: full orchestra and choir, the melody soars
+5.0-8.0   brass + timpani hits at 5.0 5.9 6.8 7.4; C - Am - F - G, and over the G a
+          riser (timpani roll, harp glissando, strings climb, cymbal swell)
+8.0       MEGA UP: key change up to D, everything bigger; hits speed up
+          (8.0 8.75 9.5 10.0 10.25) into D - G - A - D
+10.5      final grand D major chord; from 11.0 it fades to silence by 12.0."""
 import sys, os, json
-import numpy as np, soundfile as sf
-from scipy import signal as ss
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
-from orch import SR, VSCO, sox_reverb, master, export, decode, ogg_peak_db, accent_time
+from orch import Part, PERC, build, export, save_score, accent_time, decode, ogg_peak_db, n
 
-LEN = 10.0
-HIT1, GROAN, HIT2 = 2.6, 3.7, 8.0
-PERC_DIR = os.path.join(VSCO, 'Percussion')
-N = int(LEN * SR)
-mix = np.zeros((N + 8 * SR, 2))
-send = np.zeros_like(mix)
-LAYERS = []
+LEN = 12.0
+LIFT, RISE, MEGA, FINAL = 5.0, 7.4, 8.0, 10.5
+HITS1 = [5.0, 5.9, 6.8, 7.4]
+HITS2 = [8.0, 8.75, 9.5, 10.0, 10.25]
+FADE = [(FINAL, 0), (11.0, -1), (11.6, -10), (11.95, -50)]
 
-
-def load(name):
-    x, sr = sf.read(os.path.join(PERC_DIR, name), always_2d=True)
-    assert sr == SR
-    return np.repeat(x, 2, axis=1) if x.shape[1] == 1 else x[:, :2]
+# global dynamic shape (dB): silence -> long crescendo -> loud -> mega -> fade
+SHAPE = [(0.3, -32), (1.5, -25), (2.5, -19), (3.5, -13), (4.5, -6), (4.95, -3), (5.0, 0), (7.4, 0), (7.95, 1),
+         (8.0, 2), (10.5, 2)] + [(t, d + 2) for t, d in FADE[1:]]
 
 
-def vari(x, rate, start=0.0, length=None):
-    """Play x at a time-varying speed. rate: list of (t, speed) over the output
-    time (speed 0.25 = two octaves down and four times longer)."""
-    length = length or 12.0
-    t = np.arange(int(length * SR)) / SR
-    r = np.interp(t, [p[0] for p in rate], [p[1] for p in rate])
-    pos = start * SR + np.concatenate([[0], np.cumsum(r)[:-1]])
-    k = pos < len(x) - 2
-    pos = pos[k]
-    i = pos.astype(int); f = (pos - i)[:, None]
-    return x[i] * (1 - f) + x[i + 1] * f
+def env(*extra):
+    return SHAPE + list(extra) if not extra else sorted(SHAPE + list(extra))
 
 
-def shape(y, pts):
-    """dB envelope over the layer's own time."""
-    t = np.arange(len(y)) / SR
-    return y * (10 ** (np.interp(t, [p[0] for p in pts], [p[1] for p in pts]) / 20))[:, None]
+# ---- harmony: (start, end, root, chord tones low->high)
+PROG = [(0.3, 1.8, 'Bb', ['Bb2', 'F3', 'D4', 'F4', 'C5']), (1.8, 3.0, 'Eb', ['Bb2', 'G3', 'Eb4', 'G4', 'Bb4']),
+        (3.0, 3.8, 'G', ['G2', 'D3', 'Bb3', 'F4', 'Bb4']), (3.8, 4.4, 'Eb', ['Eb2', 'Bb2', 'G3', 'Eb4', 'G4']),
+        (4.4, 4.75, 'F', ['F2', 'C3', 'A3', 'F4', 'A4']), (4.75, 4.95, 'Ab', ['Ab2', 'Eb3', 'C4', 'Eb4', 'Ab4']),
+        (4.95, 5.0, 'Bb', ['Bb2', 'F3', 'D4', 'F4', 'Bb4']),
+        (5.0, 5.9, 'C', ['C2', 'G2', 'E3', 'C4', 'G4']), (5.9, 6.8, 'A', ['A1', 'E2', 'C3', 'A3', 'E4']),
+        (6.8, 7.4, 'F', ['F1', 'C2', 'A2', 'F3', 'C4']), (7.4, 8.0, 'G', ['G1', 'D2', 'B2', 'G3', 'D4']),
+        (8.0, 9.0, 'D', ['D2', 'A2', 'F#3', 'D4', 'A4']), (9.0, 9.75, 'G', ['G1', 'D2', 'B2', 'G3', 'D4']),
+        (9.75, 10.5, 'A', ['A1', 'E2', 'C#3', 'A3', 'E4']), (10.5, 11.95, 'D', ['D2', 'A2', 'F#3', 'D4', 'A4'])]
 
 
-def filt(y, lo=None, hi=None, order=4):
-    if lo:
-        y = ss.sosfiltfilt(ss.butter(order, lo, 'high', fs=SR, output='sos'), y, axis=0)
-    if hi:
-        y = ss.sosfiltfilt(ss.butter(order, hi, 'low', fs=SR, output='sos'), y, axis=0)
-    return y
+def chord(t):
+    for s, e, r, tones in PROG:
+        if s <= t < e:
+            return r, tones
+    return PROG[-1][2], PROG[-1][3]
 
 
-def place(name, t, y, db, pan=0.0, wet=0.3, width=1.0):
-    """Normalize the layer to its loudest 100 ms RMS, set it to `db`, pan, add."""
-    f = min(len(y), int(0.3 * SR))                              # never cut a ringing layer off dead
-    y = y.copy(); y[-f:] *= np.linspace(1, 0, f)[:, None]
-    k = int(0.1 * SR)
-    rms = np.sqrt(np.convolve((y ** 2).mean(axis=1), np.ones(k) / k, 'same')).max()
-    y = y / max(rms, 1e-9) * 10 ** (db / 20)
-    mid, side = (y[:, 0] + y[:, 1]) / 2, (y[:, 0] - y[:, 1]) / 2 * width
-    a = (pan + 1) * np.pi / 4
-    y = np.stack([(mid + side) * np.cos(a), (mid - side) * np.sin(a)], axis=1) * np.sqrt(2)
-    i = int(round(t * SR))
-    e = min(len(mix), i + len(y))
-    mix[i:e] += y[:e - i]
-    send[i:e] += y[:e - i] * wet
-    LAYERS.append(dict(name=name, t=t, db=db, sec=round(len(y) / SR, 2)))
+# ======================= melody (the TAGS tune, adapted)
+MEL1 = [(0.9, 'F4', .5), (1.4, 'C5', .6), (2.0, 'D5', .3), (2.3, 'C5', .3), (2.6, 'Bb4', .5),
+        (3.1, 'D5', .4), (3.5, 'F5', .5), (4.0, 'G5', .3), (4.3, 'F5', .3), (4.6, 'A5', .3), (4.82, 'Bb5', .2)]
+MEL2 = [(5.0, 'C6', .9), (5.9, 'B5', .3), (6.2, 'A5', .3), (6.5, 'E5', .3), (6.8, 'F5', .45), (7.25, 'A5', .15),
+        (7.4, 'G5', .3), (7.7, 'B5', .15), (7.85, 'C#6', .15)]
+MEL3 = [(8.0, 'D6', .75), (8.75, 'C#6', .3), (9.05, 'B5', .45), (9.5, 'A5', .5), (10.0, 'B5', .25), (10.25, 'C#6', .25),
+        (10.5, 'D6', 1.45)]
 
+fl = Part('flute', 'FluteSusVib', level=-18, pan=-0.1, send=0.45, env=[(0.8, -8), (2.0, -4), (3.0, -1), (4.0, 2), (4.9, 2), (5.0, 0)] + FADE)
+for t, p, d in MEL1:
+    fl.add(t, p, d + 0.04, 82)
+for t, p, d in MEL3:
+    if t < FINAL:
+        fl.add(t, n(p) + 12 if n(p) + 12 <= 96 else n(p), d + 0.03, 118)
+fl.add(FINAL, 'D6', 1.45, 116)
+vln = Part('violins', 'ViolinEnsSusVib', level=-14, pan=-0.35, send=0.45, align=LIFT, env=env())
+for t, p, d in MEL1[5:] + MEL2 + MEL3:
+    vln.add(t, p, d + 0.04, 90 if t < LIFT else 124)
+vln_soft = Part('violins_soft', 'ViolinEnsSusVib-Quiet', level=-20, pan=-0.3, send=0.55, env=[(0.3, -16), (1.5, -10), (2.5, -5), (3.5, -2), (4.5, 0), (5.0, -40)])
+for s, e, r, tones in PROG:
+    if s < LIFT:
+        vln_soft.add(s, tones[-2:], e - s + 0.05, 60)
+vla = Part('violas', 'ViolaEnsSusVib', level=-18, pan=0.15, send=0.4, align=LIFT, env=env())
+vc = Part('cellos', 'CelloEnsSusVib', level=-15, pan=0.3, send=0.35, align=LIFT, env=env((2.4, -40), (2.5, -16)))
+cb = Part('basses', 'ContrabassSusVB', level=-16, pan=0.4, send=0.3, align=LIFT, env=env((2.4, -40), (2.5, -20)))
+for s, e, r, tones in PROG:
+    d = e - s + 0.04
+    hot = s >= LIFT
+    vla.add(s, [p for p in tones if n('Bb3') <= n(p) <= n('A4')][:2] or [tones[2]], d, 118 if hot else 72)
+    if s >= 2.4:
+        vc.add(s, [p for p in tones if n('C2') <= n(p) <= n('D3')][:2], d, 122 if hot else 80)
+        lo = n(tones[0]) - 12 if n(tones[0]) - 12 >= n('C1') else n(tones[0])
+        cb.add(s, lo, d, 122 if hot else 76)
+trem = Part('violin_trem', 'ViolinEnsTrem', level=-21, pan=-0.4, send=0.5,
+            env=[(RISE - 0.1, -60), (RISE, -14), (MEGA - 0.05, 0), (MEGA, -60)])
+for i, p in enumerate(['D5', 'E5', 'F#5', 'G5']):
+    trem.add(RISE + i * 0.15, [p, n(p) - 12], 0.2, 96 + i * 8)
 
-gong_fff, gong_f, gong_mf = load('gongHit_fff.wav'), load('gongHit_f.wav'), load('gongHit_mf.wav')
-scrape = load('gongscrape_pp.wav')
-bow1, bow3, bow4 = load('susCymb1-bow-1.wav'), load('susCymb1-bow-3.wav'), load('susCymb1-bow-4.wav')
-rub2, rub4 = load('bassdrum_rub2_v1.wav'), load('bassdrum_rub4_v1.wav')
-brake, anvil = load('BrakeDrum1_Hammer_v3_Sum.wav'), load('Anvil_Hit1_v3_Sum.wav')
-ratchet, bd = load('Ratchet1-Slow_v1_rr1_Sum.wav'), load('BDrumNewhit_v7_rr1_Sum.wav')
+# ======================= choir
+choir = Part('choir', ('gm', 52), level=-18, pan=-0.05, send=0.55, env=env((1.75, -40), (1.8, -20)))
+for s, e, r, tones in PROG:
+    if s >= 1.8:
+        choir.add(s, [p for p in tones if n('F3') <= n(p) <= n('A4')], e - s + 0.04, 120 if s >= LIFT else 84)
 
-# ---- the body: a deep metal roar under everything (gongs slowed 3-4x, a bass-drum rub slowed 2x)
-START = 1.2                                                     # the roar fades in from here
-BODY = [(START, -60), (START + 0.25, -10), (START + 0.4, -2), (2.4, -2), (2.6, -2), (2.7, -4), (2.7, -4), (3.4, -6), (3.7, -13), (4.0, -6), (5.0, -8),
-        (5.5, -9), (6.6, -2), (6.85, -3), (7.05, -8), (7.5, -9), (8.0, -3), (8.15, -14), (8.5, -16), (8.8, -14), (9.0, -15), (9.4, -30), (9.6, -80)]
-body_t = lambda pts: [(t - START, d) for t, d in pts]            # absolute times -> layer time
-place('roar_gong_fff/4', START, filt(shape(vari(gong_fff, [(0, .25), (1.5, .26), (3, .22), (5.5, .24), (8.6, .2)], start=0.02, length=8.7),
-                                        body_t(BODY)), lo=30, hi=900), -20, wet=0.25)
-place('roar_gong_f/3', START, filt(shape(vari(gong_f, [(0, .34), (2, .32), (4, .35), (8.6, .3)], length=8.7), body_t(BODY)), lo=25, hi=500),
-      -21, pan=0.1, wet=0.2)
-place('growl_rub4/2', START, filt(shape(vari(rub4, [(0, .55), (1.0, .5), (2.0, .62), (3.0, .48), (6.0, .55), (8.6, .45)], length=8.7),
-                                      body_t(BODY)), lo=25, hi=700), -22, pan=-0.15, wet=0.15)
+# ======================= sparkle
+cel = Part('celesta', ('gm', 8), level=-21, pan=-0.3, send=0.55, env=[(0.3, -14), (1.5, -9), (2.6, -4), (3.0, 0), (5.0, -4)] + FADE)
+for i, t in enumerate([0.35, 0.6, 0.85, 1.1, 1.35, 1.6, 1.85, 2.1, 2.35, 2.6]):
+    cel.add(t, ['F6', 'Bb6', 'D7', 'C7', 'F7', 'D7', 'Bb6', 'Eb7', 'G7', 'Bb7'][i], 0.5, 54 + (i % 3) * 6)
+for t in HITS1 + HITS2:
+    r, tones = chord(t)
+    cel.add(t, [n(tones[-1]) + 24, n(tones[-2]) + 24], 0.8, 92)
+harp = Part('harp', 'Harp', level=-17, pan=-0.55, send=0.45, split=True, env=[(0, -14), (1.5, -10), (2.5, -7), (3.5, -4), (4.5, 0)])
+for s, e, r, tones in PROG[:5]:
+    for i, p in enumerate(tones):
+        harp.add(s + i * 0.08, p, 1.5, 58 + i * 2 + int(s * 3))
+sweep = [p for p in range(n('Bb3'), n('C7') + 1) if p % 12 in (10, 0, 2, 3, 5, 7, 9)]
+for i, p in enumerate(sweep):
+    harp.add(4.35 + 0.6 * (i / len(sweep)) ** 0.8, p, 0.4, 70 + i * 2)
+for i, p in enumerate([p for p in range(n('G3'), n('D7') + 1) if p % 12 in (7, 9, 11, 0, 2, 4, 6)]):
+    harp.add(RISE + i * 0.022, p, 0.4, 76 + i)
+harp.add(LIFT, ['C2', 'G2', 'C3', 'E3', 'G3', 'C4'], 2.0, 124)
+harp.add(MEGA, ['D2', 'A2', 'D3', 'F#3', 'A3', 'D4'], 2.0, 124).add(FINAL, ['D2', 'A2', 'D3', 'F#3', 'A3', 'D4', 'F#4'], 1.5, 124)
+glock = Part('glock', 'Glockenspiel', level=-23, pan=0.3, send=0.5, split=True)
+for t in HITS1 + HITS2 + [FINAL]:
+    r, tones = chord(t)
+    glock.add(t, [n(tones[-1]) + 12 if n(tones[-1]) + 12 <= 96 else n(tones[-1])], 1.0, 104)
 
-# ---- 2.6 s: the biggest hit (fresh gong strike 2x down, slowed brake drum and anvil, a slowed kick)
-place('hit1_gong/2', HIT1, filt(shape(vari(gong_fff, [(0, .5), (3, .45)], length=3.0), [(0, 0), (0.8, -10), (2.5, -40)]), lo=30, hi=1500), -10, wet=0.4)
-place('hit1_brake/4', HIT1, filt(vari(brake, [(0, .25)], length=3), hi=2500), -19, pan=0.2, wet=0.5)
-place('hit1_anvil/6', HIT1 + 0.01, filt(vari(anvil, [(0, .16)], length=3), lo=200, hi=3000), -23, pan=-0.25, wet=0.5)
-place('hit1_kick/2', HIT1, filt(vari(bd, [(0, .5)], length=3), hi=300), -13, wet=0.1)
-# the screech: bowed cymbal slowed 2x, its speed rising (a metal scream sliding up 1.4-2.0 and 2.4-3.5)
-place('screech_fall', 1.4, filt(shape(vari(bow4, [(0, .9), (0.6, .6)], start=1.0, length=0.7), [(0, -30), (0.2, 0), (0.5, -3), (0.7, -40)]), lo=250, hi=3500),
-      -30, pan=-0.3, wet=0.5)
-place('screech_rise', 2.4, filt(shape(vari(bow3, [(0, .45), (1.1, .75)], start=1.5, length=1.15), [(0, -24), (0.25, 0), (0.8, -2), (1.15, -40)]), lo=250, hi=3500),
-      -27, pan=0.3, wet=0.5)
+# ======================= brass
+hn = Part('horns', 'FHornSus', level=-12, pan=-0.15, send=0.45, align=LIFT, env=env((3.7, -40), (3.8, -16)))
+tpt = Part('trumpets', 'TrumpetSus', level=-12, pan=0.2, send=0.45, align=LIFT, env=env())
+tbn = Part('trombones', 'TromboneSus', level=-13, pan=0.35, send=0.4, align=LIFT, env=env((4.3, -40), (4.4, -12)))
+tba = Part('tuba', 'TubaSus', level=-16, pan=0.4, send=0.3, align=LIFT, env=env((4.3, -40), (4.4, -12)))
+for s, e, r, tones in PROG:
+    if s >= 3.8:
+        d = e - s + 0.04
+        hot = s >= LIFT
+        hn.add(s, [p for p in tones if n('C3') <= n(p) <= n('G4')][-3:], d, 124 if hot else 90)
+        if s >= 4.4:
+            tbn.add(s, [p for p in tones if n('A#1') <= n(p) <= n('E3')][:3], d, 124 if hot else 96)
+            lo = tones[0] if n(tones[0]) >= n('F1') else n(tones[0]) + 12
+            tba.add(s, lo, d, 124 if hot else 96)
+for t, p, d in MEL2 + MEL3:                                     # trumpets: the melody an octave down
+    if t < FINAL:
+        tpt.add(t, n(p) - 12, d + 0.03, 124)
+tpt.add(FINAL, ['A4', 'D5', 'F#5'], 1.45, 127)
+# rhythmic brass hits (staccato) on the hit grid
+tpt_st = Part('trumpet_hits', 'TrumpetStac', level=-15, pan=0.2, send=0.4, split=True, thresh=0.6)
+tbn_st = Part('trombone_hits', 'TromboneStac', level=-15, pan=0.35, send=0.35, split=True, thresh=0.6)
+for t in HITS1[1:] + HITS2[1:]:
+    r, tones = chord(t)
+    tpt_st.add(t, [p for p in tones if n('E4') <= n(p) <= n('A5')][:2] or [n(tones[-1])], 0.15, 112)
+    tbn_st.add(t, [p for p in tones if n('A#1') <= n(p) <= n('E3')][:2], 0.18, 112)
 
-# ---- 3.7-4.7 s: two metal groans (bowed cymbal 2x down, ~240 and ~285 Hz), clangs at 4.0 and 4.4
-wob = lambda base: [(i * 0.1, base * (1 + 0.006 * np.sin(i * 1.7))) for i in range(13)]
-place('groan_240', GROAN, filt(shape(vari(bow4, wob(0.43), start=1.0, length=1.2), [(0, -30), (0.25, 0), (0.9, 0), (1.2, -40)]), lo=150, hi=2000),
-      -25, pan=-0.2, wet=0.45)
-place('groan_285', GROAN + 0.1, filt(shape(vari(bow1, wob(0.505), start=2.0, length=1.1), [(0, -30), (0.25, 0), (0.8, 0), (1.1, -40)]), lo=150, hi=2000),
-      -26, pan=0.25, wet=0.45)
-place('clang_4.0', 4.0, filt(vari(brake, [(0, .3)], length=2.5), hi=1500), -26, pan=0.3, wet=0.5)
-place('clang_4.4', 4.4, filt(vari(anvil, [(0, .2)], length=2.5), lo=150, hi=2000), -28, pan=-0.3, wet=0.5)
-place('clang_4.4_gong', 4.4, filt(shape(vari(gong_mf, [(0, .5)], length=2.5), [(0, 0), (2.5, -30)]), lo=40, hi=1200), -24, wet=0.4)
+# ======================= weight: timpani, bass drum, cymbals, gong, bells
+timp = Part('timpani', 'Timpani', level=-13, pan=-0.15, send=0.3, split=True)
+for t in HITS1 + HITS2 + [FINAL]:
+    r, tones = chord(t)
+    low = [p for p in tones if n('C2') <= n(p) <= n('A2')][:2] or [n(tones[0]) + 12]
+    timp.add(t, low, 1.2, 127 if t in (LIFT, MEGA, FINAL) else 110)
+troll = Part('timp_roll', 'TimpaniRolls', level=-16, pan=-0.15, send=0.35,
+             env=[(3.5, -30), (4.95, 0), (4.99, -60), (RISE - 0.01, -60), (RISE, -14), (MEGA - 0.05, 0), (MEGA - 0.01, -60),
+                  (10.24, -60), (10.25, -6), (10.48, 0), (10.5, -60)])
+troll.add(3.5, 'F2', 1.5, 110).add(RISE, 'A2', 0.6, 110).add(10.25, 'A2', 0.27, 110)
+drum = Part('bass_drum', 'perc', level=-13, pan=0.0, send=0.3, split=True)
+for t in HITS1 + HITS2 + [FINAL]:
+    drum.add(t, PERC['bd'], 2.5, 127 if t in (LIFT, MEGA, FINAL) else 108)
+cym = Part('cymbals', 'perc', level=-18, pan=0.15, send=0.45, split=True)
+cym.add(LIFT, PERC['crash'], 3.0, 127).add(MEGA, PERC['crash'], 3.0, 127).add(FINAL, PERC['crash'], 3.0, 124)
+for t in (6.8, 9.5):
+    cym.add(t, PERC['crash'], 2.0, 96)
+cym.add(0.3, PERC['bow'], 4.0, 100)
+swell = Part('cym_swell', 'perc', level=-21, pan=0.1, send=0.5, thresh=0.001)
+swell.add(LIFT - 3.81, PERC['swell_m'], 3.85, 120).add(MEGA - 1.53, PERC['swell_s'], 1.55, 124)
+gong = Part('gong', 'perc', level=-20, pan=-0.1, send=0.5, split=True, env=[(0, 0)] + FADE)
+gong.add(MEGA, PERC['gong'], 2.5, 110).add(FINAL, PERC['gong'], 1.5, 124)
+bells = Part('bells', 'TubularBells', level=-21, pan=0.2, send=0.55, split=True)
+bells.add(LIFT, ['G4', 'C5'], 3.0, 116).add(MEGA, ['A4', 'D5'], 2.5, 120).add(FINAL, ['A4', 'D5', 'F#5'], 1.5, 124)
+tree = Part('bell_tree', 'perc', level=-24, pan=-0.2, send=0.6, split=True)
+tree.add(0.3, PERC['tree4'], 2.0, 80).add(LIFT, PERC['tree1'], 2.0, 110).add(MEGA, PERC['tree1'], 2.0, 116).add(FINAL, PERC['tree2'], 1.5, 110)
 
-# ---- 4.9-5.5 s: the dip, a short scrape
-place('scrape_5.0', 4.7, filt(shape(vari(scrape, [(0, .5)], start=0.3, length=0.75), [(0, -20), (0.1, 0), (0.5, -3), (0.75, -40)]), lo=300, hi=4000), -25, wet=0.5)
-# a metallic mid texture under the second half (two bowed-cymbal takes slowed ~2.5x, slowly drifting)
-TEX = [(4.6, -30), (5.0, -4), (5.5, -6), (6.6, 0), (7.0, -2), (7.5, -2), (8.0, 0), (8.6, -1), (9.0, -2), (9.4, -40)]
-place('texture_bow4', 4.6, filt(shape(vari(bow4, [(0, .44), (2, .4), (4.6, .37)], start=1.0, length=4.6), [(t - 4.6, d) for t, d in TEX]), lo=200, hi=2500),
-      -32, pan=0.2, wet=0.45)
-place('texture_bow3', 4.6, filt(shape(vari(bow3, [(0, .4), (2.5, .46), (4.6, .42)], start=2.0, length=4.6), [(t - 4.6, d) for t, d in TEX]), lo=200, hi=2500),
-      -33, pan=-0.25, wet=0.45)
-
-# ---- 5.4-6.6 s: swell with faint mechanical clicks (ratchet a bit slowed), a rub groaning upward
-place('clicks', 5.4, filt(shape(vari(ratchet, [(0, .7)], start=0.5, length=1.4), [(0, -12), (0.4, 0), (1.1, -2), (1.4, -40)]), lo=300, hi=4500),
-      -36, pan=0.2, wet=0.3, width=0.6)
-place('groan_rub2', 5.4, filt(shape(vari(rub2, [(0, .45), (1.2, .6)], start=1.0, length=1.6), [(0, -24), (1.1, 0), (1.6, -30)]), lo=30, hi=900),
-      -24, pan=-0.1, wet=0.3)
-
-# ---- 7.5-8.0 rise (a reversed slowed gong), 8.0 deep hit, a falling groan 7.8-8.6
-rev = filt(vari(gong_f, [(0, .4)], length=1.2), lo=30, hi=1200)[::-1]
-place('rise_rev_gong', HIT2 - len(rev) / SR, shape(rev, [(0, -30), (len(rev) / SR - 0.05, 0), (len(rev) / SR, -60)]), -24, wet=0.3)
-place('hit2_gong/3', HIT2, filt(shape(vari(gong_f, [(0, .33), (2, .3)], length=2.0), [(0, 0), (0.5, -9), (2.0, -40)]), lo=25, hi=700), -21, wet=0.35)
-place('hit2_kick/2', HIT2, filt(shape(vari(bd, [(0, .45)], length=3), [(0, 0), (0.3, -6), (1.5, -40)]), hi=250), -19, wet=0.1)
-place('hit2_brake/5', HIT2, filt(vari(brake, [(0, .2)], length=3), hi=1800), -28, pan=-0.2, wet=0.5)
-place('fall_groan', 7.8, filt(shape(vari(gong_mf, [(0, .7), (0.8, .32)], start=0.05, length=1.1), [(0, -18), (0.2, 0), (0.8, -4), (1.1, -40)]), lo=40, hi=1500),
-      -25, wet=0.4)
+PARTS = [fl, vln, vln_soft, vla, vc, cb, trem, choir, cel, harp, glock, hn, tpt, tbn, tba, tpt_st, tbn_st,
+         timp, troll, drum, cym, swell, gong, bells, tree]
+ACCENTS = [LIFT, MEGA, FINAL]
 
 if __name__ == '__main__':
     out = sys.argv[1]
-    wd = os.path.join(out, 'build', 'TAGS_metal'); os.makedirs(wd, exist_ok=True)
-    rv = sox_reverb(send, (85, 60, 100, 100, 40, 0), wd)
-    L = min(len(rv), len(mix))
-    y = (mix[:L] + rv[:L] * 0.3)[:N]
-    y = master(y, os.path.join(out, 'build'), 'TAGS_metal', (9.3, 9.95), True)
+    y, rep = build('TAGS_theme', PARTS, LEN, os.path.join(out, 'build'), reverb=(78, 38, 100, 100, 28, 0), wet=0.36,
+                   fade=(11.2, 11.97))
     wav, ogg = export(y, out, 'TAGS_theme')
+    save_score(PARTS, os.path.join(out, 'TAGS_theme.mid'))
     y = decode(ogg)
-    rep = dict(length_samples=len(y), ogg_peak_dbfs=round(ogg_peak_db(ogg), 2), layers=LAYERS,
-               accents={str(t): round(accent_time(y, t), 4) for t in (HIT1, 4.0, 4.4, HIT2)})
+    rep['length_samples'] = len(y)
+    rep['ogg_peak_dbfs'] = round(ogg_peak_db(ogg), 2)
+    rep['accents'] = {str(round(t, 2)): round(accent_time(y, t), 4) for t in ACCENTS}
     json.dump(rep, open(os.path.join(out, 'TAGS_theme_report.json'), 'w'), indent=1)
-    print(json.dumps(rep['accents']), rep['length_samples'], rep['ogg_peak_dbfs'])
+    print(json.dumps(rep['accents']))

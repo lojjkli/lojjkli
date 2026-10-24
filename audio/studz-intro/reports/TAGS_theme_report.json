@@ -1,156 +1,136 @@
 {
- "length_samples": 441000,
- "ogg_peak_dbfs": -1.05,
- "layers": [
-  {
-   "name": "roar_gong_fff/4",
-   "t": 1.2,
-   "db": -20,
-   "sec": 8.7
+ "stems": {
+  "flute": {
+   "inst": "FluteSusVib",
+   "shift_ms": 144.4,
+   "peak_db": -10.4
   },
-  {
-   "name": "roar_gong_f/3",
-   "t": 1.2,
-   "db": -21,
-   "sec": 8.7
+  "violins": {
+   "inst": "ViolinEnsSusVib",
+   "shift_ms": 156.7,
+   "peak_db": -2.9
   },
-  {
-   "name": "growl_rub4/2",
-   "t": 1.2,
-   "db": -22,
-   "sec": 8.7
+  "violins_soft": {
+   "inst": "ViolinEnsSusVib-Quiet",
+   "shift_ms": 300.0,
+   "peak_db": -17.4
   },
-  {
-   "name": "hit1_gong/2",
-   "t": 2.6,
-   "db": -10,
-   "sec": 3.0
+  "violas": {
+   "inst": "ViolaEnsSusVib",
+   "shift_ms": 92.7,
+   "peak_db": -7.2
   },
-  {
-   "name": "hit1_brake/4",
-   "t": 2.6,
-   "db": -19,
-   "sec": 3.0
+  "cellos": {
+   "inst": "CelloEnsSusVib",
+   "shift_ms": 39.4,
+   "peak_db": -1.1
   },
-  {
-   "name": "hit1_anvil/6",
-   "t": 2.61,
-   "db": -23,
-   "sec": 3.0
+  "basses": {
+   "inst": "ContrabassSusVB",
+   "shift_ms": 12.7,
+   "peak_db": -3.9
   },
-  {
-   "name": "hit1_kick/2",
-   "t": 2.6,
-   "db": -13,
-   "sec": 3.0
+  "violin_trem": {
+   "inst": "ViolinEnsTrem",
+   "shift_ms": 84.4,
+   "peak_db": -10.2
   },
-  {
-   "name": "screech_fall",
-   "t": 1.4,
-   "db": -30,
-   "sec": 0.7
+  "choir": {
+   "inst": "('gm', 52)",
+   "shift_ms": 132.3,
+   "peak_db": -4.2
   },
-  {
-   "name": "screech_rise",
-   "t": 2.4,
-   "db": -27,
-   "sec": 1.15
+  "celesta": {
+   "inst": "('gm', 8)",
+   "shift_ms": 2.9,
+   "peak_db": -11.3
   },
-  {
-   "name": "groan_240",
-   "t": 3.7,
-   "db": -25,
-   "sec": 1.2
+  "harp": {
+   "inst": "Harp",
+   "shift_ms": 0.0,
+   "peak_db": -3.1
   },
-  {
-   "name": "groan_285",
-   "t": 3.8000000000000003,
-   "db": -26,
-   "sec": 1.1
+  "glock": {
+   "inst": "Glockenspiel",
+   "shift_ms": 0.0,
+   "peak_db": -9.5
   },
-  {
-   "name": "clang_4.0",
-   "t": 4.0,
-   "db": -26,
-   "sec": 2.5
+  "horns": {
+   "inst": "FHornSus",
+   "shift_ms": 49.9,
+   "peak_db": -1.6
   },
-  {
-   "name": "clang_4.4",
-   "t": 4.4,
-   "db": -28,
-   "sec": 2.5
+  "trumpets": {
+   "inst": "TrumpetSus",
+   "shift_ms": 12.0,
+   "peak_db": 2.0
   },
-  {
-   "name": "clang_4.4_gong",
-   "t": 4.4,
-   "db": -24,
-   "sec": 2.5
+  "trombones": {
+   "inst": "TromboneSus",
+   "shift_ms": 56.5,
+   "peak_db": 4.5
   },
-  {
-   "name": "scrape_5.0",
-   "t": 4.7,
-   "db": -25,
-   "sec": 0.75
+  "tuba": {
+   "inst": "TubaSus",
+   "shift_ms": 62.8,
+   "peak_db": 1.1
   },
-  {
-   "name": "texture_bow4",
-   "t": 4.6,
-   "db": -32,
-   "sec": 4.6
+  "trumpet_hits": {
+   "inst": "TrumpetStac",
+   "shift_ms": 0.0,
+   "peak_db": -2.7
   },
-  {
-   "name": "texture_bow3",
-   "t": 4.6,
-   "db": -33,
-   "sec": 4.6
+  "trombone_hits": {
+   "inst": "TromboneStac",
+   "shift_ms": 0.0,
+   "peak_db": 6.0
   },
-  {
-   "name": "clicks",
-   "t": 5.4,
-   "db": -36,
-   "sec": 1.4
+  "timpani": {
+   "inst": "Timpani",
+   "shift_ms": 0.0,
+   "peak_db": -2.3
   },
-  {
-   "name": "groan_rub2",
-   "t": 5.4,
-   "db": -24,
-   "sec": 1.6
+  "timp_roll": {
+   "inst": "TimpaniRolls",
+   "shift_ms": 4.2,
+   "peak_db": -10.5
   },
-  {
-   "name": "rise_rev_gong",
-   "t": 6.8,
-   "db": -24,
-   "sec": 1.2
+  "bass_drum": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -3.5
   },
-  {
-   "name": "hit2_gong/3",
-   "t": 8.0,
-   "db": -21,
-   "sec": 2.0
+  "cymbals": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -3.1
   },
-  {
-   "name": "hit2_kick/2",
-   "t": 8.0,
-   "db": -19,
-   "sec": 3.0
+  "cym_swell": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -7.9
   },
-  {
-   "name": "hit2_brake/5",
-   "t": 8.0,
-   "db": -28,
-   "sec": 3.0
+  "gong": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -10.1
   },
-  {
-   "name": "fall_groan",
-   "t": 7.8,
-   "db": -25,
-   "sec": 1.1
+  "bells": {
+   "inst": "TubularBells",
+   "shift_ms": 0.0,
+   "peak_db": -10.0
+  },
+  "bell_tree": {
+   "inst": "perc",
+   "shift_ms": 0.0,
+   "peak_db": -12.4
   }
- ],
+ },
+ "length_samples": 529200,
+ "ogg_peak_dbfs": -1.04,
  "accents": {
-  "2.6": 2.6037,
-  "4.0": 3.9898,
-  "4.4": 4.4476,
-  "8.0": 8.0017
+  "5.0": 5.0017,
+  "8.0": 8.0037,
+  "10.5": 10.5017
  }
 }
