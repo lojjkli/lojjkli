@@ -91,6 +91,9 @@ PERC_SFZ = r"""
 <region> sample=Snare2-rollSN_v1_rr1_Sum.wav hivel=50
 <region> sample=Snare2-rollSN_v3_rr1_Sum.wav lovel=51 hivel=95
 <region> sample=Snare2-rollSN_v5_rr1_Sum.wav lovel=96
+<group> key=56 // gong scrape (dark shimmer)
+<region> sample=gongscrape_pp.wav hivel=80
+<region> sample=gongscrape_mf.wav lovel=81
 <group> key=75 // claves
 <region> sample=Claves1_Hit_v1_rr1_Sum.wav hivel=50
 <region> sample=Claves1_Hit_v2_rr1_Sum.wav lovel=51 hivel=95
@@ -98,7 +101,7 @@ PERC_SFZ = r"""
 """
 PERC = dict(bd=36, crash=49, cym=51, swell_s=52, swell_m=53, swell_l=54, gong=55,
             tree1=57, tree2=58, tree3=59, tree4=60, tri3=62, tri6=63, tri6m=64, bow=65,
-            taps=37, snare=38, sroll=40, claves=75)
+            taps=37, snare=38, sroll=40, claves=75, gscrape=56)
 
 
 class Part:

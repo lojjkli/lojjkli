@@ -12,22 +12,23 @@ the sample libraries, then mixed and mastered.
 Both are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
 
-## TAGS_ident (studio logo, secret-agent version, E minor)
+## TAGS_ident (studio logo, dark secret-agent movie intro, E minor)
 
-Dark and stealthy: creeping pizzicato bass, ticking snare and whispered muted brass,
-built around the minor chord with a major 7th (E–G–B–D♯). Played on a 120 bpm grid that is
-offset so 5.3 s falls on a beat.
+A cinematic logo sting rather than underscore. It is built on an "agent" motif,
+E–G–F♯–D♯ (minor with a major 7th): stated softly at the start, then fortissimo
+in the full brass.
 
 | Time | What happens |
 |---|---|
-| 0–2.3 s | In the shadows: a creeping pizzicato bass riff, snare taps ticking on the off-beats, a B/C tremolo cluster high in the violins. A muted trumpet whispers the motif (B–C–B), with a celesta glint. |
-| 2.3–5.0 s | The agent moves in: cellos join the riff and the string tremolo creeps up chromatically. Muted-horn stabs (Em(maj7) → F♯m7♭5 → B7). The bass turns to 16ths, with snare and timpani rolls and a quick harp swish. |
-| 5.05–5.3 s | A breath: everything drops out except a cymbal swell. |
-| 5.3 s | The reveal: full-orchestra E minor (major 7th) stinger with timpani, bass drum, crash, snare, low pizzicato and a low tubular bell. Kept short so the stabs that follow cut through. |
-| 5.55, 6.10, 6.55, 7.20, 7.75 s | Gadget stabs: staccato trumpets, trombones, horns and tuba, violin and cello pizzicato, claves, snare. The last one locks shut on a low E. |
-| 7.9–10.1 s | Low string tremolo, the muted trumpet whispers the motif once more, a last low pizzicato E at 9.3 s, fade to silence. |
+| 0 s | A deep boom (bass drum, timpani, low harp) opens the curtain. |
+| 0–2.3 s | A low tremolo rumble in basses and cellos, gong scrape and bowed-cymbal shimmer. Horns state the motif softly. |
+| 2.3–5.2 s | The rise: string tremolos climb chromatically, and a timpani/bass-drum heartbeat speeds up (2.3, 3.3, 3.9, 4.35, 4.68, 4.93, 5.10 s). The motif returns fortissimo in trumpets, horns and trombones, with snare and timpani rolls, a harp sweep and a cymbal swell. |
+| 5.2–5.3 s | A split-second silence (only the cymbal swell). |
+| 5.3 s | The logo: a massive E minor (major 7th) hit, the loudest moment. Full brass, strings, winds, timpani, bass drum, snare, gong, crash and tubular bells. The chord keeps ringing. |
+| 5.55, 6.10, 6.55, 7.20, 7.75 s | Trailer impacts over the held chord: timpani, bass drum, snare, staccato trumpets, horns, trombones and tuba, with crashes on 6.10 and 7.75. The held chord drops back so each impact cuts through. |
+| after 7.75 s | The chord rings out and fades to silence by 10.1 s. |
 
-Stabs measured at 5.550, 6.102, 6.554, 7.190 and 7.742 s.
+Impacts measured at 5.552, 6.094, 6.542, 7.202 and 7.750 s.
 
 ## Studz_fanfare (game logo, B-flat major)
 
@@ -51,10 +52,10 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
 ## Instruments and samples
 
 - **VSCO-2 Community Edition** (Versilian Studios, CC0), SFZ branch, commit `6dd651d`:
-  - strings: violin, viola, cello and contrabass ensembles (sustain/vibrato, tremolo, pizzicato), violin spiccato, harp
-  - winds: flute, piccolo, oboe, clarinet (sustain and staccato), bassoon
-  - brass: F horn (open, muted, staccato), trumpet (open, straight mute, staccato), tenor trombone (sustain, staccato), tuba (sustain, staccato)
-  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, snare (hits, rolls, taps), claves, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
+  - strings: violin, viola, cello and contrabass ensembles (sustain/vibrato, tremolo), violin spiccato, harp
+  - winds: flute, piccolo, oboe, clarinet, bassoon
+  - brass: F horn, trumpet, tenor trombone and tuba (sustain and staccato)
+  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, snare (hits, rolls), crash and suspended cymbals (mallet, crescendo rolls, bowed), gong (hits, scrape), bell tree. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
 - **GeneralUser GS 2.0.3** (S. Christian Collins, free for any use), commit `684543d`: celesta only, because VSCO-2 has no celesta.
 
 ## Tools
