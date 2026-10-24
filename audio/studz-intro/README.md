@@ -6,29 +6,27 @@ the sample libraries, then mixed and mastered.
 
 | File | Length | Main accent (target → measured in the .ogg) |
 |---|---|---|
-| `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.300 s |
+| `TAGS_ident.ogg` | 10.100 s (445 410 samples) | 5.300 → 5.302 s |
 | `Studz_fanfare.ogg` | 14.800 s (652 680 samples) | 10.000 → 10.004 s |
 
 Both are Ogg Vorbis, 44.1 kHz stereo, `oggenc -q 7`, peaking at about -1 dBFS and ending in
 digital silence. 24-bit WAVs of the same masters are in `wav/`.
 
-## TAGS_ident (studio logo, dark secret-agent movie intro, E minor)
+## TAGS_ident (studio logo, magical castle-intro style, D-flat major)
 
-A cinematic logo sting rather than underscore. It is built on an "agent" motif,
-E–G–F♯–D♯ (minor with a major 7th): stated softly at the start, then fortissimo
-in the full brass.
+Inspired by the feel of a modern animation-studio castle intro: string-led, lyrical and
+sparkling. The melody is original, not a quotation.
 
 | Time | What happens |
 |---|---|
-| 0 s | A deep boom (bass drum, timpani, low harp) opens the curtain. |
-| 0–2.3 s | A low tremolo rumble in basses and cellos, gong scrape and bowed-cymbal shimmer. Horns state the motif softly. |
-| 2.3–5.2 s | The rise: string tremolos climb chromatically, and a timpani/bass-drum heartbeat speeds up (2.3, 3.3, 3.9, 4.35, 4.68, 4.93, 5.10 s). The motif returns fortissimo in trumpets, horns and trombones, with snare and timpani rolls, a harp sweep and a cymbal swell. |
-| 5.2–5.3 s | A split-second silence (only the cymbal swell). |
-| 5.3 s | The logo: a massive E minor (major 7th) hit, the loudest moment. Full brass, strings, winds, timpani, bass drum, snare, gong, crash and tubular bells. The chord keeps ringing. |
-| 5.55, 6.10, 6.55, 7.20, 7.75 s | Trailer impacts over the held chord: timpani, bass drum, snare, staccato trumpets, horns, trombones and tuba, with crashes on 6.10 and 7.75. The held chord drops back so each impact cuts through. |
-| after 7.75 s | The chord rings out and fades to silence by 10.1 s. |
+| 0–2.3 s | Night sky over the water. Celesta and harp twinkle over a soft string pad (D♭maj9 → G♭maj7♯11). A solo flute sings the first phrase. |
+| 2.3 s | The star appears (bell tree). |
+| 2.3–5.3 s | The shooting star draws its arc: the violins carry the melody higher over E♭m9 → G♭maj7 → Amaj7 (the "magic" lift) → A♭9sus4 → A♭7. An accelerating harp glissando rises with the star, horns sing a warm counter-line, then a flute run, timpani roll and cymbal swell. |
+| 5.3 s | The castle lights up: full orchestra on D♭ major (strings and woodwinds leading, warm brass) with tubular bells, glockenspiel, bell tree, crash and timpani. The violin melody peaks on high D♭. |
+| 5.55, 6.10, 6.55, 7.20, 7.75 s | Fireworks: glockenspiel, celesta, harp, triangle and piccolo sparkles. Meanwhile the strings sing the cadence D♭ → B♭m7 → G♭maj7 → G♭m6 (the wistful minor iv) → D♭. |
+| after 7.75 s | It rings out with a last celesta and harp arpeggio and fades to silence by 10.1 s. |
 
-Impacts measured at 5.552, 6.094, 6.542, 7.202 and 7.750 s.
+Fireworks measured at 5.560, 6.106, 6.554, 7.204 and 7.752 s.
 
 ## Studz_fanfare (game logo, B-flat major)
 
@@ -54,8 +52,8 @@ each chord is timed on its own (the `split` option in `scripts/orch.py`).
 - **VSCO-2 Community Edition** (Versilian Studios, CC0), SFZ branch, commit `6dd651d`:
   - strings: violin, viola, cello and contrabass ensembles (sustain/vibrato, tremolo), violin spiccato, harp
   - winds: flute, piccolo, oboe, clarinet, bassoon
-  - brass: F horn, trumpet, tenor trombone and tuba (sustain and staccato)
-  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, snare (hits, rolls), crash and suspended cymbals (mallet, crescendo rolls, bowed), gong (hits, scrape), bell tree. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
+  - brass: F horn, trumpet, tenor trombone, tuba
+  - percussion: timpani hits and rolls, tubular bells, glockenspiel, bass drum, crash and suspended cymbals (mallet, crescendo rolls, bowed), gong, bell tree, triangles. The one-shot percussion has no SFZ upstream; a small one is embedded in `scripts/orch.py`.
 - **GeneralUser GS 2.0.3** (S. Christian Collins, free for any use), commit `684543d`: celesta only, because VSCO-2 has no celesta.
 
 ## Tools
